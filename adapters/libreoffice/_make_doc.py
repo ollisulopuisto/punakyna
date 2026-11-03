@@ -3,6 +3,7 @@ import sys
 import time
 
 import uno
+from com.sun.star.lang import Locale
 
 text = sys.argv[1]
 local = uno.getComponentContext()
@@ -21,6 +22,7 @@ desktop = ctx.ServiceManager.createInstanceWithContext(
     'com.sun.star.frame.Desktop', ctx)
 doc = desktop.loadComponentFromURL('private:factory/swriter', '_blank', 0, ())
 cursor = doc.Text.createTextCursor()
+cursor.CharLocale = Locale('fi', 'FI', '')  # suomi - muuten LO oikolukee väärällä kielellä
 paras = text.split('\n')
 LINE_BREAK = uno.getConstantByName('com.sun.star.text.ControlCharacter.LINE_BREAK')
 PARA_BREAK = uno.getConstantByName('com.sun.star.text.ControlCharacter.PARAGRAPH_BREAK')
