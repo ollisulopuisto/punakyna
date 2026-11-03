@@ -1,0 +1,8 @@
+{
+  "name": "fi.punakyna.host",
+  "description": "Punakynä-paikallisoikoluvun native messaging -isäntä",
+  "path": "/polku/punakyna/adapters/browser/native_host.py",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://TAYTETAVA-LAAJENNUSTUNNUS/"],
+  "allowed_extensions": ["punakyna@esimerkki.invalid"]
+}
