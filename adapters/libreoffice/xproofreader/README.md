@@ -19,3 +19,37 @@ ei palvelimen uudelleenkäynnistystä) ja/tai lisäosan poisto.
 
 Vaatimukset: LibreOffice Python-UNO:lla (Linux-jakeluissa vakio,
 python3-uno). Ei verkkoyhteyttä muualle kuin 127.0.0.1.
+
+## Suomen oikeinkirjoituksen sanasto ja Voikko-rinnakkaisuus
+
+LO:n taustaoikoluku (aaltoviivat kirjoitettaessa) vaatii profiiliin
+jonkin suomen oikeinkirjoitustarkistimen. Suositus: Voikko
+(esim. `libreoffice-voikko`-paketti tai LibreOfficen laajennos).
+HUOM: Voikko-laajennoksen asennus kirjoittaa oletusasetuksen
+(GrammarCheckerList/fi-FI) korvaavasti, mika voi poistaa Punakynan
+kaytosta - ota Punakyna silloin uudelleen kayttoon Writing Aids
+-asetuksista (kohta 5). Punakyna ei koskaan muuta muiden
+tarkistimien asetuksia.
+
+Todennettu hiekkalaatikossa (GUI-testi tests/test_lo_writer_background.py):
+kirjoitusvirheiden punaiset aaltoviivat (Voikko) JA Punakynan
+kielioppivirheen sininen alleviivaus + oikolukudialogin selite ja
+korjausehdotus (esim. "Me olen likaisia." -> "olemme").
+
+## macOS (varmistamatta - ei testattu Macilla)
+
+Seuraavat polut ovat parhaita arvauksia LibreOffice.app-paketin
+rakenteesta; varmista ensimmäisellä Mac-asennuksella ja korjaa tämä
+ohje havaintojen mukaan:
+
+- LibreOfficen oma Python-UNO-tulkki:
+  `/Applications/LibreOffice.app/Contents/Resources/python`
+  (tai `.../Contents/Frameworks/LibreOfficePython.framework/...`
+  versiosta riippuen)
+- unopkg: `/Applications/LibreOffice.app/Contents/MacOS/unopkg`
+- Asennus muutoin samat vaiheet kuin yllä: palvelin päälle, tunnus
+  (`--enroll-app libreoffice`), .oxt rakennetaan make_oxt.py:llä ja
+  lisätään LibreOfficen lisäosien hallinnasta.
+- Huom: macOS:n oma oikoluku (NSSpellServer-sovitin,
+  `adapters/macos/`) on erillinen, vielä kääntämätön luonnos - se ei
+  ole edellytys LibreOffice-lisäosalle.
