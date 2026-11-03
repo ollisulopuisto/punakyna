@@ -1,0 +1,28 @@
+{"text": "Pöydällä on kirjat."}
+{"text": "Julkiset menot ovat kasvaneet."}
+{"text": "Hän ei ole tullut."}
+{"text": "Emme osanneet vastata."}
+{"text": "Tammikuussa on kylmä."}
+{"text": "Maanantai on viikon ensimmäinen päivä."}
+{"text": "Hän asuu Suomessa ja puhuu suomea."}
+{"text": "Tämä on hyvä kirja."}
+{"text": "Kissat juoksevat nopeasti."}
+{"text": "Hän sanoi, että hän tulee huomenna."}
+{"text": "Hän ei voi tulla tänään."}
+{"text": "Sinä et ole tervetullut."}
+{"text": "He eivät tulleet ajoissa."}
+{"text": "Kokous on maanantaina kello kymmenen."}
+{"text": "Joulukuussa juhlitaan perheen kanssa."}
+{"text": "Hän osti kolme omenaa kaupasta."}
+{"text": "Tämän vuoksi emme lähde matkalle."}
+{"text": "Menot pienenivät tänä vuonna."}
+{"text": "Hän sanoi ettei tule."}
+{"text": "En tiennyt asiasta mitään."}
+{"text": "Hänen sukunimensä on Syksy.", "allow_rules": ["CAP_COMMON_NOUN", "VOIKKO_GC"]}
+{"text": "Hän sanoi: \"Tammikuussa on kylmä.\"", "allow_rules": []}
+{"text": "En haluaisi tulla mukaan.", "allow_rules": []}
+{"text": "Hän ei millään tahtonut tulla.", "allow_rules": []}
+{"text": "Metsässä on puita.", "allow_rules": []}
+{"text": "Naapurin kissat ovat sisällä.", "allow_rules": []}
+{"text": "Nämä ovat kirjoja.", "allow_rules": []}
+{"text": "Vuodenajat ovat kevät, kesä, syksy ja talvi.", "allow_rules": []}

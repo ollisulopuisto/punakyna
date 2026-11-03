@@ -1,0 +1,25 @@
+{"text": "Minä en tienneet asiasta mitään.", "expect": ["NEG_CONNEGATIVE"], "category": "grammar"}
+{"text": "Hän ei tulevat kokoukseen.", "expect": ["NEG_CONNEGATIVE"], "category": "grammar"}
+{"text": "Emme osasivat vastata kysymykseen.", "expect": ["NEG_CONNEGATIVE"], "category": "grammar"}
+{"text": "He ei tulleet ajoissa perille.", "expect": ["NEG_NUMBER"], "category": "grammar"}
+{"text": "Me ei mennä tänään mihinkään.", "expect": ["NEG_NUMBER"], "category": "grammar"}
+{"text": "Julkiset menot on kasvaneet voimakkaasti.", "expect": ["SV_AGREEMENT"], "category": "grammar"}
+{"text": "Kissat on pöydällä.", "expect": ["SV_AGREEMENT"], "category": "grammar"}
+{"text": "Uudet säännöt on tulossa voimaan ensi vuonna.", "expect": ["SV_AGREEMENT"], "category": "grammar"}
+{"text": "Tämä kirja ovat minun.", "expect": ["SV_AGREEMENT"], "category": "grammar"}
+{"text": "Tämä on on hyvä päivä.", "expect": ["DOUBLE_WORD"], "category": "grammar"}
+{"text": "Hän sanoi, että että kaikki sujuu.", "expect": ["DOUBLE_WORD"], "category": "grammar"}
+{"text": "Kokous pidetään Tammikuussa.", "expect": ["CAP_COMMON_NOUN"], "category": "spelling"}
+{"text": "Tapaamme Maanantaina kello yhdeksän.", "expect": ["CAP_COMMON_NOUN"], "category": "spelling"}
+{"text": "Vuosi vaihtuu Joulukuun lopussa.", "expect": ["CAP_COMMON_NOUN"], "category": "spelling"}
+{"text": "Minä pidän Syksystä eniten.", "expect": ["CAP_COMMON_NOUN"], "category": "spelling"}
+{"text": "Minä ostan omean kaupasta.", "expect": ["SPELL"], "category": "spelling"}
+{"text": "Hän asuu Helsingisä vanhassa talossa.", "expect": ["SPELL"], "category": "spelling"}
+{"text": "Tämä on eriomainen kirja.", "expect": ["SPELL"], "category": "spelling", "note": "Voikko hyväksyy tuottavan yhdyssanan (eri+omainen) - tunnettu aukko, ei tunnistu."}
+{"text": "tämä lause alkaa pienellä.", "expect": ["VOIKKO_GC"], "category": "style"}
+{"text": "Mies on joten kuten selvillä asiasta.", "expect": ["VOIKKO_GC"], "category": "grammar"}
+{"text": "Se on vaan niin.", "expect": ["VOIKKO_GC"], "category": "grammar"}
+{"text": "Avaimet löytyivät Reetan Taskun pohjalta.", "expect": ["VOIKKO_GC"], "category": "grammar"}
+{"text": "äidissä on pieni alkukirjain.", "expect": ["VOIKKO_GC"], "category": "style"}
+{"text": "Tämä on  kaksi välilyöntiä.", "expect": ["VOIKKO_GC"], "category": "style"}
+{"text": "Hän tuli , myöhässä.", "expect": ["VOIKKO_GC"], "category": "style"}

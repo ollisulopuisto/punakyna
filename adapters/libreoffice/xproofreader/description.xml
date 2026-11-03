@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description xmlns="http://openoffice.org/extensions/description/2006"
+    xmlns:dep="http://openoffice.org/office/extension/2006/deployment"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+ <identifier value="fi.punakyna.proofreader"/>
+ <version value="0.1.0"/>
+ <display-name>
+  <name lang="fi">Punakynä - suomen oikoluku (paikallinen)</name>
+  <name lang="en">Punakynä - Finnish proofreading (local)</name>
+ </display-name>
+</description>
