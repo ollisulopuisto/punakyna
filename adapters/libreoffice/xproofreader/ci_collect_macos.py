@@ -80,19 +80,23 @@ def stage_dylibs():
                 seeds.append(os.path.join(libdir, name))
 
     staged = {}          # basename -> True
-    resolved = {}        # dep-ref -> todellinen polku
-    queue = list(seeds)
+    # jono pareina (viitattu nimi, polku): jokainen kirjasto kopioidaan
+    # vain SILLA NIMELLA jolla jokin viittaa siihen (dyld etsii tasan
+    # viitattua nimea). Nain esim. libicudata paattyy pakettiin vain
+    # kerran (libicudata.79.dylib), ei seka versionimella etta sonamella.
+    queue = [(os.path.basename(s), s) for s in seeds]
     seen_real = set()
     while queue:
-        path = queue.pop()
+        ref_name, path = queue.pop()
         real = os.path.realpath(path)
-        if real in seen_real or not os.path.isfile(real):
+        if not os.path.isfile(real):
+            continue
+        if ref_name not in staged:
+            shutil.copyfile(real, os.path.join(STAGING_LIBS, ref_name))
+            staged[ref_name] = True
+        if real in seen_real:
             continue
         seen_real.add(real)
-        base = os.path.basename(real)
-        if base not in staged:
-            shutil.copyfile(real, os.path.join(STAGING_LIBS, base))
-            staged[base] = True
         deps = _otool_deps(real)
         print('deps(%s): %s' % (os.path.basename(real),
                                 ', '.join(deps) or '-'))
@@ -114,14 +118,7 @@ def stage_dylibs():
                     print('VAROITUS: riippuvuutta ei loydy:', dep,
                           file=sys.stderr)
                     continue
-            resolved[dep] = tgt
-            # viitattu NIMI pakettiin (dyld etsii sita tasan)
-            dep_base = os.path.basename(dep)
-            if dep_base not in staged:
-                shutil.copyfile(os.path.realpath(tgt),
-                                os.path.join(STAGING_LIBS, dep_base))
-                staged[dep_base] = True
-            queue.append(tgt)
+            queue.append((os.path.basename(dep), tgt))
     return sorted(os.listdir(STAGING_LIBS))
 
 
