@@ -46,3 +46,11 @@
   the already-delivered bundled test package still awaits the user's test.
 - See the integration PR for local test/evaluation results and environment
   limitations. No agent merge to main or replacement package release.
+
+## 2026-11-05: Mac bundled-package crash
+
+- Fix staged dylib signing order and reject stale signatures in final OXT.
+- Added cross-platform page-hash regressions; real Mac host harness added.
+- Pending: run codesign on macOS, produce the replacement only when build
+  costs are cleared, run the actual LibreOffice Mac host/GUI gates, and verify
+  correction application. Existing shipped OXT is a failed build, not ready.

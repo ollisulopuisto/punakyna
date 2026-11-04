@@ -25,3 +25,13 @@
   the already-delivered bundled test package still awaits the user's test.
 - See the integration PR for local test/evaluation results and environment
   limitations. No agent merge to main or replacement package release.
+
+## 2026-11-05: bundled Mac crash investigation
+
+- Shipped OXT failed on Mac: CODESIGNING Invalid Page during native dlopen.
+  All eleven shipped dylibs have a stale page-zero CodeDirectory hash after
+  install_name_tool. Sign final staged bytes and verify before packing.
+- Added final-OXT signature-page verification and an opt-in actual arm64
+  LibreOffice.app/UNO host harness. The harness must not count Linux/unit
+  passes as Mac validation. F7/underline/UI correction remain a GUI gate.
+- No replacement package built or uploaded during the artifact-cost hold.

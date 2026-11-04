@@ -26,6 +26,7 @@ jobs:
           mkdir -p dist
           python3 adapters/libreoffice/xproofreader/make_oxt.py \
             dist/punakyna-full-macos.oxt
+          python3 adapters/libreoffice/xproofreader/verify_macos_signatures.py dist/punakyna-full-macos.oxt
           ls -la dist/
 
       - name: 'Runtime smoke: pakattu moottori ilman Homebrewia'
@@ -66,6 +67,7 @@ jobs:
           cp adapters/libreoffice/xproofreader/ci_collect_macos.py \
              adapters/libreoffice/xproofreader/bundle_native.py \
              adapters/libreoffice/xproofreader/make_oxt.py \
+             adapters/libreoffice/xproofreader/verify_macos_signatures.py \
              .github/workflows/build-full-oxt.yml \
              dist/corresponding-sources/build-recipe/
           cp adapters/libreoffice/xproofreader/SOURCES-README.md \

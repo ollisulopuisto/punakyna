@@ -52,3 +52,27 @@ For development only: install libvoikko and its Finnish dictionary, run
 `python -m punakyna --enroll-app libreoffice`, build with `make_oxt.py`, and
 install the resulting OXT. The server preflight checks native engine setup at
 startup. This is not the normal bundled-package installation flow.
+
+## macOS crash/signature regression gate
+
+The first bundled test build failed in LibreOffice 26.8.2.2 on macOS 15.8.1:
+CODESIGNING / Invalid Page during ctypes dlopen. Relinking had invalidated
+the embedded signatures. All final dylibs must now be ad-hoc signed AFTER
+load-command edits, pass strict codesign verification, and pass the final
+OXT's cross-platform CodeDirectory page-hash check. Do not bypass OS signing
+checks or modify LibreOffice.app to work around a bad package.
+
+On a real arm64 Mac, run `test_macos_host.py --oxt <finished.oxt>
+--uno-python <Python-with-LibreOffice-uno>`. It uses a disposable profile,
+refuses an existing server on 8377, forces local mode, inserts the regression
+text, waits for background checking, calls the real proofreader through UNO,
+applies a suggestion programmatically and checks document text/process
+survival. The number in the test is a dummy. This harness is NOT a simulation
+and refuses other platforms. It needs a real LibreOffice/UNO Python setup.
+
+Before delivery, additionally verify in the actual Mac GUI: visible Finnish
+grammar underline, F7 suggestion, and applying the suggestion through the UI.
+The harness's programmatic replacement does not prove these UI interactions.
+Record OXT SHA-256, macOS/LibreOffice versions, exact commands and outcomes.
+Unrun tests are not passes. No Actions build or upload is authorized until
+the separate account-wide storage-cost gate is cleared.

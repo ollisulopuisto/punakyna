@@ -89,6 +89,26 @@ def _macos_verify(libdir):
         sys.exit('dylib-sulkeuma epataydellinen: %d viittausta' % len(bad))
 
 
+
+def _macos_sign_and_verify(libdir):
+    """Sign final bytes AFTER every install_name_tool edit.
+
+    Relinking invalidates Homebrew's existing ad-hoc page hashes. On arm64
+    macOS this can SIGKILL the host at dlopen, outside Python exceptions.
+    """
+    from verify_macos_signatures import verify_bytes
+    libs = [os.path.join(libdir, name) for name in sorted(os.listdir(libdir))
+            if name.endswith('.dylib')]
+    for lib in libs:
+        subprocess.run(['codesign', '--force', '--sign', '-',
+                        '--timestamp=none', lib], check=True)
+    for lib in libs:
+        subprocess.run(['codesign', '--verify', '--strict', '--verbose=2',
+                        lib], check=True)
+        with open(lib, 'rb') as source:
+            verify_bytes(source.read())
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--platform', choices=('linux', 'macos'), required=True)
@@ -140,6 +160,7 @@ def main():
     if args.platform == 'macos':
         _macos_fixups(libdir)
         _macos_verify(libdir)
+        _macos_sign_and_verify(libdir)
     print(BUNDLE)
 
 
