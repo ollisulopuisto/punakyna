@@ -6,7 +6,7 @@ ei koskaan normalisoi tai muuta kayttajan tekstia.
 from dataclasses import asdict
 from typing import List, Optional
 
-import libvoikko
+from .voikko_compat import Token
 
 import threading
 
@@ -181,7 +181,7 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
                 start=tidx,
                 end=tidx + len(tt),
                 ttype=t.tokenType,
-                is_word=t.tokenType == libvoikko.Token.WORD,
+                is_word=t.tokenType == Token.WORD,
                 lower=tt.lower()
             ))
             tpos = tidx + len(tt)
