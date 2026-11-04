@@ -81,11 +81,151 @@ def _resolve_libfile(lib_path):
             else 'libvoikko.so.1')
 
 
+
+
+def _bundled_native_dir():
+    """Paketin mukana tuleva natiivikirjastohakemisto (.oxt) tai None.
+
+    Asettelu: <paketti>/../native/<alusta>/lib/libvoikko.* ja
+    <paketti>/../native/dict/5/mor-standard. punakyna-paketti on
+    laajennuksen juuressa, joten native/ on sen sisarhakemisto.
+    """
+    pkg_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    plat = 'macos' if sys.platform == 'darwin' else 'linux'
+    d = os.path.join(pkg_parent, 'native', plat, 'lib')
+    return d if os.path.isdir(d) else None
+
+
+def load_voikko_library(libfile):
+    """Lataa libvoikko; pakatun .oxt:n riippuvuuskirjastot ensin.
+
+    Pakattu laajennus sisaltaa libhfstospell ym. samassa hakemistossa:
+    ne ladattava eksplisiittisesti ennen libvoikkoa, koska ajonaikaiseen
+    rpathiin ei voi luottaa (macOS: CI korjaa install namet
+    @loader_path-osoitteiksi erikseen; tama ennakkolataus riittaa
+    Linuxissa).
+    """
+    bundled = _bundled_native_dir()
+    if bundled and os.path.realpath(os.path.dirname(libfile)) ==                 os.path.realpath(bundled):
+        for name in sorted(os.listdir(bundled)):
+            p = os.path.join(bundled, name)
+            if not os.path.isfile(p) or os.path.realpath(p) ==                 os.path.realpath(libfile):
+                continue
+            if name.endswith('.dylib') or '.so' in name:
+                try:
+                    C.CDLL(p, mode=C.RTLD_GLOBAL)
+                except OSError:
+                    pass  # varsinainen CDLL(libfile) nayttaa todellisen virheen
+    return C.CDLL(libfile)
+
+
+def _candidate_lib_dirs():
+    """Hakemistot, joista libvoikko-taajamaa etsitaan (jarjestyksessa)."""
+    dirs = []
+    env = os.environ.get('PUNAKYNA_LIBVOIKKO_PATH')
+    if env:
+        dirs.append(env)
+    bundled = _bundled_native_dir()
+    if bundled:
+        dirs.append(bundled)
+    if sys.platform == 'darwin':
+        dirs.append('/opt/homebrew/lib')      # Apple Silicon Homebrew
+        dirs.append('/usr/local/lib')         # Intel Homebrew
+        dirs.append('/Applications/LibreOffice.app/Contents/Frameworks')
+    else:
+        dirs.append('/usr/lib/x86_64-linux-gnu')
+        dirs.append('/usr/lib')
+        dirs.append('/usr/lib64')
+        dirs.append('/usr/local/lib')
+    return dirs
+
+
+def _extension_lib_dirs():
+    """Asennetun Voikko-lisaosan (LibreOffice) mukana tuleva taajama, macOS."""
+    if sys.platform != 'darwin':
+        return []
+    import glob
+    home = os.path.expanduser('~')
+    roots = [
+        os.path.join(home, 'Library', 'Application Support', 'LibreOffice'),
+        '/Applications/LibreOffice.app',
+        os.path.join('/Library', 'Application Support', 'LibreOffice'),
+    ]
+    found = []
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for name in ('libvoikko.1.dylib', 'libvoikko.dylib'):
+            for p in glob.glob(os.path.join(root, '**', name),
+                               recursive=True):
+                found.append(os.path.dirname(p))
+    return found
+
+
+def discover_libfile():
+    """Paras arvaus ladattavasta libvoikko-tiedostosta.
+
+    Jarjestys: PUNAKYNA_LIBVOIKKO_PATH, Homebrew-oletukset, LibreOffice-
+    asennuksen ja Voikko-lisaosan sijainnit (macOS), alustan lataaja,
+    lopuksi alustakohtainen oletusnimi (virhepolku nayttaa konkreettisen
+    polun).
+    """
+    for d in _candidate_lib_dirs() + _extension_lib_dirs():
+        if not d:
+            continue
+        if os.path.isfile(d):
+            return d
+        for name in _CANDIDATES:
+            p = os.path.join(d, name)
+            if os.path.isfile(p):
+                return p
+    found = ctypes.util.find_library('voikko')
+    if found:
+        return found
+    return _resolve_libfile(None)
+
+
+def _dict_ok(path):
+    return any(os.path.isdir(os.path.join(path, v))
+               for v in ('5', '4', '3', '2'))
+
+
+def discover_dict_path(libfile=None):
+    """Sanastohakemisto (sisaltaa version alihakemistot) tai None.
+
+    None = libvoikko:n oma koottu oletus, joka toimii esim. Homebrew-
+    asennuksissa sellaisenaan.
+    """
+    env = os.environ.get('PUNAKYNA_VOIKKO_DICTIONARY_PATH')
+    if env:
+        return env
+    cands = []
+    if libfile:
+        libdir = os.path.dirname(os.path.realpath(libfile))
+        cands.append(os.path.join(libdir, 'voikko'))
+        # pakattu .oxt: native/dict on alustahakemiston ylapuolella
+        cands.append(os.path.join(libdir, '..', 'dict'))
+        cands.append(os.path.join(libdir, '..', '..', 'dict'))
+    if sys.platform == 'darwin':
+        cands += ['/opt/homebrew/lib/voikko', '/usr/local/lib/voikko',
+                  '/opt/homebrew/share/voikko', '/usr/local/share/voikko']
+    else:
+        cands += ['/usr/lib/voikko', '/usr/local/lib/voikko']
+    for c in cands:
+        if os.path.isdir(c) and _dict_ok(c):
+            return c
+    return None
+
+
 class VoikkoGC:
     def __init__(self, lang='fi', lib_path=None, dict_path=None):
         lib_path = lib_path or os.environ.get('PUNAKYNA_LIBVOIKKO_PATH')
-        dict_path = dict_path or os.environ.get('PUNAKYNA_VOIKKO_DICTIONARY_PATH')
-        self._lib = C.CDLL(_resolve_libfile(lib_path))
+        self._libfile = (_resolve_libfile(lib_path) if lib_path
+                         else discover_libfile())
+        dict_path = (dict_path
+                     or os.environ.get('PUNAKYNA_VOIKKO_DICTIONARY_PATH')
+                     or discover_dict_path(self._libfile))
+        self._lib = load_voikko_library(self._libfile)
         L = self._lib
         L.voikkoInit.argtypes = [C.POINTER(C.c_char_p), C.c_char_p, C.c_char_p]
         L.voikkoInit.restype = C.c_void_p

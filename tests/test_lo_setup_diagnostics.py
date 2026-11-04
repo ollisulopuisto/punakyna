@@ -118,6 +118,7 @@ def stub_server(monkeypatch):
 
 
 def test_missing_token_shows_enroll_hint(monkeypatch, tmp_path):
+    monkeypatch.setenv('PUNAKYNA_LO_MODE', 'server')
     mod = _load(monkeypatch)
     inst = _make_instance(mod, monkeypatch, tmp_path, token=False)
     res = _proofread(inst, 'Me olen likaisia.')
@@ -131,6 +132,7 @@ def test_missing_token_shows_enroll_hint(monkeypatch, tmp_path):
 
 
 def test_server_down_shows_serve_hint_and_caches(monkeypatch, tmp_path):
+    monkeypatch.setenv('PUNAKYNA_LO_MODE', 'server')
     mod = _load(monkeypatch)
     inst = _make_instance(mod, monkeypatch, tmp_path)
     monkeypatch.setenv('PUNAKYNA_PORT', '1')  # kiinni
@@ -152,6 +154,7 @@ def test_server_down_shows_serve_hint_and_caches(monkeypatch, tmp_path):
 
 def test_auth_rejected_shows_reenroll_hint(monkeypatch, tmp_path, stub_server):
     _StubHandler.status = 401
+    monkeypatch.setenv('PUNAKYNA_LO_MODE', 'server')
     mod = _load(monkeypatch)
     inst = _make_instance(mod, monkeypatch, tmp_path)
     res = _proofread(inst, 'Me olen likaisia.')
@@ -162,6 +165,7 @@ def test_auth_rejected_shows_reenroll_hint(monkeypatch, tmp_path, stub_server):
 
 def test_normal_errors_and_recovery(monkeypatch, tmp_path, stub_server):
     _StubHandler.status = 200
+    monkeypatch.setenv('PUNAKYNA_LO_MODE', 'server')
     _StubHandler.payload = {'suggestions': [
         {'rule': 'PRON_VERB_AGREEMENT', 'message': 'kongruenssi',
          'start': 3, 'end': 7, 'replacements': ['olemme']}]}
@@ -182,3 +186,26 @@ def test_empty_sentence_stays_quiet(monkeypatch, tmp_path):
     mod = _load(monkeypatch)
     inst = _make_instance(mod, monkeypatch, tmp_path, token=False)
     assert _proofread(inst, '   ').aErrors == ()
+
+
+def test_auto_mode_without_engine_shows_install_hint(monkeypatch, tmp_path):
+    """Auto-tila: ei paikallista moottoria eika tunnusta -> ohje, joka
+    namaa asennusvaihtoehdot. Paikallisen vian pakotus: viittaukset
+    olemattomiin polkuihin (molemmat taustat epaonnistuvat)."""
+    monkeypatch.setenv('PUNAKYNA_LIBVOIKKO_PATH', '/nonexistent/lib')
+    monkeypatch.setenv('PUNAKYNA_VOIKKO_DICTIONARY_PATH', '/nonexistent/dict')
+    # moottorivälimuistit tyhjäksi: aiempi testi ei saa "pelastaa" tilausta
+    import punakyna.backend_voikko as be
+    import punakyna.pipeline as pl
+    monkeypatch.setattr(be, '_VOIKKO', None)
+    monkeypatch.setattr(be, 'ACTIVE_BACKEND', None)
+    monkeypatch.setattr(pl, '_GC', None)
+    mod = _load(monkeypatch)
+    inst = _make_instance(mod, monkeypatch, tmp_path, token=False)
+    res = _proofread(inst, 'Me olen likaisia.')
+    assert len(res.aErrors) == 1
+    err = res.aErrors[0]
+    assert err.aRuleIdentifier == 'punakyna.setup'
+    assert 'Voikko-lisäosa' in err.aFullComment
+    assert 'brew install libvoikko voikko-fi' in err.aFullComment
+    assert 'x' * 64 not in err.aFullComment

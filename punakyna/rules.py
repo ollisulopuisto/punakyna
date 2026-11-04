@@ -7,7 +7,7 @@ on tarkeampaa kuin herkkyys. Saannot toimivat libvoikko-tokenisoinnin ja
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-import libvoikko
+from .voikko_compat import Token
 
 
 @dataclass
@@ -30,7 +30,7 @@ class _Tok:
 
     @property
     def is_word(self):
-        return self.ttype == libvoikko.Token.WORD
+        return self.ttype == Token.WORD
 
     @property
     def lower(self):

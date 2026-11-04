@@ -34,3 +34,15 @@
   Vaatii joko tarkemman jäsennyksen tai parsituen (Turku parser -taso).
 - DOUBLE_WORD: interjektiotoisto ("hip hip hurraa") - harkitse style-tasoa
   tai tunnettujen interjektioiden varausta.
+
+## 2026-11-04: bundled extension stack recovery
+
+- Integrated the surviving #9 merge commit from local-oxt onto current main,
+  preserving #5 description/setup hints, #6 project metadata and lockfile,
+  and #7 server preflight. #8 had closed without bringing the engine to main.
+- Packaging workflow is now manual-only: no automatic Actions builds or
+  uploads while account-wide artifact-storage cost clearance is pending.
+- macOS LibreOffice integration and correction application remain unverified;
+  the already-delivered bundled test package still awaits the user's test.
+- See the integration PR for local test/evaluation results and environment
+  limitations. No agent merge to main or replacement package release.

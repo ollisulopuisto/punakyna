@@ -1,60 +1,54 @@
-# Punakynä XProofreader (LibreOffice)
+# Punakynä for LibreOffice
 
-Natiivi LibreOffice-kieliopintarkistus (Tools -> Options -> Language
-Settings -> Writing Aids -> Punakynä). Komponentti on ohut asiakas
-paikalliselle Punakynä-API:lle - teksti ei lähde koneelta.
+## Bundled macOS test package
 
-## Käyttöönotto (käyttäjän toimenpiteet, ei automaattista asennusta)
+The Apple-silicon OXT bundles the Python engine, arm64 native libraries,
+Finnish dictionary and component license texts. Normal use needs no checkout,
+Homebrew, pip, enrollment or manually started server. Intel Macs are not
+covered by this build.
 
-1. Käynnistä palvelin: `python -m punakyna --serve`
-2. Rekisteröi sovellustunnus: `python -m punakyna --enroll-app libreoffice`
-3. Rakenna: `python3 make_oxt.py` -> punakyna-proofreader.oxt
-4. Asenna LibreOfficeen: Työkalut -> Lisäosien hallinta -> Lisää
-   (tai `unopkg add punakyna-proofreader.oxt`)
-5. Ota käyttöön: Työkalut -> Asetukset -> Kieliasetukset ->
-   Kirjoituksen apuvälineet -> Punakynä
+1. Stop the old manually started Punakynä server with Ctrl+C, or restart the
+   Mac. This one-time cleanup prevents server fallback from hiding a bundled
+   engine failure during testing.
+2. Remove the old Punakynä extension in Tools > Extension Manager, then quit
+   LibreOffice completely.
+3. Add `punakyna-full-macos.oxt` in Extension Manager and restart LibreOffice.
+4. Set the document language to Finnish. Test `Me olen likaisia.` with F7.
+   The expected suggestion is `olen` to `olemme`. Check the right-click menu
+   too, and verify that applying the suggestion changes the document.
 
-Peruutus: `python -m punakyna --revoke-app libreoffice` (voimassa heti,
-ei palvelimen uudelleenkäynnistystä) ja/tai lisäosan poisto.
+Validation limits: the bundled engine loaded and checked text standalone in
+macOS CI with no Homebrew library fallback. That is not a test inside
+LibreOffice.app. Native loading, bundled Python compatibility, and applying a
+correction in macOS LibreOffice still require the user's test. The earlier
+manual-server path did show an F7 explanation and suggestion, a blue grammar
+underline, and the context-menu suggestion on the user's Mac. Correction
+application was not confirmed.
 
-Vaatimukset: LibreOffice Python-UNO:lla (Linux-jakeluissa vakio,
-python3-uno). Ei verkkoyhteyttä muualle kuin 127.0.0.1.
+The extension prefers the local engine and can fall back to a configured
+loopback server. `PUNAKYNA_LO_MODE=local` forces local mode;
+`PUNAKYNA_LO_MODE=server` forces the legacy server path. Text stays local.
+Background grammar underlines may still require an enabled Finnish spelling
+provider in LibreOffice. Installing Voikko can replace the configured Finnish
+proofreader list: re-enable Punakynä in Writing Aids if needed.
 
-Jos palvelin ei ole käynnissä tai sovellustunnus puuttuu, kappaleen
-alkuun ilmestyy sininen ohjevirhe, joka kertoo puuttuvan vaiheen
-(--serve / --enroll-app) - asennusvika ei jää hiljaiseksi
-"ei virheitä" -tilaksi. Ohje ei sisällä tunnusta eikä tekstiä.
+## Build and source distribution
 
-## Suomen oikeinkirjoituksen sanasto ja Voikko-rinnakkaisuus
+`make_oxt.py` packs the engine and, when present, the `bundle/` staging tree.
+`ci_collect_macos.py` and `bundle_native.py` collect the pinned sources,
+licenses, native library closure and dictionary, then relink and check the
+closure. See `SOURCES-README.md`. Distribute the corresponding-source archive
+alongside the OXT. Do not treat short-lived Actions artifacts as permanent
+source distribution.
 
-LO:n taustaoikoluku (aaltoviivat kirjoitettaessa) vaatii profiiliin
-jonkin suomen oikeinkirjoitustarkistimen. Suositus: Voikko
-(esim. `libreoffice-voikko`-paketti tai LibreOfficen laajennos).
-HUOM: Voikko-laajennoksen asennus kirjoittaa oletusasetuksen
-(GrammarCheckerList/fi-FI) korvaavasti, mika voi poistaa Punakynan
-kaytosta - ota Punakyna silloin uudelleen kayttoon Writing Aids
--asetuksista (kohta 5). Punakyna ei koskaan muuta muiden
-tarkistimien asetuksia.
+The packaging workflow is manual-only. Do not run builds or upload artifacts
+until account-wide storage cost clearance is established. Standard public
+runner compute being free does not establish free artifact storage.
 
-Todennettu hiekkalaatikossa (GUI-testi tests/test_lo_writer_background.py):
-kirjoitusvirheiden punaiset aaltoviivat (Voikko) JA Punakynan
-kielioppivirheen sininen alleviivaus + oikolukudialogin selite ja
-korjausehdotus (esim. "Me olen likaisia." -> "olemme").
+## Legacy developer server path
 
-## macOS (varmistamatta - ei testattu Macilla)
-
-Seuraavat polut ovat parhaita arvauksia LibreOffice.app-paketin
-rakenteesta; varmista ensimmäisellä Mac-asennuksella ja korjaa tämä
-ohje havaintojen mukaan:
-
-- LibreOfficen oma Python-UNO-tulkki:
-  `/Applications/LibreOffice.app/Contents/Resources/python`
-  (tai `.../Contents/Frameworks/LibreOfficePython.framework/...`
-  versiosta riippuen)
-- unopkg: `/Applications/LibreOffice.app/Contents/MacOS/unopkg`
-- Asennus muutoin samat vaiheet kuin yllä: palvelin päälle, tunnus
-  (`--enroll-app libreoffice`), .oxt rakennetaan make_oxt.py:llä ja
-  lisätään LibreOfficen lisäosien hallinnasta.
-- Huom: macOS:n oma oikoluku (NSSpellServer-sovitin,
-  `adapters/macos/`) on erillinen, vielä kääntämätön luonnos - se ei
-  ole edellytys LibreOffice-lisäosalle.
+For development only: install libvoikko and its Finnish dictionary, run
+`python -m punakyna --serve`, enroll with
+`python -m punakyna --enroll-app libreoffice`, build with `make_oxt.py`, and
+install the resulting OXT. The server preflight checks native engine setup at
+startup. This is not the normal bundled-package installation flow.
