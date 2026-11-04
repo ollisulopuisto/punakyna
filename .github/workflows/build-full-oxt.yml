@@ -1,0 +1,48 @@
+name: build-full-oxt
+
+# Rakentaa itsenäisen punakyna-full-macos.oxt:n: LibreOffice-laajennus,
+# jossa mukana libvoikko + riippuvuudet + voikko-fi-sanasto +
+# lisenssit + vastaava lähdekoodi erillisenä artefaktina.
+# Ajo on maksutonta julkisessa varastossa (GitHub Actions, macos-latest).
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'adapters/libreoffice/xproofreader/**'
+      - 'punakyna/**'
+      - '.github/workflows/build-full-oxt.yml'
+
+jobs:
+  macos-bundle:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Asenna voikko-pino (libvoikko + hfstospell + voikko-fi)
+        run: brew install libvoikko
+
+      - name: Kokoa natiivit, lisenssit ja lähteet
+        run: python3 adapters/libreoffice/xproofreader/ci_collect_macos.py
+
+      - name: Rakenna täysi OXT
+        run: |
+          mkdir -p dist
+          python3 adapters/libreoffice/xproofreader/make_oxt.py \
+            dist/punakyna-full-macos.oxt
+          ls -la dist/
+
+      - name: Smoke: paketin sisältö
+        run: |
+          unzip -l dist/punakyna-full-macos.oxt | grep -E 'dylib|mor-standard|SOURCES|GPL|Apache'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: punakyna-full-macos-oxt
+          path: dist/punakyna-full-macos.oxt
+
+      - name: Vastaava lähdekoodi (corresponding sources)
+        uses: actions/upload-artifact@v4
+        with:
+          name: punakyna-full-macos-corresponding-sources
+          path: dist/corresponding-sources/
