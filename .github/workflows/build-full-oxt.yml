@@ -32,6 +32,28 @@ jobs:
             dist/punakyna-full-macos.oxt
           ls -la dist/
 
+      - name: 'Runtime smoke: pakattu moottori ilman Homebrewia'
+        run: |
+          set -e
+          PREFIX=$(brew --prefix)
+          mv "$PREFIX/lib/voikko" "$PREFIX/lib/voikko.hidden"
+          for f in "$PREFIX"/lib/libvoikko*.dylib "$PREFIX"/lib/libhfstospell*.dylib; do
+            [ -e "$f" ] && mv "$f" "$f.hidden"
+          done
+          rm -rf /tmp/smoke && mkdir -p /tmp/smoke
+          unzip -q dist/punakyna-full-macos.oxt -d /tmp/smoke
+          DYLD_PRINT_LIBRARIES=1 python3 \
+            adapters/libreoffice/xproofreader/ci_smoke_check.py /tmp/smoke \
+            2> /tmp/dyld.log
+          echo '--- ladatut voikko/hfst-kirjastot ---'
+          grep -E 'libvoikko|libhfstospell' /tmp/dyld.log | sort -u | head
+          echo '--- tarkistus: mitaan ei saa latautua Homebrew:sta ---'
+          if grep -E '/opt/homebrew.*(voikko|hfst|archive|icu|lz4|lzma|zstd|libb2)' \
+               /tmp/dyld.log; then
+            echo 'VIRHE: Homebrew-kirjasto latautui' && exit 1
+          fi
+          echo 'OK: koko riippuvuusketju tuli paketista'
+
       - name: 'Smoke: paketin sisältö'
         run: |
           unzip -l dist/punakyna-full-macos.oxt | grep -E 'dylib|mor-standard|SOURCES|GPL|Apache'
@@ -41,8 +63,22 @@ jobs:
           name: punakyna-full-macos-oxt
           path: dist/punakyna-full-macos.oxt
 
+      - name: Paketoi lähteet + rakennusohje
+        run: |
+          mkdir -p dist/corresponding-sources/build-recipe
+          cp adapters/libreoffice/xproofreader/ci_collect_macos.py \
+             adapters/libreoffice/xproofreader/bundle_native.py \
+             adapters/libreoffice/xproofreader/make_oxt.py \
+             .github/workflows/build-full-oxt.yml \
+             dist/corresponding-sources/build-recipe/
+          cp adapters/libreoffice/xproofreader/SOURCES-README.md \
+             dist/corresponding-sources/README.md
+          tar -czf dist/punakyna-corresponding-sources.tar.gz \
+            -C dist corresponding-sources
+          ls -la dist/
+
       - name: Vastaava lähdekoodi (corresponding sources)
         uses: actions/upload-artifact@v4
         with:
           name: punakyna-full-macos-corresponding-sources
-          path: dist/corresponding-sources/
+          path: dist/punakyna-corresponding-sources.tar.gz
