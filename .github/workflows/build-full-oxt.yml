@@ -62,6 +62,7 @@ jobs:
         with:
           name: punakyna-full-macos-oxt
           path: dist/punakyna-full-macos.oxt
+          retention-days: 7
 
       - name: Paketoi lähteet + rakennusohje
         run: |
@@ -73,6 +74,8 @@ jobs:
              dist/corresponding-sources/build-recipe/
           cp adapters/libreoffice/xproofreader/SOURCES-README.md \
              dist/corresponding-sources/README.md
+          cp -r adapters/libreoffice/xproofreader/.ci-staging/licenses \
+             dist/corresponding-sources/licenses
           tar -czf dist/punakyna-corresponding-sources.tar.gz \
             -C dist corresponding-sources
           ls -la dist/
@@ -82,3 +85,4 @@ jobs:
         with:
           name: punakyna-full-macos-corresponding-sources
           path: dist/punakyna-corresponding-sources.tar.gz
+          retention-days: 7
