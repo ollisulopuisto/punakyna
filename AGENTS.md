@@ -6,6 +6,7 @@
   Evaluate.py output goes into the PR description; note it is a smoke test,
   not a held-out benchmark.
 - Document your work here and in TODO.md (what was done, what is next).
+- Bolt (2026): Suorituskykyoptimointi tehty `punakyna/pipeline.py`:ssa token-luonnille (_PipelineToken slots-luokka korvasi dynaamisen type()-kutsun).
 - Precision first: a new rule must not add false alarms on eval/smoke_clean.jsonl.
   If a rule cannot be made clean-set-safe, leave it out or mark it severity=info.
 - Finnish user-facing strings are checked against Kielitoimiston sanakirja
