@@ -66,6 +66,29 @@ def _macos_fixups(libdir):
                       dep, 'kirjastossa', lib, file=sys.stderr)
 
 
+def _macos_verify(libdir):
+    """Varmista: jokaisen dylibin jokainen riippuvuus on @loader_path
+    (pakattu) tai jarjestelmakirjasto. Muuten kaataa ajon. """
+    bad = []
+    for f in sorted(os.listdir(libdir)):
+        if not f.endswith('.dylib'):
+            continue
+        lib = os.path.join(libdir, f)
+        out = subprocess.run(['otool', '-L', lib], check=True,
+                             capture_output=True, text=True).stdout
+        for line in out.splitlines()[2:]:  # otsake + id ohitetaan
+            dep = line.strip().split(' ', 1)[0]
+            if not dep:
+                continue
+            if dep.startswith(('/usr/lib/', '/System/', '@loader_path/')):
+                continue
+            bad.append('%s -> %s' % (f, dep))
+    if bad:
+        for b in bad:
+            print('KATKONAINEN VIITTAUS:', b, file=sys.stderr)
+        sys.exit('dylib-sulkeuma epataydellinen: %d viittausta' % len(bad))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--platform', choices=('linux', 'macos'), required=True)
@@ -116,6 +139,7 @@ def main():
 
     if args.platform == 'macos':
         _macos_fixups(libdir)
+        _macos_verify(libdir)
     print(BUNDLE)
 
 

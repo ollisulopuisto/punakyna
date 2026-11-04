@@ -93,7 +93,10 @@ def stage_dylibs():
         if base not in staged:
             shutil.copyfile(real, os.path.join(STAGING_LIBS, base))
             staged[base] = True
-        for dep in _otool_deps(real):
+        deps = _otool_deps(real)
+        print('deps(%s): %s' % (os.path.basename(real),
+                                ', '.join(deps) or '-'))
+        for dep in deps:
             if not dep or dep.startswith(('/usr/lib/', '/System/')):
                 continue
             if dep.startswith('@rpath/'):

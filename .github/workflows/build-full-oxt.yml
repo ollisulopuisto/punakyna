@@ -44,7 +44,7 @@ jobs:
           unzip -q dist/punakyna-full-macos.oxt -d /tmp/smoke
           DYLD_PRINT_LIBRARIES=1 python3 \
             adapters/libreoffice/xproofreader/ci_smoke_check.py /tmp/smoke \
-            2> /tmp/dyld.log
+            2> >(tee /tmp/dyld.log >&2)
           echo '--- ladatut voikko/hfst-kirjastot ---'
           grep -E 'libvoikko|libhfstospell' /tmp/dyld.log | sort -u | head
           echo '--- tarkistus: mitaan ei saa latautua Homebrew:sta ---'
