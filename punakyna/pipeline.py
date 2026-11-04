@@ -60,6 +60,24 @@ _ABBREV = {
 }
 
 
+class _PipelineToken:
+    """Kevyt oliomalli tokenille tokenisoinnissa.
+
+    Korvaa dynaamisen type('T', (), ...) -kutsun, joka loi uuden luokan
+    jokaiselle tokenille joka kutsulla ja aiheutti merkittävän CPU-kuorman.
+    """
+    __slots__ = ('text', 'start', 'end', 'ttype', 'is_word', 'lower')
+
+    def __init__(self, text: str, start: int, end: int, ttype: object,
+                 is_word: bool, lower: str):
+        self.text = text
+        self.start = start
+        self.end = end
+        self.ttype = ttype
+        self.is_word = is_word
+        self.lower = lower
+
+
 
 def _lev(a, b, limit=3):
     """Levenshtein-etaisyys varhaiskatkaisulla."""
@@ -155,12 +173,18 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
             tidx = sent_text.find(t.tokenText, tpos)
             if tidx < 0:
                 tidx = tpos
-            toks.append(type('T', (), {
-                'text': t.tokenText, 'start': tidx,
-                'end': tidx + len(t.tokenText), 'ttype': t.tokenType,
-                'is_word': t.tokenType == libvoikko.Token.WORD,
-                'lower': t.tokenText.lower()})())
-            tpos = tidx + len(t.tokenText)
+            tt = t.tokenText
+            # Suorituskykyoptimointi: käytä esialustettua _PipelineToken-luokkaa
+            # dynamic type()-metaluokan luonnin sijasta.
+            toks.append(_PipelineToken(
+                text=tt,
+                start=tidx,
+                end=tidx + len(tt),
+                ttype=t.tokenType,
+                is_word=t.tokenType == libvoikko.Token.WORD,
+                lower=tt.lower()
+            ))
+            tpos = tidx + len(tt)
         if use_spelling:
             out += _spelling_suggestions(sent_text, s_off, toks, voikko)
         if use_rules:
