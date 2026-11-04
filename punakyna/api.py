@@ -208,6 +208,11 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
                 except RuntimeError as e:
                     # esim. parser-taso pyydetty mutta stanza puuttuu
                     return self._send(400, {'error': str(e)})
+                except Exception as e:
+                    # moottorivika (esim. libvoikko-taajama puuttuu):
+                    # siisti JSON-virhe, ei tracebackia lokiin per pyyntö
+                    return self._send(500, {'error': 'tarkistus epäonnistui: '
+                                            f'{type(e).__name__}'})
             self._send(200, {'suggestions': suggestions_as_dicts(suggs)})
 
     class BoundedServer(ThreadingHTTPServer):
@@ -246,8 +251,29 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
     return BoundedServer((host, port), Handler)
 
 
+def preflight_engine():
+    """Lataa moottori käynnistyksessä: asennusvika näkyy heti, ei vasta
+    ensimmäisestä pyynnöstä tracebackina. Onnistuessaan täyttää
+    get_voikko:n välimuistin, joten ensimmäinen pyyntö on nopea."""
+    try:
+        from .backend_voikko import get_voikko
+        get_voikko()
+    except Exception as e:
+        raise SystemExit(
+            'Punakynä-palvelin ei käynnisty: libvoikko-taajamaa tai suomen '
+            'sanastoa ei löydy.\n'
+            f'Virhe: {type(e).__name__}: {e}\n'
+            'Asenna (macOS): brew install libvoikko voikko-fi\n'
+            'Asenna (Debian/Ubuntu): sudo apt install libvoikko1 voikko-fi\n'
+            'Jos asennettuna epävakiopolkuun:\n'
+            '  PUNAKYNA_LIBVOIKKO_PATH=/kirjaston/hakemisto\n'
+            '  PUNAKYNA_VOIKKO_DICTIONARY_PATH=/polku/jossa/5/mor-standard'
+        ) from e
+
+
 def serve(port=8377, host='127.0.0.1', token_path=TOKEN_PATH):
     load_or_create_token(token_path)  # varmista perus-tunnuksen olemassaolo
+    preflight_engine()
     srv = make_server(port=port, host=host,
                       tokens_provider=lambda: load_all_tokens(
                           fallback_path=token_path))
