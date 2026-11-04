@@ -87,3 +87,35 @@ def test_native_matches_binding():
         a = [asdict(x) for x in _check_text_unlocked(sent, voikko=v_bind)]
         b = [asdict(x) for x in _check_text_unlocked(sent, voikko=v_native)]
         assert a == b, sent
+
+
+def test_bundled_native_dir(monkeypatch, tmp_path):
+    """Pakattu .oxt: native/<alusta>/lib loytyy paketin sisarkansiosta."""
+    from punakyna import voikko_gc
+    import sys
+    plat = 'macos' if sys.platform == 'darwin' else 'linux'
+    pkg = tmp_path / 'ext' / 'punakyna'
+    libdir = tmp_path / 'ext' / 'native' / plat / 'lib'
+    pkg.mkdir(parents=True)
+    libdir.mkdir(parents=True)
+    monkeypatch.setattr(voikko_gc, '__file__', str(pkg / 'voikko_gc.py'))
+    assert voikko_gc._bundled_native_dir() == str(libdir)
+
+
+def test_bundled_dict_path_relative_to_lib(tmp_path):
+    """Pakatussa asettelussa sanasto on native/dict (alustatason ylapuolella)."""
+    from punakyna import voikko_gc
+    import sys
+    plat = 'macos' if sys.platform == 'darwin' else 'linux'
+    libdir = tmp_path / 'ext' / 'native' / plat / 'lib'
+    libdir.mkdir(parents=True)
+    libfile = libdir / ('libvoikko.1.dylib' if plat == 'macos'
+                        else 'libvoikko.so.1')
+    libfile.write_text('')
+    dictdir = tmp_path / 'ext' / 'native' / 'dict'
+    (dictdir / '5' / 'mor-standard').mkdir(parents=True)
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.delenv('PUNAKYNA_VOIKKO_DICTIONARY_PATH', raising=False)
+    found = voikko_gc.discover_dict_path(str(libfile))
+    monkeypatch.undo()
+    assert os.path.realpath(found) == os.path.realpath(str(dictdir))

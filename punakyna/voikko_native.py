@@ -18,7 +18,7 @@ from typing import Dict, Iterator, List, Optional
 
 from .voikko_gc import (VOIKKO_OPT_ACCEPT_UNFINISHED_PARAGRAPHS_IN_GC,
                         _resolve_libfile, discover_dict_path,
-                        discover_libfile)
+                        discover_libfile, load_voikko_library)
 
 TOKEN_NONE = 0
 TOKEN_WORD = 1
@@ -68,7 +68,7 @@ class NativeVoikko:
         dict_path = (dict_path
                      or os.environ.get('PUNAKYNA_VOIKKO_DICTIONARY_PATH')
                      or discover_dict_path(libfile))
-        L = C.CDLL(libfile)
+        L = load_voikko_library(libfile)
         self._libfile = libfile
         L.voikkoInit.argtypes = [C.POINTER(C.c_char_p), C.c_char_p, C.c_char_p]
         L.voikkoInit.restype = C.c_void_p
