@@ -121,10 +121,56 @@ def fetch_sources_and_licenses(pkgs_extra):
                 for f in files:
                     if re.match(r'(?i)^(copying|license|licence|notice)'
                                 r'(\.\w+)?$', f):
+                        src_f = os.path.join(root, f)
+                        if os.path.getsize(src_f) == 0:
+                            continue  # esim. zstd:n tyhja LICENSE-tayte
                         dstname = '%s.%s' % (name, f)
-                        shutil.copyfile(os.path.join(root, f),
-                                        os.path.join(STAGING_LIC, dstname))
+                        if not os.path.exists(os.path.join(STAGING_LIC,
+                                                           dstname)):
+                            shutil.copyfile(src_f, os.path.join(STAGING_LIC,
+                                                                dstname))
     return rows
+
+
+def fetch_voikko_fi_resource():
+    """voikko-fi-sanaston lahdepaketti libvoikko-kaavan resourcesta.
+
+    brew-formula asentaa sanaston resourcesta, joten se ei nay pakettien
+    riippuvuuksissa eika formula-API:n resources-kentassa - luetaan
+    kaavan .rb-tiedostosta suoraan (url + sha256).
+    """
+    rb = urllib.request.urlopen(
+        'https://raw.githubusercontent.com/Homebrew/homebrew-core/HEAD/'
+        'Formula/lib/libvoikko.rb').read().decode('utf-8')
+    m = re.search(r'resource "voikko-fi" do.*?url "([^"]+)".*?'
+                  r'sha256 "([0-9a-f]{64})"', rb, re.S)
+    if not m:
+        sys.exit('voikko-fi-resurssia ei loydy libvoikko-kaavasta')
+    url, sha = m.group(1), m.group(2)
+    dst = os.path.join(DIST_SRC, os.path.basename(url))
+    if not os.path.exists(dst):
+        print('ladataan', url)
+        urllib.request.urlretrieve(url, dst)
+    import hashlib
+    got = hashlib.sha256(open(dst, 'rb').read()).hexdigest()
+    if got != sha:
+        sys.exit('sha256-virhe voikko-fi: %s != %s' % (got, sha))
+    version = re.search(r'voikko-fi[._-]v?(\d+(?:\.\d+)+)',
+                        os.path.basename(url)).group(1)
+    # lisenssitiedosto paketista bundleen
+    with tempfile.TemporaryDirectory() as td:
+        with tarfile.open(dst) as tf:
+            tf.extractall(td, filter='data')
+        for root, _d, files in os.walk(td):
+            for f in files:
+                if re.match(r'(?i)^(copying|license|licence)(\.\w+)?$', f):
+                    src_f = os.path.join(root, f)
+                    if os.path.getsize(src_f) > 0:
+                        shutil.copyfile(src_f, os.path.join(
+                            STAGING_LIC, 'voikko-fi.%s' % f))
+                        return ('voikko-fi', version, 'GPL-2.0-or-later',
+                                url, sha)
+    return ('voikko-fi', version, 'GPL-2.0-or-later', url, sha)
 
 
 def main():
@@ -157,6 +203,7 @@ def main():
         if 'liblzma' in lib or 'libxz' in lib:
             extra.append('xz')
     rows = fetch_sources_and_licenses(sorted(set(extra)))
+    rows.append(fetch_voikko_fi_resource())
 
     lines = [
         'Punakynä LibreOffice -laajennus: mukana tulevat binäärit ja '
