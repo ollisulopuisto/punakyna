@@ -99,11 +99,12 @@ def stage_dylibs():
         for dep in deps:
             if not dep or dep.startswith(('/usr/lib/', '/System/')):
                 continue
-            if dep.startswith('@rpath/'):
+            if dep.startswith(('@rpath/', '@loader_path/',
+                               '@executable_path/')):
                 tgt = _resolve_rpath(dep, real)
                 if not tgt:
-                    print('VAROITUS: @rpath-vittaus ratkaisematta:', dep,
-                          'viittaajalta', real, file=sys.stderr)
+                    print('VAROITUS: dynaaminen viittaus ratkaisematta:',
+                          dep, 'viittaajalta', real, file=sys.stderr)
                     continue
             elif dep.startswith('@'):
                 continue
