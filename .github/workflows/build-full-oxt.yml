@@ -1,0 +1,84 @@
+name: build-full-oxt
+
+# Rakentaa itsenäisen punakyna-full-macos.oxt:n: LibreOffice-laajennus,
+# jossa mukana libvoikko + riippuvuudet + voikko-fi-sanasto +
+# lisenssit + vastaava lähdekoodi erillisenä artefaktina.
+# Standard public runners have free compute, but artifact storage is quota-based.
+# Manual only: do not run until account-wide zero-cost storage is verified.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macos-bundle:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Asenna voikko-pino (libvoikko + hfstospell + voikko-fi)
+        run: brew install libvoikko
+
+      - name: Kokoa natiivit, lisenssit ja lähteet
+        run: python3 adapters/libreoffice/xproofreader/ci_collect_macos.py
+
+      - name: Rakenna täysi OXT
+        run: |
+          mkdir -p dist
+          python3 adapters/libreoffice/xproofreader/make_oxt.py \
+            dist/punakyna-full-macos.oxt
+          ls -la dist/
+
+      - name: 'Runtime smoke: pakattu moottori ilman Homebrewia'
+        run: |
+          set -e
+          PREFIX=$(brew --prefix)
+          mv "$PREFIX/lib/voikko" "$PREFIX/lib/voikko.hidden"
+          for f in "$PREFIX"/lib/libvoikko*.dylib "$PREFIX"/lib/libhfstospell*.dylib; do
+            [ -e "$f" ] && mv "$f" "$f.hidden"
+          done
+          rm -rf /tmp/smoke && mkdir -p /tmp/smoke
+          unzip -q dist/punakyna-full-macos.oxt -d /tmp/smoke
+          DYLD_PRINT_LIBRARIES=1 python3 \
+            adapters/libreoffice/xproofreader/ci_smoke_check.py /tmp/smoke \
+            2> >(tee /tmp/dyld.log >&2)
+          echo '--- ladatut voikko/hfst-kirjastot ---'
+          grep -E 'libvoikko|libhfstospell' /tmp/dyld.log | sort -u | head
+          echo '--- tarkistus: mitaan ei saa latautua Homebrew:sta ---'
+          if grep -E '/opt/homebrew.*(voikko|hfst|archive|icu|lz4|lzma|zstd|libb2)' \
+               /tmp/dyld.log; then
+            echo 'VIRHE: Homebrew-kirjasto latautui' && exit 1
+          fi
+          echo 'OK: koko riippuvuusketju tuli paketista'
+
+      - name: 'Smoke: paketin sisältö'
+        run: |
+          unzip -l dist/punakyna-full-macos.oxt | grep -E 'dylib|mor-standard|SOURCES|GPL|Apache'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: punakyna-full-macos-oxt
+          path: dist/punakyna-full-macos.oxt
+          retention-days: 7
+
+      - name: Paketoi lähteet + rakennusohje
+        run: |
+          mkdir -p dist/corresponding-sources/build-recipe
+          cp adapters/libreoffice/xproofreader/ci_collect_macos.py \
+             adapters/libreoffice/xproofreader/bundle_native.py \
+             adapters/libreoffice/xproofreader/make_oxt.py \
+             .github/workflows/build-full-oxt.yml \
+             dist/corresponding-sources/build-recipe/
+          cp adapters/libreoffice/xproofreader/SOURCES-README.md \
+             dist/corresponding-sources/README.md
+          cp -r adapters/libreoffice/xproofreader/.ci-staging/licenses \
+             dist/corresponding-sources/licenses
+          tar -czf dist/punakyna-corresponding-sources.tar.gz \
+            -C dist corresponding-sources
+          ls -la dist/
+
+      - name: Vastaava lähdekoodi (corresponding sources)
+        uses: actions/upload-artifact@v4
+        with:
+          name: punakyna-full-macos-corresponding-sources
+          path: dist/punakyna-corresponding-sources.tar.gz
+          retention-days: 7
