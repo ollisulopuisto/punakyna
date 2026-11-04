@@ -4,14 +4,23 @@ name: build-full-oxt
 # jossa mukana libvoikko + riippuvuudet + voikko-fi-sanasto +
 # lisenssit + vastaava lähdekoodi erillisenä artefaktina.
 # Standard public runners have free compute, but artifact storage is quota-based.
-# Manual only: do not run until account-wide zero-cost storage is verified.
+# Manual only. Standard public macOS runner; no Actions artifacts or cache.
+# Successful host-checked files go to a draft GitHub release, never auto-publish.
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
 jobs:
   macos-bundle:
-    runs-on: macos-latest
+    runs-on: macos-15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +35,7 @@ jobs:
           mkdir -p dist
           python3 adapters/libreoffice/xproofreader/make_oxt.py \
             dist/punakyna-full-macos.oxt
+          python3 adapters/libreoffice/xproofreader/verify_macos_signatures.py dist/punakyna-full-macos.oxt
           ls -la dist/
 
       - name: 'Runtime smoke: pakattu moottori ilman Homebrewia'
@@ -54,18 +64,13 @@ jobs:
         run: |
           unzip -l dist/punakyna-full-macos.oxt | grep -E 'dylib|mor-standard|SOURCES|GPL|Apache'
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: punakyna-full-macos-oxt
-          path: dist/punakyna-full-macos.oxt
-          retention-days: 7
-
       - name: Paketoi lähteet + rakennusohje
         run: |
           mkdir -p dist/corresponding-sources/build-recipe
           cp adapters/libreoffice/xproofreader/ci_collect_macos.py \
              adapters/libreoffice/xproofreader/bundle_native.py \
              adapters/libreoffice/xproofreader/make_oxt.py \
+             adapters/libreoffice/xproofreader/verify_macos_signatures.py \
              .github/workflows/build-full-oxt.yml \
              dist/corresponding-sources/build-recipe/
           cp adapters/libreoffice/xproofreader/SOURCES-README.md \
@@ -76,9 +81,39 @@ jobs:
             -C dist corresponding-sources
           ls -la dist/
 
-      - name: Vastaava lähdekoodi (corresponding sources)
-        uses: actions/upload-artifact@v4
-        with:
-          name: punakyna-full-macos-corresponding-sources
-          path: dist/punakyna-corresponding-sources.tar.gz
-          retention-days: 7
+      - name: Install actual arm64 LibreOffice host
+        run: |
+          test "$(uname -m)" = arm64
+          curl --fail --location --retry 2 \
+            https://download.documentfoundation.org/libreoffice/stable/26.8.2/mac/aarch64/LibreOffice_26.8.2_MacOS_aarch64.dmg \
+            --output "$RUNNER_TEMP/libreoffice.dmg"
+          echo "9f24fe83ab1ed5c95eb3df580119f32932f713e577feeac02bf619fb00749b55  $RUNNER_TEMP/libreoffice.dmg" | shasum -a 256 --check
+          hdiutil attach "$RUNNER_TEMP/libreoffice.dmg" -mountpoint "$RUNNER_TEMP/lo-mount" -nobrowse -readonly
+          ditto "$RUNNER_TEMP/lo-mount/LibreOffice.app" /Applications/LibreOffice.app
+          hdiutil detach "$RUNNER_TEMP/lo-mount"
+          /Applications/LibreOffice.app/Contents/MacOS/soffice --version
+          test -x /Applications/LibreOffice.app/Contents/Resources/python
+          /Applications/LibreOffice.app/Contents/Resources/python -c 'import uno; print("UNO Python ready")'
+
+      - name: Real LibreOffice.app callback and correction smoke
+        run: |
+          python3 adapters/libreoffice/xproofreader/test_macos_host.py \
+            --oxt dist/punakyna-full-macos.oxt \
+            --uno-python /Applications/LibreOffice.app/Contents/Resources/python
+
+      - name: Stage checked files in draft release (no Actions storage)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          TAG="punakyna-macos-candidate-${GITHUB_RUN_ID}"
+          shasum -a 256 dist/punakyna-full-macos.oxt dist/punakyna-corresponding-sources.tar.gz > dist/SHA256SUMS.txt
+          printf '%s\n' \
+            'Signed arm64 test candidate. Signature verification, standalone engine and actual LibreOffice.app UNO host smoke passed.' \
+            'GUI F7, visible underline and user-click correction remain unverified. Draft only; not a public release.' \
+            > dist/release-notes.txt
+          gh release create "$TAG" --draft --prerelease --target "$GITHUB_SHA" \
+            --title "Punakynä macOS test candidate $GITHUB_RUN_ID" \
+            --notes-file dist/release-notes.txt \
+            dist/punakyna-full-macos.oxt \
+            dist/punakyna-corresponding-sources.tar.gz dist/SHA256SUMS.txt
