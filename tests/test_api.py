@@ -76,3 +76,14 @@ def test_oversized_413(server):
 def test_refuses_non_loopback():
     with pytest.raises(ValueError):
         make_server(port=0, host='0.0.0.0')
+
+
+def test_optional_style_profile(server):
+    text = 'Hakemus lähetetään huomenna.'
+    status, body = _post(server, '/check', {'text': text})
+    assert status == 200
+    assert not any(s['rule'].startswith('STYLE_') for s in body['suggestions'])
+    status, body = _post(server, '/check', {'text': text, 'style_profile': {'prefer_active': True}})
+    assert status == 200
+    assert any(s['rule'] == 'STYLE_ACTOR' for s in body['suggestions'])
+    assert _post(server, '/check', {'text': text, 'style_profile': {'reader': 'invalid'}})[0] == 400

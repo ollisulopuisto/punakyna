@@ -10,12 +10,13 @@ import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILES = ['punakyna_proofreader.py', 'Linguistic.xcu', 'description.xml',
-         'package-description.txt', 'META-INF/manifest.xml']
+         'package-description.txt', 'META-INF/manifest.xml',
+         'punakyna_style_settings.py', 'Addons.xcu']
 
 # paikallinen moottori mukaan pakettiin: ei pip-asennuksia kayttajalle
 PKG_DIR = os.path.normpath(os.path.join(HERE, '..', '..', '..', 'punakyna'))
 PKG_FILES = ['__init__.py', 'pipeline.py', 'rules.py', 'backend_voikko.py',
-             'voikko_gc.py', 'voikko_native.py', 'voikko_compat.py']
+             'voikko_gc.py', 'voikko_native.py', 'voikko_compat.py', 'style.py', 'style_settings.py']
 
 
 BUNDLE_DIR = os.path.join(HERE, 'bundle')

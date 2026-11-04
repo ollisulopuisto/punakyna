@@ -93,6 +93,13 @@ python -m pytest tests/              # yksikkötestit (13 kpl)
 python eval/evaluate.py              # savutestiarviointi
 ```
 
+## Valinnaiset tyylivinkit
+
+Aktiivin suosiminen sekä kertojan (minä/me) ja lukijan puhuttelun
+(sinä/te) johdonmukaisuus ovat erikseen valittavia vinkkejä, eivät
+kielioppivirheitä. Oletuksena pois. LibreOfficessa asetukset löytyvät
+Työkalut-valikon Lisäosat-kohdasta. [Käyttö ja rajat](docs/style-advice.md).
+
 ## Voikon kieliopintarkistimen kattavuus (mitattu 2026-11-03)
 
 Verifioitu libvoikko:n omalla korjepaketilla (corevoikko,
