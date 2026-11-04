@@ -76,3 +76,11 @@ The harness's programmatic replacement does not prove these UI interactions.
 Record OXT SHA-256, macOS/LibreOffice versions, exact commands and outcomes.
 Unrun tests are not passes. No Actions build or upload is authorized until
 the separate account-wide storage-cost gate is cleared.
+
+
+The manual workflow now avoids Actions artifact and cache storage entirely.
+It uses the standard public-repository arm64 macos-15 runner, installs the
+actual LibreOffice host, runs the signature/engine/UNO-host gates, and stages
+successful files in a draft GitHub release. It never auto-publishes a release.
+This does not authorize another storage-bearing workflow. A failed host gate
+stops before draft asset upload; GUI validation remains a separate gate.

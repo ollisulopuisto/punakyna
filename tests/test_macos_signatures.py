@@ -46,7 +46,7 @@ def test_signing_happens_after_fixups_and_before_packing():
     main = source[source.index('def main():'):]
     assert main.index('_macos_fixups(libdir)') < main.index('_macos_verify(libdir)') < main.index('_macos_sign_and_verify(libdir)')
     workflow = (ROOT / '.github/workflows/build-full-oxt.yml').read_text()
-    assert workflow.index('verify_macos_signatures.py dist/') < workflow.index('actions/upload-artifact')
+    assert workflow.index('verify_macos_signatures.py dist/') < workflow.index('gh release create')
     assert '  push:' not in workflow
 
 
@@ -77,3 +77,12 @@ def test_failed_signing_stops_packaging(tmp_path, monkeypatch):
     monkeypatch.setattr(bundle_native.subprocess, 'run', fail)
     with pytest.raises(subprocess.CalledProcessError):
         bundle_native._macos_sign_and_verify(str(tmp_path))
+
+
+def test_zero_actions_storage_workflow():
+    workflow = (ROOT / '.github/workflows/build-full-oxt.yml').read_text()
+    assert 'runs-on: macos-15' in workflow
+    assert 'actions/upload-artifact' not in workflow
+    assert 'actions/cache' not in workflow
+    assert '--draft --prerelease' in workflow
+    assert workflow.index('test_macos_host.py') < workflow.index('gh release create')
