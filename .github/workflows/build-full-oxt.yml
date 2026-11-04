@@ -84,7 +84,14 @@ jobs:
       - name: Install actual arm64 LibreOffice host
         run: |
           test "$(uname -m)" = arm64
-          brew install --cask libreoffice
+          curl --fail --location --retry 2 \
+            https://download.documentfoundation.org/libreoffice/stable/26.8.2/mac/aarch64/LibreOffice_26.8.2_MacOS_aarch64.dmg \
+            --output "$RUNNER_TEMP/libreoffice.dmg"
+          echo "9f24fe83ab1ed5c95eb3df580119f32932f713e577feeac02bf619fb00749b55  $RUNNER_TEMP/libreoffice.dmg" | shasum -a 256 --check
+          hdiutil attach "$RUNNER_TEMP/libreoffice.dmg" -mountpoint "$RUNNER_TEMP/lo-mount" -nobrowse -readonly
+          ditto "$RUNNER_TEMP/lo-mount/LibreOffice.app" /Applications/LibreOffice.app
+          hdiutil detach "$RUNNER_TEMP/lo-mount"
+          /Applications/LibreOffice.app/Contents/MacOS/soffice --version
           test -x /Applications/LibreOffice.app/Contents/Resources/python
           /Applications/LibreOffice.app/Contents/Resources/python -c 'import uno; print("UNO Python ready")'
 

@@ -60,6 +60,8 @@ def main():
     from verify_macos_signatures import verify_oxt
     print('Final OXT signature pages:', verify_oxt(args.oxt))
     program = args.app / 'Contents/MacOS'
+    print('Host platform:', platform.platform(), platform.machine(), flush=True)
+    subprocess.run([str(program / 'soffice'), '--version'], check=True)
     env = dict(os.environ, PUNAKYNA_LO_MODE='local')
     for name in ('PUNAKYNA_LIBVOIKKO_PATH', 'PUNAKYNA_VOIKKO_DICTIONARY_PATH'):
         env.pop(name, None)
