@@ -64,10 +64,17 @@ def load_or_create_token(path=TOKEN_PATH):
         return _create(path)
 
 
+def _validate_app_name(app):
+    """Tarkista sovellustunniste: vain sallitut merkit, ei polkuhyppayksia."""
+    # Turvatarkistus: estää hakemistotraversaalin ja mielivaltaisen tiedostonpoiston
+    if not app or '/' in app or '\\' in app or '\0' in app or app in ('.', '..'):
+        raise TokenError(f'virheellinen sovellustunniste: {app!r}')
+    return app
+
+
 def load_or_create_app_token(app, tokens_dir=None):
     """Sovelluskohtainen tunnus: tokens/<app> (0600)."""
-    if not app or '/' in app or app in ('.', '..'):
-        raise TokenError(f'virheellinen sovellustunniste: {app!r}')
+    _validate_app_name(app)
     return load_or_create_token(Path(tokens_dir or TOKENS_DIR) / app)
 
 
@@ -96,7 +103,11 @@ def load_all_tokens(tokens_dir=None, fallback_path=None):
 
 def revoke_app_token(app, tokens_dir=None):
     """Peru sovelluksen tunnus poistamalla tiedosto. True jos poistettiin."""
-    p = Path(tokens_dir or TOKENS_DIR) / app
+    _validate_app_name(app)
+    base_dir = Path(tokens_dir or TOKENS_DIR).resolve()
+    p = (base_dir / app).resolve()
+    if p.parent != base_dir:
+        raise TokenError(f'virheellinen sovelluspolku: {app!r}')
     try:
         p.unlink()
         return True
@@ -111,6 +122,5 @@ def read_app_token(app, tokens_dir=None):
     lukee. Puuttuva/virheellinen tunnus = ei rekisteröity -> FileNotFoundError
     tai TokenError.
     """
-    if not app or '/' in app or app in ('.', '..'):
-        raise TokenError(f'virheellinen sovellustunniste: {app!r}')
+    _validate_app_name(app)
     return _validate_and_read(Path(tokens_dir or TOKENS_DIR) / app)

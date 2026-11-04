@@ -344,6 +344,22 @@ def test_app_token_lifecycle(tmp_path):
     assert load_all_tokens(d, fallback_path=tmp_path / 'token') == {'libreoffice': t1}
     with pytest.raises(TokenError):
         load_or_create_app_token('../pahis', d)
+    with pytest.raises(TokenError):
+        revoke_app_token('../pahis', d)
+    with pytest.raises(TokenError):
+        revoke_app_token('..\\pahis', d)
+
+
+def test_revoke_app_token_path_traversal_prevented(tmp_path):
+    from punakyna.tokenfile import revoke_app_token, TokenError
+    tokens_dir = tmp_path / 'tokens'
+    tokens_dir.mkdir()
+    victim = tmp_path / 'victim.txt'
+    victim.write_text('sensitive data')
+
+    with pytest.raises(TokenError):
+        revoke_app_token('../victim.txt', tokens_dir=tokens_dir)
+    assert victim.exists()
 
 
 def test_revoke_takes_effect_without_restart(tmp_path):
