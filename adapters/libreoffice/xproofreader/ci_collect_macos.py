@@ -144,6 +144,8 @@ def main():
     # riippuvuusdylibien omistavat brew-paketit lisenssitietoja varten
     extra = []
     for lib in libs:
+        if 'libb2' in lib:
+            extra.append('libb2')
         if 'libarchive' in lib:
             extra.append('libarchive')
         if 'libicu' in lib:
