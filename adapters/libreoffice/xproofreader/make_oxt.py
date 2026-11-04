@@ -6,7 +6,7 @@ import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILES = ['punakyna_proofreader.py', 'Linguistic.xcu', 'description.xml',
-         'META-INF/manifest.xml']
+         'package-description.txt', 'META-INF/manifest.xml']
 
 
 def build(out):

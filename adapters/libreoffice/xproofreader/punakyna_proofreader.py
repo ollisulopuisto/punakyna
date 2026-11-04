@@ -15,10 +15,17 @@ komponentissa molempiin suuntiin (_slice_utf16 / _utf16_len).
 
 Vain vakio- ja pyuno-kirjastot: komponentti toimii LibreOfficen
 omassa Pythonissa ilman asennuksia.
+
+Puuttuva palvelin tai tunnus EI jää hiljaiseksi: kappaleen alkuun
+näytetään ohjevirhe, joka kertoo puuttuvan asennusvaiheen
+(--serve / --enroll-app). Muut virheet degradaavat hiljaa, ettei
+tarkistus kaada Writeriä.
 """
 import json
 import os
 import stat
+import time
+import urllib.error
 import urllib.request
 
 import uno
@@ -31,6 +38,20 @@ from com.sun.star.text.TextMarkupType import PROOFREADING
 IMPLEMENTATION_NAME = 'org.punakyna.comp.pyuno.PunakynaProofreader'
 SERVICE_NAME = 'com.sun.star.linguistic2.Proofreader'
 MIN_TOKEN_LEN = 32
+# asennusvian ohjevirhe välitetään näin usein uudelleenpalvelinyrityksellä
+_SETUP_FAIL_TTL = 15.0
+
+_MSG_NO_TOKEN = ('Punakynä ei ole käytössä: sovellustunnus puuttuu. '
+                 'Aja päätteessä: uv run python -m punakyna '
+                 '--enroll-app libreoffice')
+_MSG_AUTH = ('Punakynä hylkäsi sovellustunnuksen. Rekisteröi uudelleen '
+             'päätteessä: uv run python -m punakyna '
+             '--enroll-app libreoffice')
+
+
+def _msg_server():
+    return ('Punakynä-palvelin ei vastaa (127.0.0.1:%d). Käynnistä '
+            'päätteessä: uv run python -m punakyna --serve' % _api_port())
 
 
 def _config_dir():
@@ -92,6 +113,7 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
         self.ctx = ctx
         self.locales = (Locale('fi', 'FI', ''), Locale('fi', '', ''))
         self.ignored_rules = set()
+        self._setup_fail = None  # (viesti, monotonic-aikaleima)
 
     # XServiceInfo
     def getImplementationName(self):
@@ -132,17 +154,58 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
         aRes.aProperties = ()
         aRes.xProofreader = self
 
-        token = _read_token()
-        if not token:
-            return aRes  # ei rekisteröityä tunnusta: älä häiritse kirjoittajaa
         sentence = _slice_utf16(rText, nStartOfSentencePos,
                                 nSuggestedSentenceEndPos)
         if not sentence.strip():
             return aRes
+
+        def setup_error(message):
+            # ohjevirhe kappaleen alkuun: asennusvika ei jää näkymättömäksi
+            if nStartOfSentencePos != 0:
+                return None
+            word = sentence.lstrip().split(None, 1)[0] if sentence.strip()                 else ''
+            err = uno.createUnoStruct(
+                'com.sun.star.linguistic2.SingleProofreadingError')
+            err.nErrorStart = (nStartOfSentencePos
+                               + _utf16_len(sentence[:len(sentence)
+                                            - len(sentence.lstrip())]))
+            err.nErrorLength = max(1, _utf16_len(word[:20]))
+            err.nErrorType = PROOFREADING
+            err.aRuleIdentifier = 'punakyna.setup'
+            err.aShortComment = message[:100]
+            err.aFullComment = message
+            err.aSuggestions = ()
+            err.aProperties = ()
+            return err
+
+        token = _read_token()
+        if not token:
+            err = setup_error(_MSG_NO_TOKEN)
+            aRes.aErrors = (err,) if err else ()
+            return aRes
+
+        if (self._setup_fail is not None
+                and time.monotonic() - self._setup_fail[1] < _SETUP_FAIL_TTL):
+            err = setup_error(self._setup_fail[0])
+            aRes.aErrors = (err,) if err else ()
+            return aRes
+
         try:
             suggs = _check(sentence, token)
+            self._setup_fail = None
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                self._setup_fail = (_MSG_AUTH, time.monotonic())
+                err = setup_error(_MSG_AUTH)
+                aRes.aErrors = (err,) if err else ()
+            return aRes
+        except (urllib.error.URLError, OSError, TimeoutError):
+            self._setup_fail = (_msg_server(), time.monotonic())
+            err = setup_error(self._setup_fail[0])
+            aRes.aErrors = (err,) if err else ()
+            return aRes
         except Exception:
-            return aRes  # API poissa/virhe: hiljainen degradaatio
+            return aRes  # tuntematon virhe: hiljainen degradaatio
 
         errors = []
         for s in suggs:

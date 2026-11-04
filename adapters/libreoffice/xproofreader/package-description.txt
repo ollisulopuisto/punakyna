@@ -1,0 +1,3 @@
+Punakynä - local Finnish proofreading for Writer (grammar and spelling), running against the Punakynä server on 127.0.0.1. Text never leaves the machine. Requires the server running and an enrolled app token (see README).
+
+Paikallinen suomen oikoluku Writeriin (kielioppi ja oikeinkirjoitus) paikallista Punakynä-palvelinta vasten (127.0.0.1). Teksti ei lähde koneelta. Edellyttää käynnissä olevan palvelimen ja rekisteröidyn sovellustunnuksen (ks. README).

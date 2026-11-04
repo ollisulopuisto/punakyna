@@ -20,6 +20,11 @@ ei palvelimen uudelleenkäynnistystä) ja/tai lisäosan poisto.
 Vaatimukset: LibreOffice Python-UNO:lla (Linux-jakeluissa vakio,
 python3-uno). Ei verkkoyhteyttä muualle kuin 127.0.0.1.
 
+Jos palvelin ei ole käynnissä tai sovellustunnus puuttuu, kappaleen
+alkuun ilmestyy sininen ohjevirhe, joka kertoo puuttuvan vaiheen
+(--serve / --enroll-app) - asennusvika ei jää hiljaiseksi
+"ei virheitä" -tilaksi. Ohje ei sisällä tunnusta eikä tekstiä.
+
 ## Suomen oikeinkirjoituksen sanasto ja Voikko-rinnakkaisuus
 
 LO:n taustaoikoluku (aaltoviivat kirjoitettaessa) vaatii profiiliin
