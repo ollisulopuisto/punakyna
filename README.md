@@ -69,10 +69,18 @@ näytetään vain tarkemmin perusteltu sääntötason osuma.
 
 ```sh
 # libvoikko + suomen sanasto (esim. Debian: libvoikko1 + voikko-fi,
+# macOS: brew install libvoikko voikko-fi,
 # tai lähdekoodista voikko.puimula.org/sources.html)
+
+# uv (suositus): luo .venv:n ja asentaa riippuvuudet
+uv sync
+uv run python -m punakyna --serve
+
+# tai pelkkä pip:
 pip install libvoikko pytest
-export PUNAKYNA_VOIKKO_DICTIONARY_PATH=/polku/jossa/5/mor-standard   # jos ei vakiopolussa
-export PUNAKYNA_LIBVOIKKO_PATH=/polku/jossa/libvoikko.so.1           # jos ei vakiopolussa
+
+export PUNAKYNA_VOIKKO_DICTIONARY_PATH=/polku/jossa/5/mor-standard   # jos ei vakiopolussa (macOS/brew: /opt/homebrew/lib/voikko)
+export PUNAKYNA_LIBVOIKKO_PATH=/polku/jossa/libvoikko.so.1           # jos ei vakiopolussa (macOS/brew: /opt/homebrew/lib)
 ```
 
 ## Käyttö
