@@ -35,3 +35,14 @@
   LibreOffice.app/UNO host harness. The harness must not count Linux/unit
   passes as Mac validation. F7/underline/UI correction remain a GUI gate.
 - No replacement package built or uploaded during the artifact-cost hold.
+
+## 2026-11-05: optional style advice
+
+- Added opt-in actor clarity and explicit narrator/reader consistency profiles.
+- Local only, no auto-rewrites; ambiguous and quoted/code-like text skipped.
+- Added CLI/API profile and Writer settings dialog; grammar diagnostics win.
+- Full Linux suite: 142 passed, 6 skipped (final style branch).
+- Baseline smoke: unchanged detections, 0 unexpected flags / 28 clean sentences.
+- Installed Linux UNO menu/dialog visually checked; Save and subsequent callback pass.
+- Mac settings/menu GUI still unverified. No release or human merge performed.
+- Details and deliberate gaps: docs/style-advice.md.

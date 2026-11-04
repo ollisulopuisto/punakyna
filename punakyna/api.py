@@ -204,8 +204,9 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
                         use_rules=payload.get('use_rules', check_kwargs.get('use_rules', True)),
                         use_spelling=payload.get('use_spelling', check_kwargs.get('use_spelling', True)),
                         use_parser=payload.get('use_parser', check_kwargs.get('use_parser', False)),
+                        style_profile=payload.get('style_profile', check_kwargs.get('style_profile')),
                     )
-                except RuntimeError as e:
+                except (RuntimeError, ValueError) as e:
                     # esim. parser-taso pyydetty mutta stanza puuttuu
                     return self._send(400, {'error': str(e)})
                 except Exception as e:

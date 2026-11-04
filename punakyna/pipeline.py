@@ -136,7 +136,7 @@ _ENGINE_LOCK = threading.Lock()
 
 
 def check_text(text, voikko=None, use_rules=True, use_spelling=True,
-               use_gc=True, neural_backend=None, use_parser=False):
+               use_gc=True, neural_backend=None, use_parser=False, style_profile=None):
     """Palauttaa listan Suggestion-olioita tekstin merkkisijainneilla.
 
     Säieturvallinen: libvoikko-instanssi ei kestä rinnakkaisuutta
@@ -149,14 +149,18 @@ def check_text(text, voikko=None, use_rules=True, use_spelling=True,
     """
     with _ENGINE_LOCK:
         return _check_text_unlocked(text, voikko, use_rules, use_spelling,
-                                    use_gc, neural_backend, use_parser)
+                                    use_gc, neural_backend, use_parser, style_profile)
 
 
 def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
-                         use_gc=True, neural_backend=None, use_parser=False):
+                         use_gc=True, neural_backend=None, use_parser=False, style_profile=None):
+    from .style import StyleProfile, check_style, excluded_text
+    profile = StyleProfile.from_value(style_profile)
     voikko = voikko or get_voikko()
     out: List[Suggestion] = []
     cache = {}
+    style_out = []
+    style_allowed = profile.enabled and not excluded_text(text)
     pos = 0
     sentences = list(voikko.sentences(text))
     spans = []
@@ -189,6 +193,8 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
             out += _spelling_suggestions(sent_text, s_off, toks, voikko)
         if use_rules:
             out += run_rules(sent_text, s_off, toks, voikko, cache)
+        if style_allowed:
+            style_out += check_style(sent_text, s_off, toks, voikko, cache, profile)
         if neural_backend is not None:
             corr = neural_backend.correct(sent_text)
             if corr is not None:
@@ -210,6 +216,8 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
             if any(s.start < e and s0 < s.end for s0, e in own_spans):
                 continue  # oma saanto kattaa jo saman kohteen (span-osuma)
             out.append(s)
+    # Style advice must never hide or replace grammar/spelling diagnostics.
+    out += [s for s in style_out if not any(s.start < e.end and e.start < s.end for e in out)]
     out.sort(key=lambda s: (s.start, s.rule))
     return out
 

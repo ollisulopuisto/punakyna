@@ -127,9 +127,9 @@ def _slice_utf16(text, start, end):
     return b[2 * start:2 * end].decode('utf-16-le', 'surrogatepass')
 
 
-def _check(sentence, token):
+def _check(sentence, token, style_profile=None):
     body = json.dumps({'text': sentence, 'use_rules': True,
-                       'use_spelling': True}).encode('utf-8')
+                       'use_spelling': True, 'style_profile': style_profile}).encode('utf-8')
     req = urllib.request.Request(
         'http://127.0.0.1:%d/check' % _api_port(), data=body,
         headers={'Content-Type': 'application/json',
@@ -220,6 +220,12 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             aRes.aErrors = (err,) if err else ()
             return aRes
 
+        from punakyna.style_settings import load_profile
+        from dataclasses import asdict
+        style_profile = asdict(load_profile())
+        from punakyna.style import excluded_text
+        if excluded_text(rText):
+            style_profile = None  # quotation can span several sentence callbacks
         mode = self._resolve_mode()
         if mode == 'fail':
             err = setup_error(self._setup_fail[0])
@@ -229,13 +235,14 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             try:
                 suggs = self._suggestions_as_dicts(
                     self._check_text(sentence, use_rules=True,
-                                     use_spelling=True))
+                                     use_spelling=True,
+                                     style_profile=style_profile))
                 self._setup_fail = None
             except Exception:
                 return aRes  # moottorivika kesken ajan: hiljainen degradaatio
         else:
             try:
-                suggs = _check(sentence, self._token)
+                suggs = _check(sentence, self._token, style_profile)
                 self._setup_fail = None
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403):

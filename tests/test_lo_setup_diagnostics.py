@@ -138,9 +138,9 @@ def test_server_down_shows_serve_hint_and_caches(monkeypatch, tmp_path):
     monkeypatch.setenv('PUNAKYNA_PORT', '1')  # kiinni
     calls = []
     orig = mod._check
-    def counting(s, t):
+    def counting(s, t, profile=None):
         calls.append(1)
-        return orig(s, t)
+        return orig(s, t, profile)
     monkeypatch.setattr(mod, '_check', counting)
     res = _proofread(inst, 'Me olen likaisia.')
     assert len(res.aErrors) == 1
@@ -209,3 +209,24 @@ def test_auto_mode_without_engine_shows_install_hint(monkeypatch, tmp_path):
     assert 'Voikko-lisäosa' in err.aFullComment
     assert 'brew install libvoikko voikko-fi' in err.aFullComment
     assert 'x' * 64 not in err.aFullComment
+
+
+def test_style_profile_and_quotation_context(monkeypatch, tmp_path):
+    from punakyna.style_settings import save_profile
+    from punakyna.style import StyleProfile
+    monkeypatch.setenv('PUNAKYNA_CONFIG', str(tmp_path))
+    save_profile(StyleProfile(prefer_active=True))
+    mod = _load(monkeypatch)
+    inst = _make_instance(mod, monkeypatch, tmp_path)
+    monkeypatch.setattr(inst, '_resolve_mode', lambda: 'local')
+    calls = []
+    inst._check_text = lambda sentence, **kwargs: calls.append(kwargs) or []
+    inst._suggestions_as_dicts = lambda values: values
+    save_profile(StyleProfile(prefer_active=True))
+    _proofread(inst, 'Hakemus lähetetään.')
+    assert calls[-1]['style_profile']['prefer_active'] is True
+    # A quotation opened before this sentence must disable style hints too.
+    text = '“Lainaus. Hakemus lähetetään. Vielä lainauksessa.”'
+    start = text.index('Hakemus')
+    _proofread(inst, text, start, text.index(' Vielä'))
+    assert calls[-1]['style_profile'] is None

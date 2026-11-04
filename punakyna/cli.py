@@ -23,6 +23,9 @@ def main(argv=None):
     p.add_argument('--list-apps', action='store_true',
                    help='listaa rekisteröidyt sovellukset')
     p.add_argument('--no-spelling', action='store_true', help='vain saannot')
+    p.add_argument('--prefer-active', action='store_true', help='valinnainen tyylivinkki: tuo tekijä näkyviin')
+    p.add_argument('--narrator', choices=['any', 'mina', 'me'], default='any', help='valittu kertojan persoona (tyylivinkit)')
+    p.add_argument('--reader', choices=['any', 'sina', 'te'], default='any', help='valittu lukijan puhuttelu (tyylivinkit)')
     args = p.parse_args(argv)
     if args.enroll_app or args.revoke_app or args.list_apps:
         from .tokenfile import (load_or_create_app_token, load_all_tokens,
@@ -45,12 +48,14 @@ def main(argv=None):
         return 0
     if args.serve:
         from .api import serve
-        serve(port=args.port)
+        serve(port=args.port, style_profile=dict(prefer_active=args.prefer_active,
+                   narrator=args.narrator, reader=args.reader))
         return 0
     text = open(args.file, encoding='utf-8').read() if args.file else sys.stdin.read()
     suggs = check_text(text, use_rules=not args.no_rules,
                        use_parser=args.parser,
-                       use_spelling=not args.no_spelling)
+                       use_spelling=not args.no_spelling,
+                       style_profile=dict(prefer_active=args.prefer_active, narrator=args.narrator, reader=args.reader))
     if args.json:
         print(json.dumps(suggestions_as_dicts(suggs), ensure_ascii=False, indent=2))
     else:
