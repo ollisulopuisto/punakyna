@@ -1,0 +1,13 @@
+[project]
+name = "punakyna"
+version = "0.1.0"
+description = "Paikallinen suomen oikolukumoottori (Voikko + omat säännöt)"
+requires-python = ">=3.10"
+dependencies = ["libvoikko"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.uv]
+# ei rakenneta asennettavaa pakettia - ajetaan suoraan lähdepuusta
+package = false
