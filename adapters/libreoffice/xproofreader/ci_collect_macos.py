@@ -49,8 +49,28 @@ def brew_info(pkg):
     return json.loads(out)['formulae'][0]
 
 
+def _otool_deps(lib):
+    out = sh('otool', '-L', lib)
+    return [line.strip().split(' ', 1)[0]
+            for line in out.splitlines()[1:] if line.strip()]
+
+
+def _resolve_rpath(ref, referrer):
+    """@rpath-vittaus: etsi ensin vittaavan kirjaston hakemistosta."""
+    name = ref.split('/', 1)[1]
+    cand = os.path.join(os.path.dirname(referrer), name)
+    return cand if os.path.isfile(cand) else None
+
+
 def stage_dylibs():
-    """Kopioi voikko-dylibit ja riippuvuussulkeuma staging-hakemistoon."""
+    """Kopioi voikko-dylibit + TAYSI riippuvuussulkeuma aliaksineen.
+
+    - @rpath-vittaukset (esim. ICU:n libicudata) ratkaistaan vittaavan
+      kirjaston hakemistosta
+    - jokainen VIITATTU tiedostonimi (soname, esim. liblz4.1.dylib)
+      kopioidaan myos, vaikka todellinen tiedosto olisi versioidumpi
+      (liblz4.1.10.0.dylib): dyld etsii tasan viittattya nimea
+    """
     os.makedirs(STAGING_LIBS, exist_ok=True)
     seeds = []
     for pkg in BREW_PKGS:
@@ -58,27 +78,46 @@ def stage_dylibs():
         for name in sorted(os.listdir(libdir)):
             if name.endswith('.dylib'):
                 seeds.append(os.path.join(libdir, name))
-    done = set()
+
+    staged = {}          # basename -> True
+    resolved = {}        # dep-ref -> todellinen polku
     queue = list(seeds)
+    seen_real = set()
     while queue:
         path = queue.pop()
         real = os.path.realpath(path)
-        if real in done or not os.path.isfile(real):
+        if real in seen_real or not os.path.isfile(real):
             continue
-        done.add(real)
-        dst = os.path.join(STAGING_LIBS, os.path.basename(real))
-        if not os.path.exists(dst):
-            shutil.copyfile(real, dst)
-        out = sh('otool', '-L', real)
-        for line in out.splitlines()[1:]:
-            dep = line.strip().split(' ', 1)[0]
-            if not dep or dep.startswith(SYSTEM_PREFIXES):
+        seen_real.add(real)
+        base = os.path.basename(real)
+        if base not in staged:
+            shutil.copyfile(real, os.path.join(STAGING_LIBS, base))
+            staged[base] = True
+        for dep in _otool_deps(real):
+            if not dep or dep.startswith(('/usr/lib/', '/System/')):
                 continue
-            if os.path.isfile(dep):
-                queue.append(dep)
+            if dep.startswith('@rpath/'):
+                tgt = _resolve_rpath(dep, real)
+                if not tgt:
+                    print('VAROITUS: @rpath-vittaus ratkaisematta:', dep,
+                          'viittaajalta', real, file=sys.stderr)
+                    continue
+            elif dep.startswith('@'):
+                continue
             else:
-                print('VAROITUS: riippuvuutta ei loydy:', dep,
-                      file=sys.stderr)
+                tgt = dep if os.path.isfile(dep) else None
+                if not tgt:
+                    print('VAROITUS: riippuvuutta ei loydy:', dep,
+                          file=sys.stderr)
+                    continue
+            resolved[dep] = tgt
+            # viitattu NIMI pakettiin (dyld etsii sita tasan)
+            dep_base = os.path.basename(dep)
+            if dep_base not in staged:
+                shutil.copyfile(os.path.realpath(tgt),
+                                os.path.join(STAGING_LIBS, dep_base))
+                staged[dep_base] = True
+            queue.append(tgt)
     return sorted(os.listdir(STAGING_LIBS))
 
 

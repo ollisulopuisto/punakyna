@@ -52,12 +52,18 @@ def _macos_fixups(libdir):
         for line in out.splitlines()[1:]:
             dep = line.strip().split(' ', 1)[0]
             if not dep or dep.startswith(('/usr/lib/', '/System/',
-                                          '@loader_path/')):
+                                          '@loader_path/',
+                                          '@executable_path/')):
                 continue
+            # myos @rpath/... kirjoitetaan: dyld etsii tasan viitattua
+            # nimea, ja viitattu basename on staging-kopioitu mukaan
             dep_name = os.path.basename(dep)
             if os.path.isfile(os.path.join(libdir, dep_name)):
                 subprocess.run(['install_name_tool', '-change', dep,
                                 '@loader_path/' + dep_name, lib], check=True)
+            else:
+                print('VAROITUS: riippuvuudelle ei pakattua tiedostoa:',
+                      dep, 'kirjastossa', lib, file=sys.stderr)
 
 
 def main():
