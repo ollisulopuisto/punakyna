@@ -7,6 +7,7 @@
   not a held-out benchmark.
 - Document your work here and in TODO.md (what was done, what is next).
 - Bolt (2026): Suorituskykyoptimointi tehty `punakyna/pipeline.py`:ssa token-luonnille (_PipelineToken slots-luokka korvasi dynaamisen type()-kutsun).
+- Bolt (2026-11-05): Suorituskykyoptimointi tehty `punakyna/rules.py`:ssa säännölle `check_olla_agreement` (varhainen poistuminen `_OLLA_3RD_PRES`-tarkistuksella ennen kalliita `_analyze`-kutsuja; sääntökohtainen suoritusnopeutus ~79 %).
 - Precision first: a new rule must not add false alarms on eval/smoke_clean.jsonl.
   If a rule cannot be made clean-set-safe, leave it out or mark it severity=info.
 - Finnish user-facing strings are checked against Kielitoimiston sanakirja
