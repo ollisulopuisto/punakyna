@@ -362,6 +362,33 @@ def test_revoke_app_token_path_traversal_prevented(tmp_path):
     assert victim.exists()
 
 
+def test_app_name_strict_allowlist_validation(tmp_path):
+    """Sovellustunnisteen sallijalistatarkistus: hylkää ohjausmerkit,
+    välimerkit, rivinvaihdot, piilotiedostot ja ylipituuden."""
+    from punakyna.tokenfile import (load_or_create_app_token, read_app_token,
+                                    revoke_app_token, TokenError)
+    tokens_dir = tmp_path / 'tokens'
+    # Hyväksytyt
+    for valid_name in ('app', 'libreoffice', 'firefox-e2e', 'my_app.1'):
+        tok = load_or_create_app_token(valid_name, tokens_dir=tokens_dir)
+        assert read_app_token(valid_name, tokens_dir=tokens_dir) == tok
+
+    # Kielletyt: CRLF, whitespace, ohjausmerkit, polkuerottimet, erikoismerkit
+    invalid_names = [
+        'app\nname', 'app\r\nname', 'app\tname', 'app name',
+        'app/sub', 'app\\sub', 'app\0null',
+        '.hidden', 'trailing.', '.', '..', '',
+        'a' * 65, None, 123
+    ]
+    for invalid in invalid_names:
+        with pytest.raises(TokenError):
+            load_or_create_app_token(invalid, tokens_dir=tokens_dir)
+        with pytest.raises(TokenError):
+            read_app_token(invalid, tokens_dir=tokens_dir)
+        with pytest.raises(TokenError):
+            revoke_app_token(invalid, tokens_dir=tokens_dir)
+
+
 def test_revoke_takes_effect_without_restart(tmp_path):
     """Peruutus voimaan AJONEUVON ollessa käynnissä: 200 -> poisto -> 401."""
     from punakyna.api import make_server as ms

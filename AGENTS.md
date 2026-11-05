@@ -46,3 +46,11 @@
 - Installed Linux UNO menu/dialog visually checked; Save and subsequent callback pass.
 - Mac settings/menu GUI still unverified. No release or human merge performed.
 - Details and deliberate gaps: docs/style-advice.md.
+
+## 2026-11-05: token management hardening (Sentinel)
+
+- Replaced blocklist with strict allowlist regex validation for application
+  identifiers in tokenfile.py (`^[a-zA-Z0-9](?:[a-zA-Z0-9_\-\.]{0,62}[a-zA-Z0-9])?$`).
+- Rejects control characters (CRLF), leading/trailing dots, spaces, and length > 64.
+- Added comprehensive regression tests in `tests/test_api_hardening.py`.
+- Full suite (134 passed, 15 skipped) and smoke evaluation (0 false alarms) pass.

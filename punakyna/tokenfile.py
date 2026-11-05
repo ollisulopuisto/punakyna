@@ -8,6 +8,7 @@ tiedoston poisto. Yksi perus-tunnus (~/.config/punakyna/token) säilyy
 taaksepäin yhteensopivana, kun sovelluksia ei ole eritelty.
 """
 import os
+import re
 import secrets
 import stat
 from pathlib import Path
@@ -16,6 +17,8 @@ MIN_TOKEN_LEN = 32  # lyhyempi tunnus = rikkinäinen/partial, hylätään
 
 TOKEN_PATH = Path.home() / '.config' / 'punakyna' / 'token'
 TOKENS_DIR = Path.home() / '.config' / 'punakyna' / 'tokens'
+
+_APP_NAME_RE = re.compile(r'^[a-zA-Z0-9](?:[a-zA-Z0-9_\-\.]{0,62}[a-zA-Z0-9])?$')
 
 
 class TokenError(RuntimeError):
@@ -65,9 +68,10 @@ def load_or_create_token(path=TOKEN_PATH):
 
 
 def _validate_app_name(app):
-    """Tarkista sovellustunniste: vain sallitut merkit, ei polkuhyppayksia."""
-    # Turvatarkistus: estää hakemistotraversaalin ja mielivaltaisen tiedostonpoiston
-    if not app or '/' in app or '\\' in app or '\0' in app or app in ('.', '..'):
+    """Tarkista sovellustunniste: sallitut merkit ja pituus, ei polkuhyppayksia."""
+    # Turvatarkistus: sallijalista estää hakemistotraversaalin, tiedostonimet
+    # ohjausmerkeillä (CRLF/nollatavu), piilotiedostot ja pituuden ylitykset.
+    if not isinstance(app, str) or not _APP_NAME_RE.fullmatch(app):
         raise TokenError(f'virheellinen sovellustunniste: {app!r}')
     return app
 
