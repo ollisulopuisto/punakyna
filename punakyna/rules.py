@@ -203,6 +203,13 @@ def _olla_pl(verb_an):
                and a.get('TENSE') == 'present_simple' for a in verb_an)
 
 
+# Olla-verbin preesensin 3. persoonan muodot (on/ovat).
+# check_olla_agreement tarkistaa ainoastaan näiden kongruenssin
+# nominatiivisubjektin kanssa; muiden sanojen analyysi ohitetaan varhaisella
+# poistumisella CPU-kuorman ja libvoikko-kutsujen vähentämiseksi.
+_OLLA_3RD_PRES = {'on', 'ovat'}
+
+
 def _nom_pl_noun(analyses):
     return any(a.get('CLASS') == 'nimisana' and a.get('NUMBER') == 'plural'
                and a.get('SIJAMUOTO') == 'nimento' for a in analyses)
@@ -239,6 +246,11 @@ def check_olla_agreement(sent_text, offset, words, voikko, cache):
     """
     out = []
     for i, (prev, cur) in enumerate(zip(words, words[1:])):
+        # Suorituskykyoptimointi: sääntö koskee vain preesensin 3. persoonan
+        # muotoja ("on" tai "ovat"). Ohitetaan morfologinen analyysi heti,
+        # jos sana ei ole kumpikaan näistä.
+        if cur.lower not in _OLLA_3RD_PRES:
+            continue
         verb_an = [a for a in _analyze(voikko, cur.text, cache)
                    if a.get('CLASS') == 'teonsana']
         if not verb_an:
