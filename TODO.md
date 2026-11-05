@@ -65,3 +65,12 @@
 - Installed Linux UNO menu/dialog visually checked; Save and subsequent callback pass.
 - Mac settings/menu GUI still unverified. No release or human merge performed.
 - Details and deliberate gaps: docs/style-advice.md.
+
+## 2026-11-05: token management hardening (Sentinel)
+
+- Kovennus: `_validate_app_name` `punakyna/tokenfile.py`:ssa muutettu
+  sallijalistapohjaiseksi (`^[a-zA-Z0-9](?:[a-zA-Z0-9_\-\.]{0,62}[a-zA-Z0-9])?$`).
+  Torjuu ohjausmerkit (CRLF), piilotiedostot, välimerkit ja liian pitkät tunnisteet.
+- Testit: `tests/test_api_hardening.py` laajennettu kattamaan sallijalistan
+  rajatapaukset (134 yksikkötestiä hyväksytty).
+- Seuraavaksi: sovellusten oikeuksien hienojakoisempi rajaus ja audit-loki.
