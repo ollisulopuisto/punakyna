@@ -161,11 +161,32 @@ def test_non_loopback_bind_refused():
 
 
 def test_host_header_validator():
+    # Hyväksytyt loopback-osoitteet portilla ja ilman
+    assert _valid_host_header('127.0.0.1')
     assert _valid_host_header('127.0.0.1:8377')
+    assert _valid_host_header('127.0.0.1:65535')
     assert _valid_host_header('localhost')
+    assert _valid_host_header('localhost:8377')
+    assert _valid_host_header('LOCALHOST:80')
+    assert _valid_host_header('[::1]')
     assert _valid_host_header('[::1]:8377')
+    assert _valid_host_header('::1')
+
+    # Hylätyt osoitteet: ei-loopback, rebind-yritykset, virheelliset portit, ohjausmerkit
     assert not _valid_host_header('127.0.0.1.evil.com')
+    assert not _valid_host_header('evil.com:127.0.0.1')
+    assert not _valid_host_header('127.0.0.1:evil')
+    assert not _valid_host_header('127.0.0.1:0')
+    assert not _valid_host_header('127.0.0.1:65536')
+    assert not _valid_host_header('127.0.0.1:99999')
+    assert not _valid_host_header('[::1]:evil')
+    assert not _valid_host_header('[::1]:65536')
+    assert not _valid_host_header('foo@127.0.0.1')
+    assert not _valid_host_header('127.0.0.1/foo')
     assert not _valid_host_header('')
+    assert not _valid_host_header('   ')
+    assert not _valid_host_header(None)
+    assert not _valid_host_header(127001)
 
 
 def test_token_file_created_0600(tmp_path):

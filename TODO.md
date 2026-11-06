@@ -76,3 +76,10 @@
 - Testit: `tests/test_api_hardening.py` laajennettu kattamaan sallijalistan
   rajatapaukset (134 yksikkötestiä hyväksytty).
 - Seuraavaksi: sovellusten oikeuksien hienojakoisempi rajaus ja audit-loki.
+
+## 2026-11-05: Host header validation hardening (Sentinel)
+
+- Kovennus: `_valid_host_header` `punakyna/api.py`:ssa tarkistaa loopback-isännän
+  ja portin numeerisuuden sekä arvoalueen (1-65535). Sallii oikein `[::1]` ja `::1`
+  ilman porttia sekä torjuu `127.0.0.1:evil` kaltaiset vääristymät.
+- Testit: `tests/test_api_hardening.py` päivitetty kattamaan rajatapaukset.
