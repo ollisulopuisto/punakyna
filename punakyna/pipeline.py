@@ -59,6 +59,9 @@ _ABBREV = {
     'mm', 'ml', 'pl', 't', 'hlö', 'tai', 'toim', 'prof', 'FT', 'FM',
 }
 
+# Suorituskyky: nopea joukko numeromerkeille numerotarkistusta varten
+_DIGITS = set('0123456789')
+
 
 class _PipelineToken:
     """Kevyt oliomalli tokenille tokenisoinnissa.
@@ -106,11 +109,15 @@ def _spelling_suggestions(sent_text, offset, tokens, voikko):
         if not tok.is_word:
             continue
         w = tok.text
-        if len(w) < 2 or any(c.isdigit() for c in w):
+        # Suorituskyky: 'not _DIGITS.isdisjoint(w)' välttää generaattoriallokoinnin
+        # ja any()-kutsujen kuorman jokaiselle sanalle.
+        if len(w) < 2 or not _DIGITS.isdisjoint(w):
             continue
         if '@' in w or ':/' in w:
             continue
-        if w.lower() in _ABBREV:
+        # Suorituskyky: käytetään tok.lower (_PipelineToken:in laskema arvo)
+        # toistuvan w.lower()-kutsun sijasta.
+        if tok.lower in _ABBREV:
             continue
         if w.isupper():
             continue  # lyhenne, esim. EU
@@ -164,31 +171,42 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
     pos = 0
     sentences = list(voikko.sentences(text))
     spans = []
+    # Suorituskyky: Libvoikko palauttaa peräkkäiset virkkeet järjestyksessä.
+    # Vältetään toistuvat text.find()-alimerkkijonohaut vertaamalla suoraan pos-kohtaan.
     for s in sentences:
-        idx = text.find(s.sentenceText, pos)
-        if idx < 0:
+        stext = s.sentenceText
+        slen = len(stext)
+        if text.startswith(stext, pos):
             idx = pos
-        spans.append((s.sentenceText, idx))
-        pos = idx + len(s.sentenceText)
+        else:
+            idx = text.find(stext, pos)
+            if idx < 0:
+                idx = pos
+        spans.append((stext, idx))
+        pos = idx + slen
     for sent_text, s_off in spans:
         toks = []
         tpos = 0
         for t in voikko.tokens(sent_text):
-            tidx = sent_text.find(t.tokenText, tpos)
-            if tidx < 0:
-                tidx = tpos
             tt = t.tokenText
+            tlen = len(tt)
+            if sent_text.startswith(tt, tpos):
+                tidx = tpos
+            else:
+                tidx = sent_text.find(tt, tpos)
+                if tidx < 0:
+                    tidx = tpos
             # Suorituskykyoptimointi: käytä esialustettua _PipelineToken-luokkaa
             # dynamic type()-metaluokan luonnin sijasta.
             toks.append(_PipelineToken(
                 text=tt,
                 start=tidx,
-                end=tidx + len(tt),
+                end=tidx + tlen,
                 ttype=t.tokenType,
                 is_word=t.tokenType == Token.WORD,
                 lower=tt.lower()
             ))
-            tpos = tidx + len(tt)
+            tpos = tidx + tlen
         if use_spelling:
             out += _spelling_suggestions(sent_text, s_off, toks, voikko)
         if use_rules:
