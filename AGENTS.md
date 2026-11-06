@@ -55,3 +55,10 @@
 - Rejects control characters (CRLF), leading/trailing dots, spaces, and length > 64.
 - Added comprehensive regression tests in `tests/test_api_hardening.py`.
 - Full suite (134 passed, 15 skipped) and smoke evaluation (0 false alarms) pass.
+
+## 2026-11-05: Host header validation hardening (Sentinel)
+
+- Hardened `_valid_host_header` in `punakyna/api.py` with strict regex and port range check (`1..65535`).
+- Fixes handling of standard IPv6 loopback `[::1]` and `::1` without ports.
+- Rejects malformed host headers with non-numeric ports (e.g. `127.0.0.1:evil`), out-of-range ports, and userinfo.
+- Added regression tests in `tests/test_api_hardening.py`.

@@ -48,13 +48,27 @@ HUOM_TURVAMALLI = (
 
 LOOPBACK_HOSTS = ('127.0.0.1', 'localhost', '::1')
 
+import re
+_HOST_RE = re.compile(
+    r'^(?:(?:127\.0\.0\.1|localhost)(?::([0-9]{1,5}))?|'
+    r'\[::1\](?::([0-9]{1,5}))?|'
+    r'::1)$',
+    re.IGNORECASE
+)
+
 def _valid_host_header(value):
-    """Host on oltava loopback (mikä tahansa portti). Torjuu DNS-rebindingin."""
-    if not value:
+    """Host on oltava loopback ja mahdollisen portin (1-65535). Torjuu DNS-rebindingin."""
+    if not value or not isinstance(value, str):
         return False
-    host = value.rsplit(':', 1)[0] if ':' in value else value
-    host = host.strip('[]').lower()
-    return host in ('127.0.0.1', 'localhost', '::1')
+    m = _HOST_RE.fullmatch(value.strip())
+    if not m:
+        return False
+    port = m.group(1) or m.group(2)
+    if port is not None:
+        p = int(port)
+        if not (1 <= p <= 65535):
+            return False
+    return True
 
 
 def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
