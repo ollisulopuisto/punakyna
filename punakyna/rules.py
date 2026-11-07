@@ -4,6 +4,7 @@ Jokainen saanto on tarkoituksella kapea: tarkkuus (vahat vaarat halytykset)
 on tarkeampaa kuin herkkyys. Saannot toimivat libvoikko-tokenisoinnin ja
 -morfologisen analyysin paalla.
 """
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -442,6 +443,99 @@ def check_pron_verb_agreement(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Aktiivin perfekti vaatii NUT-partisiipin ("olen mennyt"); TU-partisiippi on
+# passiivin perfektin osa ja sen apuverbi on yksikon 3. persoonassa ("on menty").
+# VISK §1292: "Liittomuodossa passiivin tunnus sijoittuu partisiippimuotoon,
+# ja apuverbi on yksikön 3. persoonassa."
+# VISK §530: intransitiiviverbien passiivin partisiippimuodot toimivat yleensa
+# vain liittomuotojen ja verbiliittojen osana ("Sohvalla on istuttu").
+# Siksi tarkistetaan vain valittuja intransitiiviverbeja: transitiiviverbin
+# TU-partisiippi voi olla kelvollinen predikatiivi ("olen kiusattu",
+# "olemme tehty samasta puusta").
+# verbin perusmuoto -> (NUT-yksikko, NUT-monikko)
+_INTRANSITIVE_NUT = {
+    'mennä': ('mennyt', 'menneet'), 'tulla': ('tullut', 'tulleet'),
+    'käydä': ('käynyt', 'käyneet'), 'kävellä': ('kävellyt', 'kävelleet'),
+    'juosta': ('juossut', 'juosseet'), 'istua': ('istunut', 'istuneet'),
+    'seistä': ('seisonut', 'seisoneet'), 'nukkua': ('nukkunut', 'nukkuneet'),
+    'asua': ('asunut', 'asuneet'), 'lähteä': ('lähtenyt', 'lähteneet'),
+    'saapua': ('saapunut', 'saapuneet'), 'palata': ('palannut', 'palanneet'),
+    'jäädä': ('jäänyt', 'jääneet'), 'nousta': ('noussut', 'nousseet'),
+    'uida': ('uinut', 'uineet'), 'matkustaa': ('matkustanut', 'matkustaneet'),
+    'tanssia': ('tanssinut', 'tanssineet'), 'nauraa': ('nauranut', 'nauraneet'),
+    'itkeä': ('itkenyt', 'itkeneet'), 'kulkea': ('kulkenut', 'kulkeneet'),
+    'pysähtyä': ('pysähtynyt', 'pysähtyneet'),
+}
+_OLLA_FINITE_NON3 = {
+    'olen': 'singular', 'olet': 'singular', 'olemme': 'plural',
+    'olette': 'plural', 'ovat': 'plural',
+    'olin': 'singular', 'olit': 'singular', 'olimme': 'plural',
+    'olitte': 'plural', 'olivat': 'plural',
+}
+_NEG_FOR_OLE = {'en', 'et', 'emme', 'ette', 'eivät'}
+_PERFECT_ADVERBS = {'jo', 'vasta', 'juuri', 'aina', 'myös', 'vielä',
+                    'sitten', 'koskaan', 'kyllä'}
+
+
+def _passive_only_participle_verb(analyses):
+    """Palauta verbin perusmuoto, jos sana on vain passiivin TU-partisiippi."""
+    verbs = set()
+    for a in analyses:
+        if a.get('CLASS') != 'laatusana' or a.get('PARTICIPLE') != 'past_passive':
+            return None
+        fst = a.get('FSTOUTPUT') or ''
+        m = re.search(r'\[Xp\]([^\[]+)\[X\]', fst)
+        if not m:
+            return None
+        verbs.add(m.group(1))
+    # sana, jolla on myos aktiivitulkinta (mennyt), ei ole vain passiivia
+    return verbs.pop() if len(verbs) == 1 else None
+
+
+def check_active_perfect_passive_participle(sent_text, offset, words, voikko, cache):
+    """"Minä olen menty": persoonamuotoinen olla + passiivin TU-partisiippi.
+
+    Passiivin perfekti on aina "on menty" (VISK §1292), joten olen/olet/
+    olemme/olette/ovat (ja imperfektin vastineet) + intransitiiviverbin
+    passiivipartisiippi on aktiivin perfektin virhe: "olen mennyt".
+    Yksikon 3. persoona ("on menty", "kotiin on menty") ei osu.
+    """
+    out = []
+    for i, tok in enumerate(words):
+        low = tok.lower
+        number = _OLLA_FINITE_NON3.get(low)
+        if number is None and low == 'ole' and i > 0 \
+                and words[i - 1].lower in _NEG_FOR_OLE:
+            number = ('plural' if words[i - 1].lower in ('emme', 'ette', 'eivät')
+                      else 'singular')
+        if number is None:
+            continue
+        j = i + 1
+        if j < len(words) and words[j].lower in _PERFECT_ADVERBS:
+            j += 1
+        if j >= len(words):
+            continue
+        nxt = words[j]
+        if sent_text[words[j - 1].end:nxt.start].strip():
+            continue  # valimerkki valissa
+        forms = _INTRANSITIVE_NUT
+        analyses = _analyze(voikko, nxt.text, cache)
+        verb = _passive_only_participle_verb(analyses)
+        if verb not in forms:
+            continue
+        sg, pl = forms[verb]
+        repl = pl if number == 'plural' else sg
+        out.append(Suggestion(
+            rule='PERFECT_PASSIVE_PARTICIPLE', category='grammar',
+            severity='error', start=offset + nxt.start, end=offset + nxt.end,
+            message=('Aktiivin perfekti muodostetaan NUT-partisiipilla '
+                     f'("{tok.text} {repl}"). TU-partisiippi kuuluu passiivin '
+                     f'perfektiin, jossa apuverbi on yksikön 3. persoonassa '
+                     f'("on {nxt.text}").'),
+            replacements=[repl]))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -451,4 +545,6 @@ def run_rules(sent_text, offset, tokens, voikko, cache):
     out += check_olla_agreement(sent_text, offset, words, voikko, cache)
     out += check_pron_verb_agreement(sent_text, offset, words, voikko, cache)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
+    out += check_active_perfect_passive_participle(
+        sent_text, offset, words, voikko, cache)
     return out
