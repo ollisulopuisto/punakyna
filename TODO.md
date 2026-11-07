@@ -91,3 +91,4 @@
   HTTP-palvelimen vastauksiin (`punakyna/api.py`).
 - Torjuu MIME-tyypin nuuskimisen ja selaimen kehysupotuksen / clickjacking-riskit.
 - Testit: `tests/test_api_hardening.py` päivitetty kattamaan turvaotsakkeet.
+- v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.

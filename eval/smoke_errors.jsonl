@@ -23,3 +23,4 @@
 {"text": "äidissä on pieni alkukirjain.", "expect": ["VOIKKO_GC"], "category": "style"}
 {"text": "Tämä on  kaksi välilyöntiä.", "expect": ["VOIKKO_GC"], "category": "style"}
 {"text": "Hän tuli , myöhässä.", "expect": ["VOIKKO_GC"], "category": "style"}
+{"text": "Minä olen menty kotiin.", "expect": ["PERFECT_PASSIVE_PARTICIPLE"], "category": "grammar"}

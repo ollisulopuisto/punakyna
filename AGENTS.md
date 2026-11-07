@@ -70,3 +70,20 @@
 - Added defense-in-depth HTTP security headers (`X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`) to all server responses in `punakyna/api.py`.
 - Protects clients and browsers from MIME type sniffing and iframe framing / UI redressing.
 - Added regression tests in `tests/test_api_hardening.py`.
+
+## 2026-11-07: PERFECT_PASSIVE_PARTICIPLE (v0.1.1)
+
+- Miss reported by Olli in LibreOffice: "Minä olen menty kotiin." was not flagged
+  (Voikko GC and existing rules do not check the participle type after olla).
+- New rule PERFECT_PASSIVE_PARTICIPLE: olen/olet/olemme/olette/ovat (and past
+  forms; "en ole" after a person negation) + a word analysed only as a passive
+  TU participle of a listed intransitive verb -> suggest the NUT participle.
+  Sources: VISK §1292 (passive perfect: auxiliary in 3rd person singular),
+  VISK §530 (intransitive passive participles occur only in compound forms).
+- Deliberately limited to a fixed intransitive verb list: transitive TU
+  participles are valid predicatives ("olen kiusattu", "olemme tehty puusta").
+  "on menty", "kotiin on menty", "ei ole menty" are not flagged.
+- Tests: tests/test_perfect_passive_participle.py; smoke eval 26 error / 30 clean, 0 false alarms.
+- Env note: test_lo_writer_gui and test_lo_xproofreader fail in this Linux sandbox
+  (unopkg install fails; also fails on unmodified main for the GUI test).
+- Version bumped to 0.1.1 (pyproject, __init__, description.xml, browser manifest, uv.lock). No OXT built.
