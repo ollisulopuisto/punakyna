@@ -12,3 +12,8 @@
 **Vulnerability:** Host header validation for DNS rebinding protection used naive string splitting on `:` without validating the port number or distinguishing IPv6 brackets, allowing malformed non-numeric ports (e.g., `127.0.0.1:evil`) and rejecting valid IPv6 loopback without ports (`[::1]`).
 **Learning:** Naive splitting on `:` breaks IPv6 address parsing and allows arbitrary suffixes in the port section if port format and numerical ranges (1-65535) are not verified.
 **Prevention:** Parse network addresses with structured regex or standard authority parsers that strictly validate host identity and enforce numeric port ranges (1-65535).
+
+## 2026-11-07 - Missing Defense-in-Depth HTTP Response Security Headers
+**Vulnerability:** The local loopback HTTP server omitted standard security headers (`X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`), leaving browser interactions reliant solely on content-type enforcement and lack of CORS headers.
+**Learning:** Even loopback servers communicating via JSON can be probed or embedded by web applications running in local browsers if additional browser-level security headers are missing.
+**Prevention:** Always set `X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY` on all responses (including errors) in HTTP servers to reinforce defense in depth.

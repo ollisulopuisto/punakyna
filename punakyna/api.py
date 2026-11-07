@@ -125,6 +125,9 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
             self.send_response(code)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
+            # Turvaotsakkeet: estä MIME-tyypin nuuskiminen ja upotus kehyksiin selaimessa.
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.send_header('X-Frame-Options', 'DENY')
             # Tietoisesti EI Access-Control-Allow-Origin -otsaketta:
             # sivustojen ei pidä lukea vastauksia selaimessa.
             self.end_headers()
