@@ -1,0 +1,161 @@
+# Finnish proofreading rule inventory (plan, v0.1.1)
+
+Scope: grammar, spelling/typos, punctuation, capitalisation, numbers/units,
+and style/clarity (active voice, wordiness, sentence length, officialese).
+
+Status: PLAN. No implementation beyond the rules listed as "have". Written
+2026-11-07 after the "Minä olen menty" miss (PR #19). Aim: replace one-off
+rules with a systematic, sourced inventory. Each rule gets: id, source,
+positive tests, false-positive guards, and a row in the coverage map below.
+
+## Rule record (required for every rule)
+
+| field | content |
+|---|---|
+| id | `CATEGORY_NAME`, stable |
+| source | VISK § number (+URL) first; Kielitoimiston ohjepankki / sanakirja or Kotus for norm questions; no source = no rule |
+| scope | what it checks, what it deliberately skips |
+| tests | >= 3 positive, >= 3 guards (valid sentences that look similar) |
+| severity | `error` only when the norm is unambiguous (VISK/ohjepankki "norminmukainen"); `style`/`info` for variation, speech-like forms, contested usage |
+| data | rule table in a data file (verb lists, lemma sets), not inline code |
+
+Registry file (to build): `punakyna/rules_data/*.yaml|py` + one test module
+per category + `eval/` smoke lines. A script generates the coverage map from
+the registry so docs cannot drift.
+
+## Sources, in priority order
+
+1. VISK, Iso suomen kielioppi, https://scripta.kotus.fi/visk/ (Kotus). Parts:
+   Sanat / Rakenne / Ilmiöt. Descriptive, includes spoken variation: use for
+   "what is grammatical", and for guards.
+2. Kielitoimiston ohjepankki, https://www.kielitoimistonohjepankki.fi/
+   (Kotus). Normative standard-language advice: use for what to mark as error.
+   Topics: Merkit/numerot/lyhenteet, Nimet, Sana, Lause, Tyylivalinnat.
+3. Kielitoimiston sanakirja, https://www.kielitoimistonsanakirja.fi/ : word
+   forms, inflection types, spelling.
+4. Hyvän virkakielen ohjeita (Kielitoimiston ohjepankki, virkakieli-osio),
+   https://kielitoimistonohjepankki.fi/virkakieli/ : sections "Selkeät
+   virkkeet, jäsennelty teksti", "Sanasto ja sananvalinta", "Ohjeita
+   säädöskieleen" (e.g. /vk/ohjeita-saadoskieleen/haitallisen-tiivis-ilmaisu/).
+   Style tier only.
+5. Selkokeskus, https://selkokeskus.fi/selkokieli/nain-kirjoitat-selkokielta/
+   (helpot kielen rakenteet, pikaopas): plain-language profile only. It is
+   stricter than general good style (e.g. avoid lauseenvastikkeet), so it is
+   a separate opt-in profile, never the default.
+6. Valtioneuvosto, Hyvän virkakielen toimintaohjelma and viestinnän ohjeet,
+   https://valtioneuvosto.fi/valtioneuvoston-viestinta/ohjeita-ja-suosituksia :
+   officialese profile.
+7. Kotus virkakielivinkit, via https://www.kotus.fi/ ; secondary commentary
+   such as Korpela's Nykyajan kielenopas (https://www.jkorpela.fi/kielenopas/)
+   may be cited as context but never as the sole source for a rule.
+
+Rule: a source with a numeric threshold (e.g. Kotus virkakielivinkki: over 15
+words in a sentence, consider splitting) becomes a configurable default, and
+the threshold is cited in the message.
+
+Not sources: forum pages, language-learning sites, model knowledge.
+
+## What exists today
+
+Voikko GC (libvoikko 4.3.3 `src/grammar/error.hpp`, codes 1-18): invalid
+spelling; extra whitespace / space before punctuation; extra comma;
+sentence starter; first-letter case (lower/upper); repeating word; missing
+terminating punctuation; quotation/parenthesis punctuation; negative verb
+mismatch (13); A-infinitive required (14); MA-infinitive required (15);
+misplaced sidesana (16); missing main verb (17); extra main verb (18).
+Punakynä layers (have): DOUBLE_WORD, NEG_CONNEGATIVE, NEG_NUMBER,
+SV_AGREEMENT (olla only), PRON_VERB_AGREEMENT, CAP_COMMON_NOUN,
+PERFECT_PASSIVE_PARTICIPLE (PR #19), optional Stanza parser tier, style
+advice profiles.
+
+## Categories, sources, coverage, priority
+
+Rows 1-17 are correctness (priority 1-3); rows 18-25 are style (priority
+S1-S3, tiers above).
+
+Coverage: have = rule exists; GC = Voikko GC covers; none = gap. Priority
+1 = high frequency in native writing AND checkable with morphology only
+(precision first); 2 = needs sentence structure; 3 = parser/neural or
+contested norm.
+
+| # | Category | Primary source (VISK chapter / ohjepankki) | Coverage | Prio |
+|---|---|---|---|---|
+| 1 | Compound-tense participle form (olen menty; §1292, §530, §1534) | VISK Passiivi; Tempus | have (limited verb list) | 1: extend |
+| 2 | Subject-verb / pronoun-verb agreement (kongruenssi) | VISK Kongruenssi | have (narrow) | 1: extend to all finite verbs, not only olla |
+| 3 | Negation: neg. verb + connegative, ei + 1/2 pers. | VISK Kielto ja kielteiset ilmaukset | GC 13 + have | 1: verify gaps (imperative älä, "ei" + finite) |
+| 4 | Predicative/attribute agreement in number and case (isot talo, hyvä ruoat) | VISK Kongruenssi; Adjektiivit | none | 1 |
+| 5 | Infinitive / participle government (A-, MA-, E-inf.; "pyrkii tehdä") | VISK Infinitiivit ja partisiitit; Verbit | GC 14, 15 partial | 2 |
+| 6 | Case government: verbs/adpositions (pre/postpositio + genetiivi/partitiivi) | VISK Adpositiot; Sijamuotojen syntaksia | none | 2 |
+| 7 | Object case (akkusatiivi/partitiivi/nominatiivi) | VISK Sijamuotojen syntaksia | none | 3 (needs parse) |
+| 8 | Numeral + noun case/number (kaksi talo, 5 kirjaa) | VISK Numeraalit; ohjepankki Lause: yksikkö ja monikko | none | 1 |
+| 9 | Passive: personal passive "me mennään" is speech; "ollaan menty" | VISK §1292 | partial (guards) | 2 |
+| 10 | Comparison (isompi kuin vs isompaa; superlative forms) | VISK Komparaatio | none | 2 |
+| 11 | Compound words, hyphenation (yhdyssanavirhe, sanaliitto, väli-viiva) | VISK Yhdyssanat; ohjepankki Sana | spelling GC partial | 1 (needs resource, see ROADMAP 3) |
+| 12 | Capitalisation (months, days, institutions, nationality words) | ohjepankki Sana: alkukirjain | have (months) + GC 6/7 | 1: extend |
+| 13 | Punctuation: commas before että/joka/jotta/koska; quotation marks; dashes | ohjepankki Merkit; VISK Yhdyslauseet | GC 3/4/10-12 partial | 2 |
+| 14 | Numbers, units, abbreviations (spacing, 3. vs 3, kello 10.00) | ohjepankki Merkit, numerot, lyhenteet | none | 1 |
+| 15 | Possessive suffix and reflexive (hän ... omaa; sen takia ... -nsa) | VISK Pronominit; Possessiivisuffiksi | none | 3 |
+| 16 | Word order / missing or extra main verb | VISK Sanajärjestys | GC 16-18 (style) | 3 |
+| 17 | Anglicisms/calques; "tehdä sense", "olla tarvetta" | ohjepankki Tyylivalinnat; Sana: vierassanat | none | style-only |
+| 18 | Passive overuse, active voice, person consistency | Selkokeskus "Helpot kielen rakenteet" (prefer active; passive only if agent unknown or irrelevant); ohjepankki "Passiivi: passiivimaisia rakenteita"; docs/style-advice.md | have (opt-in, narrow) | S1 |
+| 19 | Sentence length, one idea per sentence, lone main clauses | Kotus virkakielivinkki "Vältä pitkiä virkkeitä" (over 15 words: consider splitting); ohjepankki virkakieli: selkeät virkkeet; Selkokeskus | none | S1 |
+| 20 | Nominal style, haitallisen tiivis ilmaisu (stacked nouns, participle/infinitive chains, lauseenvastikkeet) | ohjepankki /vk/ohjeita-saadoskieleen/haitallisen-tiivis-ilmaisu/ and selkea-tiivis-ilmaisu/; Selkokeskus (avoid lauseenvastikkeet, long attributes) | none | S2 |
+| 21 | Wordiness and officialese (turhat täytesanat, vanhahtavat virkakielen sanat, "suorittaa" + noun) | Hyvän virkakielen ohjeet: sanasto ja sananvalinta; valtioneuvosto toimintaohjelma | none | S2 (needs a cited word list) |
+| 22 | Repetition (same word/stem in adjacent sentences, same sentence opener) | virkakieli: sidosteisuus, jäsennelty teksti; style only | none | S3 |
+| 23 | List form consistency (luetelmat, parallel forms) | ohjepankki Tyylivalinnat, otsikot, luetelma; Selkokeskus | none | S3 |
+| 24 | Unclear reference, long distance between subject and verb | virkakieli: selkeät virkkeet | none | S3 (parser) |
+| 25 | Tone and address (te/sinä consistency, imperative vs. polite) | virkakieli: sävy; docs/style-advice.md person consistency | partial | S3 |
+
+## Style and clarity: severity tiers and configuration
+
+Style rules are advisory. They never use severity `error` and never block a
+grammar diagnostic on the same span (grammar wins, as in docs/style-advice.md).
+
+| tier | meaning | default |
+|---|---|---|
+| `error` | norm violation, source says "norminmukainen" | on |
+| `warning` | contested or context-dependent norm (VISK describes variation) | on |
+| `style` | advisory good-writing advice (active voice, sentence length) | off, opt-in |
+| `info` | plain-language (selkokieli) or officialese profile hints | off, profile opt-in |
+
+Configuration (Writer settings, CLI `--profile`, API `profile`): named
+profiles `standard` (errors + warnings), `writing` (adds style), `virkakieli`
+(adds officialese and tiivis ilmaisu hints), `selkokieli` (adds Selkokeskus
+rules, stricter thresholds). Each rule can be toggled by id; thresholds
+(sentence word count, passive share) are settings with the cited value as
+default. Messages are labelled "Ehdotus", not "Virhe", for style/info.
+Style rules skip quoted, code-like and ambiguous text, and make no automatic
+rewrites.
+
+## Method (per category)
+
+1. Read the VISK section(s) and the ohjepankki entry; record URL, quote the
+   norm in the rule header (short), and the norm vs variation line.
+2. List the surface patterns the morphology layer can detect (Voikko
+   analyses: CLASS, SIJAMUOTO, NUMBER, PERSON, PARTICIPLE, FSTOUTPUT).
+3. List guards from the VISK exceptions (e.g. §1292 double passive, "ei oltu
+   tehty"; §530 transitive passive participles as predicatives).
+4. Implement as table + generic checker, test, run `eval/evaluate.py` on the
+   clean set; any new flag on clean text blocks the rule (AGENTS.md).
+5. Measure on held-out data when available (ROADMAP 1: FinnGEC/DaLA; DaLA is
+   synthetic). Report per-category precision, not only recall.
+
+## Proposed order
+
+1. Registry + coverage-map generator + migrate the 5 existing rule
+   families onto it (no behaviour change; tests prove equivalence).
+2. Cat. 1 and 2 generalised (all finite verbs, all participle forms).
+3. Cat. 4 and 8 (number/case agreement; numeral+noun).
+4. Cat. 12, 14 (capitalisation, numbers/units/abbreviations) from the
+   ohjepankki.
+5. Style S1 (cat. 18, 19) with profiles/config; then S2.
+6. Cat. 11 once a compound resource is cleared (ROADMAP 3).
+7. Cats. 5, 6, 9, 10 with parser tier; cat. 7, 15, 16 research only.
+
+## Open questions for Olli
+
+- Severity policy: is "norm" = Kielitoimisto standard language always, or
+  is speech-like (me ollaan) accepted as no-flag? Current default: no flag.
+- Priority between precision (few flags) and recall for the first release.
+- Is a licensing check of VISK text reuse needed? Plan: cite and paraphrase,
+  never copy VISK passages or example sentences into the repo.

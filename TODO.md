@@ -91,3 +91,4 @@
   HTTP-palvelimen vastauksiin (`punakyna/api.py`).
 - Torjuu MIME-tyypin nuuskimisen ja selaimen kehysupotuksen / clickjacking-riskit.
 - Testit: `tests/test_api_hardening.py` päivitetty kattamaan turvaotsakkeet.
+- v0.1.1 (2026-11-07): docs/grammar-inventory.md: suunnitelma systemaattiselle, lähteistetylle sääntörekisterille.
