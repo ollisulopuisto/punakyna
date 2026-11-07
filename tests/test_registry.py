@@ -13,7 +13,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 def _emitted_ids():
     ids = set()
     for p in (ROOT / 'punakyna').glob('*.py'):
-        ids |= set(re.findall(r"rule='([A-Z_]+)'", p.read_text()))
+        text = p.read_text()
+        ids |= set(re.findall(r"rule='([A-Z_]+)'", text))
+        ids |= set(re.findall(r"Suggestion\('([A-Z_]+)'", text))
     return ids
 
 

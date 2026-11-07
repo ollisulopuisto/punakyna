@@ -144,3 +144,14 @@
 - Precision: 0 flags on the ~77k-word fi.wikipedia sweep; smoke eval 0 false alarms
   on 34 clean sentences. Not a held-out benchmark; recall on real writer errors unknown.
 - Version 0.1.5. Next: predicative agreement (cat. 4), style profile config.
+## 2026-11-07: style profile: sentence length, virkakieli preset (v0.1.6, inventory S1)
+
+- StyleProfile.max_sentence_words (0 off), STYLE_SENTENCE_LENGTH, preset('virkakieli'),
+  CLI --max-sentence-words / --profile. Sources: Kotus virkakielivinkki and
+  Kielitoimiston ohjepankki "Pitkät virkkeet" (read 2026-11-07): 15 words, no
+  absolute limit. Opt-in only; never `error`.
+- Style rule ids (STYLE_*) now in the registry; test_registry also scans
+  positional Suggestion('ID', ...) constructors. STYLE_PERSON has only a chapter-level source.
+- Not done: LibreOffice settings dialog field, selkokieli preset (Selkokeskus gives
+  no numeric threshold I could verify), nominal style / wordiness rules.
+- Version 0.1.6.

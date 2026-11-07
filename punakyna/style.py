@@ -12,6 +12,7 @@ class StyleProfile:
     prefer_active: bool = False
     narrator: str = 'any'  # any | mina | me
     reader: str = 'any'    # any | sina | te
+    max_sentence_words: int = 0  # 0 = off; Kotus/ohjepankki: yli 15 sanaa -> harkitse jakamista
 
     @classmethod
     def from_value(cls, value):
@@ -20,7 +21,7 @@ class StyleProfile:
         if isinstance(value, cls):
             value.validate()
             return value
-        if not isinstance(value, dict) or set(value) - {'prefer_active', 'narrator', 'reader'}:
+        if not isinstance(value, dict) or set(value) - {'prefer_active', 'narrator', 'reader', 'max_sentence_words'}:
             raise ValueError('invalid style profile')
         p = cls(**value)
         p.validate()
@@ -29,12 +30,25 @@ class StyleProfile:
     def validate(self):
         if (type(self.prefer_active) is not bool
                 or self.narrator not in ('any', 'mina', 'me')
-                or self.reader not in ('any', 'sina', 'te')):
+                or self.reader not in ('any', 'sina', 'te')
+                or type(self.max_sentence_words) is not int
+                or not 0 <= self.max_sentence_words <= 200):
             raise ValueError('invalid style profile')
 
     @property
     def enabled(self):
-        return self.prefer_active or self.narrator != 'any' or self.reader != 'any'
+        return (self.prefer_active or self.narrator != 'any' or self.reader != 'any'
+                or self.max_sentence_words > 0)
+
+    @classmethod
+    def preset(cls, name):
+        """Nimetyt profiilit (docs/grammar-inventory.md). Oletus 'standard' = ei tyylivinkkeja."""
+        if name in (None, 'standard'):
+            return cls()
+        if name == 'virkakieli':
+            # Kielitoimiston ohjepankki: Pitkat virkkeet; Kotus virkakielivinkki
+            return cls(prefer_active=True, max_sentence_words=15)
+        raise ValueError('unknown style preset')
 
 
 # Conservative exclusion: whole sentences containing quotation/code delimiters
@@ -55,6 +69,19 @@ def check_style(sentence, offset, tokens, voikko, cache, profile):
         return []
     out = []
     flagged_roles = set()
+    if profile.max_sentence_words:
+        # Lahteet: https://kotus.fi/valta-pitkia-virkkeita/ ja
+        # https://kielitoimistonohjepankki.fi/vk/ohjeita-saadoskieleen/pitkat-virkkeet/
+        # (yli 15 sanaa: harkitse jakamista; ehdotonta rajaa ei ole).
+        words = [t for t in tokens if t.is_word]
+        if len(words) > profile.max_sentence_words:
+            first_over = words[profile.max_sentence_words]
+            out.append(Suggestion('STYLE_SENTENCE_LENGTH', 'style', 'style',
+                offset + first_over.start, offset + first_over.end,
+                'Tyylivinkki: virkkeessä on %d sanaa (raja %d). Pitkä virke voi olla '
+                'hankala lukijalle; harkitse jakamista kahteen virkkeeseen. Ehdotonta '
+                'pituusrajaa ei ole, ja pitkäkin virke voi olla selkeä.'
+                % (len(words), profile.max_sentence_words), []))
     for tok in tokens:
         if not tok.is_word:
             continue

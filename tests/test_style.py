@@ -1,3 +1,4 @@
+from punakyna.pipeline import check_text
 from types import SimpleNamespace
 from punakyna.style import StyleProfile, check_style
 import pytest
@@ -123,4 +124,36 @@ def test_cli_style_server_defaults(monkeypatch):
     captured = {}
     monkeypatch.setattr(api, 'serve', lambda **kw: captured.update(kw))
     main(['--serve', '--prefer-active', '--narrator', 'me'])
-    assert captured['style_profile'] == {'prefer_active': True, 'narrator': 'me', 'reader': 'any'}
+    assert captured['style_profile'] == {'prefer_active': True, 'narrator': 'me', 'reader': 'any',
+                                         'max_sentence_words': 0}
+    main(['--serve', '--profile', 'virkakieli'])
+    assert captured['style_profile'] == {'prefer_active': True, 'narrator': 'any',
+                                         'reader': 'any', 'max_sentence_words': 15}
+
+
+def test_sentence_length_hint_is_opt_in_and_cited():
+    from punakyna.style import StyleProfile
+    # 24 sanaa (oma lause, ei Kotuksen esimerkkilausetta)
+    long_s = ('Jos lapsen hoidon tarpeen ajankohtaa ei voi ennakoida ja paikan tarve johtuu '
+              'äkillisestä työllistymisestä tai opiskelupaikan saamisesta, paikkaa on haettava '
+              'niin pian kuin mahdollista.')
+    assert not [s for s in check_text(long_s, use_spelling=False)
+                if s.rule == 'STYLE_SENTENCE_LENGTH']
+    hits = [s for s in check_text(long_s, use_spelling=False,
+                                  style_profile={'max_sentence_words': 15})
+            if s.rule == 'STYLE_SENTENCE_LENGTH']
+    assert len(hits) == 1 and hits[0].severity == 'style'
+    assert long_s[hits[0].start:hits[0].end] == 'opiskelupaikan'  # 16. sana
+    assert not [s for s in check_text('Tämä on lyhyt virke.', use_spelling=False,
+                                      style_profile={'max_sentence_words': 15})
+                if s.rule == 'STYLE_SENTENCE_LENGTH']
+    assert StyleProfile.preset('virkakieli').max_sentence_words == 15
+    assert StyleProfile.preset('standard') == StyleProfile()
+
+
+def test_sentence_length_validation():
+    import pytest
+    from punakyna.style import StyleProfile
+    for bad in (-1, 201, True, '15', 1.5):
+        with pytest.raises(ValueError):
+            StyleProfile.from_value({'max_sentence_words': bad})
