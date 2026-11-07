@@ -132,3 +132,15 @@
 - Not done (needs parser or contested norm): plural subject + singular verb,
   predicative agreement (cat. 4), numeral + noun (cat. 8): next steps.
 - Version 0.1.4 (pyproject, __init__, description.xml, browser manifest, uv.lock).
+
+## 2026-11-07: numeral + noun case (v0.1.5, inventory step 3a)
+
+- New NUM_NOUN_CASE (warning, VISK §789, §773): cardinal 2-19 as a separate
+  nominative word + noun analysed only as singular nominative common noun
+  ("kolme lapsi" -> "kolme lasta"). No automatic replacement (no generator).
+- Skipped on purpose: digits (years, model numbers: "2020 syksy"), kuusi (also
+  the tree), sata/tuhat/miljoona, capitalised nouns, kello/klo/numero/luku/sivu/
+  kohta/vuonna + numeral, coordination (ja/tai/sekä), possessive suffix, names.
+- Precision: 0 flags on the ~77k-word fi.wikipedia sweep; smoke eval 0 false alarms
+  on 34 clean sentences. Not a held-out benchmark; recall on real writer errors unknown.
+- Version 0.1.5. Next: predicative agreement (cat. 4), style profile config.

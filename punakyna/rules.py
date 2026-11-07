@@ -391,6 +391,50 @@ def check_sg_subject_plural_verb(sent_text, offset, words, voikko, cache, before
     return out
 
 
+# Numeraali (nominatiivi) + laskettava substantiivi: "kolme lasta", ei "kolme lapsi".
+# VISK §789 ("Viisi lasta ja viidellä lapsella"): yksikon nominatiivissa tai
+# partitiivissa olevan numeraalin kanssa laskettava on yksikon partitiivissa;
+# muissa sijoissa numeraali ja substantiivi kongruoivat. Rajattu: perusluvut
+# 2-19 omina sanoinaan, seuraava sana vain yksikon nominatiivina analysoituva
+# yleisnimi. "kuusi" ohitetaan (kuusi = myos puu), samoin sata/tuhat ym.
+_NUM_NOM = {
+    'kaksi', 'kolme', 'neljä', 'viisi', 'seitsemän', 'kahdeksan', 'yhdeksän',
+    'kymmenen', 'yksitoista', 'kaksitoista', 'kolmetoista', 'neljätoista',
+    'viisitoista', 'kuusitoista', 'seitsemäntoista', 'kahdeksantoista',
+    'yhdeksäntoista',
+}
+
+
+def check_numeral_noun_case(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, (prev, cur) in enumerate(zip(words, words[1:])):
+        if prev.lower not in _NUM_NOM:
+            continue
+        if sent_text[prev.end:cur.start].strip():
+            continue  # valimerkki valissa ("kaksi, kolme")
+        if cur.text[:1].isupper():
+            continue  # nimi ("Kolme Viisasta")
+        if i > 0 and words[i - 1].lower in ('kello', 'klo', 'numero', 'luku', 'sivu',
+                                            'kohta', 'pykälä', 'vuonna', 'ja', 'tai', 'sekä'):
+            continue  # kellonaika, numero + nimike, luettelo
+        cur_an = _analyze(voikko, cur.text, cache)
+        if not _sg_nom_only(cur_an):
+            continue
+        if any(a.get('POSSESSIVE') for a in cur_an):
+            continue
+        if any(a.get('CLASS') in ('sukunimi', 'etunimi', 'paikannimi') for a in cur_an):
+            continue
+        if cur.lower in _NUM_NOM or cur.lower in ('sata', 'tuhat', 'miljoona', 'miljardi'):
+            continue
+        out.append(Suggestion(
+            rule='NUM_NOUN_CASE', category='grammar', severity='warning',
+            start=offset + cur.start, end=offset + cur.end,
+            message=('Numeraalin "%s" jälkeen laskettava on yksikön partitiivissa '
+                     '(esim. "kolme lasta"), ei nominatiivissa.' % prev.text),
+            replacements=[]))
+    return out
+
+
 def check_lowercase_names(sent_text, offset, words, voikko, cache):
     """Kuukausi/viikonpaiva/vuodenaika isolla alkukirjaimella lauseen sisalla."""
     out = []
@@ -633,6 +677,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_pron_verb_agreement(sent_text, offset, words, voikko, cache)
     out += check_sg_subject_plural_verb(
         sent_text, offset, words, voikko, cache, before)
+    out += check_numeral_noun_case(sent_text, offset, words, voikko, cache)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
         sent_text, offset, words, voikko, cache)
