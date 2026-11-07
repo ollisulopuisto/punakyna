@@ -93,3 +93,5 @@
 - Testit: `tests/test_api_hardening.py` päivitetty kattamaan turvaotsakkeet.
 - v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.
 - v0.1.2 (2026-11-07): sääntörekisteri + kattavuuskartta (docs/coverage-map.md); ei toiminnallisia muutoksia.
+
+- LibreOffice update feed (2026-11-07): description.xml update-information, make_update_xml.py, update-feed.yml; first real check needs a published full release. Version 0.1.3.

@@ -98,3 +98,17 @@
   citations older than this registry (e.g. §1581, §1284c in rules.py) are not
   yet re-verified. Next: generalise participle/agreement rules (inventory cat. 1-2).
 - New rules must add a RuleSpec with a verified source before merging.
+
+## 2026-11-07: LibreOffice extension update feed (Olli: "native Libre office way")
+
+- description.xml now has update-information pointing at
+  https://github.com/ollisulopuisto/punakyna/releases/latest/download/punakyna.update.xml
+  (LibreOffice's own extension updater; Sparkle does not apply to an OXT).
+- make_update_xml.py writes the feed from description.xml's version and a release tag.
+  .github/workflows/update-feed.yml attaches it to published full releases that carry
+  punakyna-full-macos.oxt. Draft and pre-release candidates (what build-full-oxt makes)
+  never reach /releases/latest, so testers are not auto-updated. Free: ubuntu runner on a
+  public repo, one small release asset.
+- A new OXT version must raise the version in description.xml, or LibreOffice sees no update.
+- Not verified on a Mac: LibreOffice's Check for Updates against a real published release.
+- Version bumped to 0.1.3 (pyproject, __init__, description.xml, browser manifest, uv.lock); chain: 0.1.1 #19, 0.1.2 #21, 0.1.3 this PR.
