@@ -3,6 +3,7 @@
 - Suorituskyky: `punakyna/pipeline.py` `_spelling_suggestions` ja span-seuranta optimoitu (`_DIGITS.isdisjoint(w)` korvasi generaattorin `any(c.isdigit()...)`, `tok.lower` korvasi toistuvan `w.lower()`-kutsun, ja `startswith` korvasi toistuvat `text.find()`-haut; monikappaletekstin latenssi -42,5 %).
 - Suorituskyky: `punakyna/pipeline.py` token-luonti optimoitu käyttämään `_PipelineToken`-slots-luokkaa dynaamisen `type('T', (), ...)` luomisen sijaan (kappaletarkistuksen latenssi -58 %, savutestin kokonaisaika -29 %).
 - Suorituskyky: `punakyna/rules.py` `check_olla_agreement` optimoitu varhaisella poistumisella `_OLLA_3RD_PRES`-joukon ("on", "ovat") avulla välttäen turhat `_analyze`-morfologiakutsut muille sanoille (sääntökohtainen suoritusnopeutus ~79 %).
+- Suorituskyky: `punakyna/rules.py` `check_double_word` optimoitu varhaisella poistumisella `prev.lower != cur.lower` välttäen turhat virkekatkelmien osamerkkijonoviipaloinnit, `.strip()`-operaatiot ja `isupper()`-tarkistukset peräkkäisille erillisille sanoille (sääntökohtainen suoritusnopeutus ~61,7 %).
 - v0.1 (2026-11-03): initial pipeline, 7 unit tests passing, smoke eval
   19 error / 20 clean sentences, 0 false alarms.
 - v0.2 (2026-11-03): VOIKKO_GC-taso lisätty (ctypes-kaare, pip-sidonnan
