@@ -89,7 +89,7 @@ contested norm.
 | 5 | Infinitive / participle government (A-, MA-, E-inf.; "pyrkii tehdä") | VISK Infinitiivit ja partisiitit; Verbit | GC 14, 15 partial | 2 |
 | 6 | Case government: verbs/adpositions (pre/postpositio + genetiivi/partitiivi) | VISK Adpositiot; Sijamuotojen syntaksia | none | 2 |
 | 7 | Object case (akkusatiivi/partitiivi/nominatiivi) | VISK Sijamuotojen syntaksia | none | 3 (needs parse) |
-| 8 | Numeral + noun case/number (kaksi talo, 5 kirjaa) | VISK Numeraalit; ohjepankki Lause: yksikkö ja monikko | none | 1 |
+| 8 | Numeral + noun case/number (kaksi talo, 5 kirjaa) | VISK §789, §773; ohjepankki Lause: yksikkö ja monikko | have (words 2-19 only; digits and 20+ open) | 1 |
 | 9 | Passive: personal passive "me mennään" is speech; "ollaan menty" | VISK §1292 | partial (guards) | 2 |
 | 10 | Comparison (isompi kuin vs isompaa; superlative forms) | VISK Komparaatio | none | 2 |
 | 11 | Compound words, hyphenation (yhdyssanavirhe, sanaliitto, väli-viiva) | VISK Yhdyssanat; ohjepankki Sana | spelling GC partial | 1 (needs resource, see ROADMAP 3) |
