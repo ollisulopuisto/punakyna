@@ -71,22 +71,25 @@ def _baseforms(analyses):
 def check_double_word(sent_text, offset, words):
     out = []
     for prev, cur in zip(words, words[1:]):
+        # Suorituskyky: Verrataan sanoja ensin. Lähes kaikki peräkkäiset sanat
+        # ovat eri sanoja (prev.lower != cur.lower), joten vältetään turha
+        # osamerkkijonojen leikkely (sent_text[prev.end:cur.start].strip()) ja
+        # isupper()-tarkistukset valtaosalle sanapareista.
+        if prev.lower != cur.lower:
+            continue
         if len(cur.text) < 2:
             continue
-        if not sent_text[prev.end:cur.start].strip():
-            pass
-        else:
+        if sent_text[prev.end:cur.start].strip():
             continue  # valissa valimerkki (esim. luettelo "Concorde, Concorde Nova")
         if cur.text[:1].isupper():
             continue  # toistuva nimi ("Díaz Díaz", "Sigue Sigue Sputnik")
         if prev.text[:1].isupper() and prev.start > 0:
             continue  # tieteellinen kaksinimitys ("Histrionicus histrionicus")
-        if prev.lower == cur.lower:
-            out.append(Suggestion(
-                rule='DOUBLE_WORD', category='grammar', severity='error',
-                start=offset + cur.start, end=offset + cur.end,
-                message=f'Sana "{cur.text}" toistuu peräkkäin.',
-                replacements=[]))
+        out.append(Suggestion(
+            rule='DOUBLE_WORD', category='grammar', severity='error',
+            start=offset + cur.start, end=offset + cur.end,
+            message=f'Sana "{cur.text}" toistuu peräkkäin.',
+            replacements=[]))
     return out
 
 
