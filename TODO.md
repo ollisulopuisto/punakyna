@@ -99,3 +99,4 @@
 - v0.1.5 (2026-11-07): NUM_NOUN_CASE (kolme lapsi -> kolme lasta; VISK §789, §773). Katso AGENTS.md.
 - v0.1.6 (2026-11-07): STYLE_SENTENCE_LENGTH + --profile virkakieli (opt-in). Katso docs/style-advice.md, AGENTS.md.
 - v0.1.7 (2026-11-07): ATTR_AGREEMENT (isot talo -> isot talot; VISK §1302, §582). Katso AGENTS.md.
+- v0.1.8 (2026-11-07): TYPO_PERCENT_SPACE, TYPO_CURRENCY_SPACE, TYPO_CLOCK_FORMAT, TYPO_ABBR_DOT (ohjepankki). Katso docs/ohjepankki-candidates.md, AGENTS.md.

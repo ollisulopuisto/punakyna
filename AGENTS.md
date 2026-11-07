@@ -168,3 +168,16 @@
   on the wiki sweep; both fixed. Now 0 flags on the ~77k-word sweep and 0/34 on the clean smoke set.
 - Predicative (post-copula) agreement stays with the parser tier (PRED_NUM).
 - Version 0.1.7.
+
+## 2026-11-07: typography rules from the ohjepankki (v0.1.8)
+
+- New: TYPO_PERCENT_SPACE, TYPO_CURRENCY_SPACE, TYPO_CLOCK_FORMAT (style), TYPO_ABBR_DOT.
+  Sources are the four ohjepankki pages in the registry (read directly). Page text is not
+  copied; docs/ohjepankki-candidates.md has our paraphrased candidate list for the whole site.
+- Licence: the ohjepankki footer says CC BY-NC-ND 4.0, so the repo holds links and our own
+  paraphrase only. The crawled datasets (ohjepankki 729 pages, VISK partial) are private.
+- libvoikko splits sentences at "9:" in "klo 9:15", so the clock check runs on the whole text
+  in the pipeline instead of per sentence.
+- Precision: 1 hit on the ~77k-word Wikipedia sweep ("Kello 10:45", a true instance of the
+  style advice), 0 on the clean smoke set.
+- This PR is stacked on #26 (ATTR_AGREEMENT, v0.1.7). Version 0.1.8.

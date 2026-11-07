@@ -737,6 +737,72 @@ def check_active_perfect_passive_participle(sent_text, offset, words, voikko, ca
     return out
 
 
+# Typografia (Kielitoimiston ohjepankki). Kapeat, mekaaniset saannot:
+#  - numero + %, € $ £ : valilyonti numeron ja merkin valiin
+#    (https://kielitoimistonohjepankki.fi/ohje/prosenttimerkki/ ja .../rahasummat/)
+#  - kellonaika pisteella, ei kaksoispisteella; ei etunollaa tunneissa
+#    (https://kielitoimistonohjepankki.fi/ohje/ajanilmaukset-kellonajat-merkinta-ja-taivutus/)
+#  - pisteelliset lyhenteet esim., jne., tms., yms., huom.
+#    (https://kielitoimistonohjepankki.fi/ohje/lyhenteet-pisteelliset/)
+_RE_PERCENT = re.compile(r'(?<![\w.,/%-])(\d+(?:,\d+)?)(%)(?!\w)')
+_RE_CURRENCY = re.compile(r'(?<![\w.,/-])(\d+(?:,\d+)?)([€$£])(?![\w])')
+_RE_CLOCK_COLON = re.compile(r'\b(klo|kello) (\d{1,2}):(\d{2})(?![\d:])', re.I)
+_RE_CLOCK_ZERO = re.compile(r'\b(klo|kello) (0\d)(?:\.(\d{2}))?(?![\d:,]|\.\d)', re.I)
+_RE_ABBR = re.compile(r'(?<![\w.-])(esim|jne|tms|yms|huom)(?![\w.:-])', re.I)
+
+
+def _check_clock(sent_text, offset):
+    out = []
+    for m in _RE_CLOCK_COLON.finditer(sent_text):
+        hh, mm = int(m.group(2)), int(m.group(3))
+        if hh > 24 or mm > 59:
+            continue
+        out.append(Suggestion(
+            rule='TYPO_CLOCK_FORMAT', category='style', severity='style',
+            start=offset + m.start(), end=offset + m.end(),
+            message=('Suomenkielisessä asiatekstissä tunnit ja minuutit erotetaan '
+                     'pisteellä ("%s %d.%s"). Ohje on suositus.' % (m.group(1), hh, m.group(3))),
+            replacements=['%s %d.%s' % (m.group(1), hh, m.group(3))]))
+    for m in _RE_CLOCK_ZERO.finditer(sent_text):
+        hh = int(m.group(2))
+        if hh > 9:
+            continue
+        out.append(Suggestion(
+            rule='TYPO_CLOCK_FORMAT', category='style', severity='style',
+            start=offset + m.start(), end=offset + m.end(),
+            message='Kellonaikaan ei yleensä merkitä etunollaa ("klo 9.15"). Ohje on suositus.',
+            replacements=[]))
+    return out
+
+
+def check_typography(sent_text, offset, clock=False):
+    """clock=True: vain kellonaikasäännöt (ajetaan koko tekstille, koska
+    libvoikko katkaisee virkkeen kaksoispisteeseen: 'klo 9:' + '15')."""
+    out = []
+    if clock:
+        return _check_clock(sent_text, offset)
+    for m in _RE_PERCENT.finditer(sent_text):
+        out.append(Suggestion(
+            rule='TYPO_PERCENT_SPACE', category='style', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message='Numeron ja prosenttimerkin väliin tulee välilyönti ("10 %").',
+            replacements=[m.group(1) + '\u00a0%']))
+    for m in _RE_CURRENCY.finditer(sent_text):
+        out.append(Suggestion(
+            rule='TYPO_CURRENCY_SPACE', category='style', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message='Numeron ja rahayksikön tunnuksen väliin tulee välilyönti ("29,90 €").',
+            replacements=[m.group(1) + '\u00a0' + m.group(2)]))
+    for m in _RE_ABBR.finditer(sent_text):
+        word = m.group(1)
+        out.append(Suggestion(
+            rule='TYPO_ABBR_DOT', category='spelling', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message='Lyhenteen perässä on piste ("%s.").' % word.lower(),
+            replacements=[word + '.']))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -749,6 +815,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
         sent_text, offset, words, voikko, cache, before)
     out += check_numeral_noun_case(sent_text, offset, words, voikko, cache)
     out += check_attribute_agreement(sent_text, offset, words, voikko, cache)
+    out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
         sent_text, offset, words, voikko, cache)
