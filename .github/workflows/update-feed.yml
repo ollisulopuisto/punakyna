@@ -1,0 +1,35 @@
+name: update-feed
+
+# LibreOffice checks the update feed named in description.xml
+# (releases/latest/download/punakyna.update.xml). When a full release is
+# published, attach that feed file to it. Runs only for published, non-draft,
+# non-pre-releases that carry the OXT; no storage beyond the release asset,
+# standard public runner.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  feed:
+    if: ${{ !github.event.release.prerelease && !github.event.release.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Attach punakyna.update.xml if the release has the OXT
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -eu
+          gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx 'punakyna-full-macos.oxt' \
+            || { echo 'no OXT asset; no feed written'; exit 0; }
+          python3 adapters/libreoffice/xproofreader/make_update_xml.py "$TAG" punakyna.update.xml
+          cat punakyna.update.xml
+          gh release upload "$TAG" punakyna.update.xml --clobber
