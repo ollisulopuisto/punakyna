@@ -95,3 +95,4 @@
 - v0.1.2 (2026-11-07): sääntörekisteri + kattavuuskartta (docs/coverage-map.md); ei toiminnallisia muutoksia.
 
 - LibreOffice update feed (2026-11-07): description.xml update-information, make_update_xml.py, update-feed.yml; first real check needs a published full release. Version 0.1.3.
+- v0.1.4 (2026-11-07): SV_NUMBER_NONOLLA (yksikkösubjekti + monikkoverbi), PERFECT_PASSIVE_PARTICIPLE-taulukko laajennettu ja testattu Voikkoa vasten. Katso AGENTS.md.

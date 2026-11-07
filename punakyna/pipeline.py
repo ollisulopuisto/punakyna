@@ -210,7 +210,8 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
         if use_spelling:
             out += _spelling_suggestions(sent_text, s_off, toks, voikko)
         if use_rules:
-            out += run_rules(sent_text, s_off, toks, voikko, cache)
+            out += run_rules(sent_text, s_off, toks, voikko, cache,
+                             before=text[max(0, s_off - 40):s_off])
         if style_allowed:
             style_out += check_style(sent_text, s_off, toks, voikko, cache, profile)
         if neural_backend is not None:

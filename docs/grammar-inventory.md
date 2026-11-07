@@ -83,7 +83,7 @@ contested norm.
 | # | Category | Primary source (VISK chapter / ohjepankki) | Coverage | Prio |
 |---|---|---|---|---|
 | 1 | Compound-tense participle form (olen menty; §1292, §530, §1534) | VISK Passiivi; Tempus | have (limited verb list) | 1: extend |
-| 2 | Subject-verb / pronoun-verb agreement (kongruenssi) | VISK Kongruenssi | have (narrow) | 1: extend to all finite verbs, not only olla |
+| 2 | Subject-verb / pronoun-verb agreement (kongruenssi) | VISK Kongruenssi | have (olla, pronoun, sg subject + pl verb) | 1: extend to all finite verbs, not only olla |
 | 3 | Negation: neg. verb + connegative, ei + 1/2 pers. | VISK Kielto ja kielteiset ilmaukset | GC 13 + have | 1: verify gaps (imperative älä, "ei" + finite) |
 | 4 | Predicative/attribute agreement in number and case (isot talo, hyvä ruoat) | VISK Kongruenssi; Adjektiivit | none | 1 |
 | 5 | Infinitive / participle government (A-, MA-, E-inf.; "pyrkii tehdä") | VISK Infinitiivit ja partisiitit; Verbit | GC 14, 15 partial | 2 |

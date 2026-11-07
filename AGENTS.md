@@ -112,3 +112,23 @@
 - A new OXT version must raise the version in description.xml, or LibreOffice sees no update.
 - Not verified on a Mac: LibreOffice's Check for Updates against a real published release.
 - Version bumped to 0.1.3 (pyproject, __init__, description.xml, browser manifest, uv.lock); chain: 0.1.1 #19, 0.1.2 #21, 0.1.3 this PR.
+
+## 2026-11-07: participle/agreement generalisation (v0.1.4, inventory step 2)
+
+- PERFECT_PASSIVE_PARTICIPLE: verb table widened from 21 to 33 intransitives.
+  tests/test_sg_subject_plural_verb.py checks every table entry against Voikko
+  (sg and pl NUT forms exist and belong to the verb), so the table cannot rot.
+- New SV_NUMBER_NONOLLA (severity `warning`, VISK §1267, §1270, §1272): singular
+  nominative-only noun immediately before a 3rd-person plural finite verb that is
+  not olla ("Lapsi leikkivät"). Only this direction: plural subject + singular
+  verb ("lapset leikkii") is common speech and is deliberately not flagged.
+  Guards: coordination (also across ordinal-dot sentence splits, via new
+  `before` context passed to run_rules), possessive suffix (Voikko POSSESSIVE),
+  collective proper names, kaikki/moni/jokainen, olla (copula agrees with predicative).
+- Precision check: unmodified Wikipedia sweep of 16+8 fi.wikipedia articles
+  (~77k words, 2026-11-07): 0 flags from both rules after fixing three false
+  positives found on the first pass (ordinal coordination x2, copula). Not a
+  held-out benchmark. Smoke eval: 0 false alarms on 32 clean sentences.
+- Not done (needs parser or contested norm): plural subject + singular verb,
+  predicative agreement (cat. 4), numeral + noun (cat. 8): next steps.
+- Version 0.1.4 (pyproject, __init__, description.xml, browser manifest, uv.lock).
