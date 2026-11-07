@@ -63,3 +63,9 @@
 - Fixes handling of standard IPv6 loopback `[::1]` and `::1` without ports.
 - Rejects malformed host headers with non-numeric ports (e.g. `127.0.0.1:evil`), out-of-range ports, and userinfo.
 - Added regression tests in `tests/test_api_hardening.py`.
+
+## 2026-11-07: Security response headers enhancement (Sentinel)
+
+- Added defense-in-depth HTTP security headers (`X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`) to all server responses in `punakyna/api.py`.
+- Protects clients and browsers from MIME type sniffing and iframe framing / UI redressing.
+- Added regression tests in `tests/test_api_hardening.py`.

@@ -97,6 +97,42 @@ def test_no_cors_headers(server):
     conn.close()
 
 
+def test_security_headers_present(server):
+    """Palvelimen vastausten on sisällettävä turvaotsakkeet MIME-nuuskinnan ja kehyksiin upotuksen torjumiseksi."""
+    # POST /check onnistunut vastaus
+    conn = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=10)
+    conn.request('POST', '/check', body=_good_body(), headers=_good_headers())
+    resp = conn.getresponse(); resp.read()
+    assert resp.getheader('X-Content-Type-Options') == 'nosniff'
+    assert resp.getheader('X-Frame-Options') == 'DENY'
+    conn.close()
+
+    # GET /health
+    conn = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=10)
+    conn.request('GET', '/health', headers={'Host': '127.0.0.1'})
+    resp = conn.getresponse(); resp.read()
+    assert resp.getheader('X-Content-Type-Options') == 'nosniff'
+    assert resp.getheader('X-Frame-Options') == 'DENY'
+    conn.close()
+
+    # Virhevastaukset (esim. 401, 404)
+    conn = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=10)
+    conn.request('POST', '/check', body=_good_body(), headers={'Host': '127.0.0.1', 'Content-Type': 'application/json'})
+    resp = conn.getresponse(); resp.read()
+    assert resp.status == 401
+    assert resp.getheader('X-Content-Type-Options') == 'nosniff'
+    assert resp.getheader('X-Frame-Options') == 'DENY'
+    conn.close()
+
+    conn = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=10)
+    conn.request('GET', '/tuntematon', headers={'Host': '127.0.0.1'})
+    resp = conn.getresponse(); resp.read()
+    assert resp.status == 404
+    assert resp.getheader('X-Content-Type-Options') == 'nosniff'
+    assert resp.getheader('X-Frame-Options') == 'DENY'
+    conn.close()
+
+
 def test_options_preflight_rejected(server):
     status, _ = _req(server, '/check', method='OPTIONS',
                      headers={'Host': '127.0.0.1',

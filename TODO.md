@@ -83,3 +83,10 @@
   ja portin numeerisuuden sekä arvoalueen (1-65535). Sallii oikein `[::1]` ja `::1`
   ilman porttia sekä torjuu `127.0.0.1:evil` kaltaiset vääristymät.
 - Testit: `tests/test_api_hardening.py` päivitetty kattamaan rajatapaukset.
+
+## 2026-11-07: Security response headers enhancement (Sentinel)
+
+- Parannus: lisätty `X-Content-Type-Options: nosniff` ja `X-Frame-Options: DENY`
+  HTTP-palvelimen vastauksiin (`punakyna/api.py`).
+- Torjuu MIME-tyypin nuuskimisen ja selaimen kehysupotuksen / clickjacking-riskit.
+- Testit: `tests/test_api_hardening.py` päivitetty kattamaan turvaotsakkeet.
