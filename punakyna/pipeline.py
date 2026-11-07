@@ -222,6 +222,9 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
                     start=s_off, end=s_off + len(sent_text),
                     message='Mallin ehdottama muokkaus (tarkista ihmisena).',
                     replacements=[corr.corrected]))
+    if use_rules:
+        from .rules import check_typography
+        out += check_typography(text, 0, clock=True)
     if use_parser:
         from .parser_tier import check as parser_check
         own = [(s.start, s.end) for s in out]
