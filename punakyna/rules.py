@@ -15,7 +15,7 @@ from .voikko_compat import Token
 class Suggestion:
     rule: str
     category: str           # 'spelling' | 'grammar' | 'style'
-    severity: str           # 'error' | 'style' | 'info'
+    severity: str           # 'error' | 'warning' | 'style' | 'info'
     start: int              # merkkisijainti alkuperaisessa tekstissa
     end: int
     message: str
@@ -316,6 +316,81 @@ def check_olla_agreement(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Yksikon nominatiivisubjekti + monikon 3. persoonan verbi ("Lapsi leikkivät").
+# VISK §1267-1270 (kongruenssi): finiittiverbi kongruoi subjektin kanssa
+# luvussa. Vain suunta yksikko -> monikkoverbi tarkistetaan: monikkosubjekti +
+# yksikkoverbi ("lapset leikkii") on puhekielen yleinen muoto (VISK §1272
+# kuvaa puhekielen persoonajarjestelmaa), joten sita ei liputeta.
+# On/ovat kuuluu check_olla_agreement-saannolle.
+_ORDINAL_BEFORE = re.compile(r'\d+\.\s*$')
+_COORD_BEFORE = re.compile(r'(?:^|\s)(?:ja|sekä|tai|eli|että)(?:\s|$)')
+
+
+def _sg_nom_only(analyses):
+    return bool(analyses) and all(
+        a.get('CLASS') == 'nimisana' and a.get('NUMBER') == 'singular'
+        and a.get('SIJAMUOTO') == 'nimento' for a in analyses)
+
+
+def _finite_3pl(analyses):
+    return any(a.get('CLASS') == 'teonsana' and a.get('PERSON') == '3'
+               and a.get('NUMBER') == 'plural'
+               and a.get('MOOD') in ('indicative', 'conditional', 'potential')
+               for a in analyses)
+
+
+def check_sg_subject_plural_verb(sent_text, offset, words, voikko, cache, before=''):
+    out = []
+    for i, (prev, cur) in enumerate(zip(words, words[1:])):
+        if cur.lower in _OLLA_3RD_PRES or len(cur.text) < 5:
+            continue
+        if not cur.lower.endswith(('vat', 'vät', 'ivat', 'ivät', 'isivat', 'isivät')):
+            continue  # varhainen poistuminen: monikon 3. persoonan paate
+        if sent_text[prev.end:cur.start].strip():
+            continue  # valimerkki valissa
+        if prev.lower in ('kaikki', 'moni', 'joku', 'jokainen', 'kukaan', 'mikään'):
+            continue
+        if prev.text[:1].isupper() and prev is not words[0]:
+            continue  # kollektiivinen erisnimi
+        if prev is words[0] and prev.text[:1].islower():
+            continue  # virkkeen alku pienella: katkennut "3. ja 5. divisioona" -virke
+        # koordinoitu tai yhteinen subjekti ("Pekka ja Liisa", "poika sekä tytto")
+        coord = False
+        for back in words[max(0, i - 5):i][::-1]:
+            if back.lower in ('ja', 'sekä', 'tai', 'eli', 'että', 'vaan', 'mutta', 'sekä'):
+                coord = True
+                break
+            if any(a.get('CLASS') == 'teonsana' and '[Tt]' in (a.get('FSTOUTPUT') or '')
+                   for a in _analyze(voikko, back.text, cache)):
+                break
+        if not coord and _COORD_BEFORE.search(sent_text[max(0, prev.start - 30):prev.start]):
+            coord = True  # esim. "34. ja 50. Armeijakunta hyokkasivat" (numerot eivat ole sanoja)
+        if not coord and _ORDINAL_BEFORE.search((before + sent_text)[:len(before) + prev.start]):
+            coord = True  # lauseraja jakaa "3. ja 5. divisioona" (jarjestysluvun piste)
+        if coord:
+            continue
+        verb_an = _analyze(voikko, cur.text, cache)
+        if not _finite_3pl(verb_an):
+            continue
+        if any(a.get('BASEFORM') == 'olla' for a in verb_an):
+            continue  # kopula: sopii predikatiivin kanssa ("tekija olivat ...")
+        prev_an = _analyze(voikko, prev.text, cache)
+        if not _sg_nom_only(prev_an):
+            continue
+        if any(a.get('POSSESSIVE') for a in prev_an):
+            continue  # possessiivisuffiksi yhdistaa numerot ("kirjansa ovat")
+        if any(a.get('CLASS') in ('sukunimi', 'etunimi', 'paikannimi')
+               for a in prev_an):
+            continue
+        out.append(Suggestion(
+            rule='SV_NUMBER_NONOLLA', category='grammar', severity='warning',
+            start=offset + cur.start, end=offset + cur.end,
+            message=('Kongruenssi: yksiköllinen subjekti ("%s") ja monikon '
+                     '3. persoonan verbi "%s". Tarkista luku.' % (prev.text, cur.text)),
+            replacements=[]))
+    return out
+
+
 def check_lowercase_names(sent_text, offset, words, voikko, cache):
     """Kuukausi/viikonpaiva/vuodenaika isolla alkukirjaimella lauseen sisalla."""
     out = []
@@ -465,6 +540,18 @@ _INTRANSITIVE_NUT = {
     'tanssia': ('tanssinut', 'tanssineet'), 'nauraa': ('nauranut', 'nauraneet'),
     'itkeä': ('itkenyt', 'itkeneet'), 'kulkea': ('kulkenut', 'kulkeneet'),
     'pysähtyä': ('pysähtynyt', 'pysähtyneet'),
+    'ratsastaa': ('ratsastanut', 'ratsastaneet'),
+    'hypätä': ('hypännyt', 'hypänneet'),
+    'kiivetä': ('kiivennyt', 'kiivenneet'),
+    'pudota': ('pudonnut', 'pudonneet'),
+    'kaatua': ('kaatunut', 'kaatuneet'),
+    'syntyä': ('syntynyt', 'syntyneet'),
+    'kuolla': ('kuollut', 'kuolleet'),
+    'herätä': ('herännyt', 'heränneet'),
+    'väsyä': ('väsynyt', 'väsyneet'),
+    'sairastua': ('sairastunut', 'sairastuneet'),
+    'ehtiä': ('ehtinyt', 'ehtineet'),
+    'viipyä': ('viipynyt', 'viipyneet'),
 }
 _OLLA_FINITE_NON3 = {
     'olen': 'singular', 'olet': 'singular', 'olemme': 'plural',
@@ -536,7 +623,7 @@ def check_active_perfect_passive_participle(sent_text, offset, words, voikko, ca
     return out
 
 
-def run_rules(sent_text, offset, tokens, voikko, cache):
+def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
     out += check_double_word(sent_text, offset, words)
@@ -544,6 +631,8 @@ def run_rules(sent_text, offset, tokens, voikko, cache):
     out += check_negation_agreement(sent_text, offset, words)
     out += check_olla_agreement(sent_text, offset, words, voikko, cache)
     out += check_pron_verb_agreement(sent_text, offset, words, voikko, cache)
+    out += check_sg_subject_plural_verb(
+        sent_text, offset, words, voikko, cache, before)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
         sent_text, offset, words, voikko, cache)
