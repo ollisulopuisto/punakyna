@@ -87,3 +87,14 @@
 - Env note: test_lo_writer_gui and test_lo_xproofreader fail in this Linux sandbox
   (unopkg install fails; also fails on unmodified main for the GUI test).
 - Version bumped to 0.1.1 (pyproject, __init__, description.xml, browser manifest, uv.lock). No OXT built.
+
+## 2026-11-07: rule registry (v0.1.2, stacked on PR #19)
+
+- Added punakyna/registry.py (id, category, layer, severity, sources, source
+  status, tests per rule) and scripts/gen_coverage_map.py -> docs/coverage-map.md.
+- tests/test_registry.py: every emitted rule id is registered, sourced and has
+  an existing test module; map must be regenerated when the registry changes.
+- No behaviour change. Source status 'chapter' (DOUBLE_WORD) and in-code VISK
+  citations older than this registry (e.g. §1581, §1284c in rules.py) are not
+  yet re-verified. Next: generalise participle/agreement rules (inventory cat. 1-2).
+- New rules must add a RuleSpec with a verified source before merging.
