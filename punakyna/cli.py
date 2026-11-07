@@ -26,7 +26,17 @@ def main(argv=None):
     p.add_argument('--prefer-active', action='store_true', help='valinnainen tyylivinkki: tuo tekijä näkyviin')
     p.add_argument('--narrator', choices=['any', 'mina', 'me'], default='any', help='valittu kertojan persoona (tyylivinkit)')
     p.add_argument('--reader', choices=['any', 'sina', 'te'], default='any', help='valittu lukijan puhuttelu (tyylivinkit)')
+    p.add_argument('--max-sentence-words', type=int, default=0, metavar='N',
+                   help='tyylivinkki: huomauta yli N sanan virkkeistä (0 = pois; Kotus: 15)')
+    p.add_argument('--profile', choices=['standard', 'virkakieli'], default='standard',
+                   help='nimetty tyyliprofiili (virkakieli: aktiivi + virkkeet enintaan 15 sanaa)')
     args = p.parse_args(argv)
+    from dataclasses import asdict
+    from .style import StyleProfile
+    base = asdict(StyleProfile.preset(args.profile))
+    style = dict(prefer_active=args.prefer_active or base['prefer_active'],
+                 narrator=args.narrator, reader=args.reader,
+                 max_sentence_words=args.max_sentence_words or base['max_sentence_words'])
     if args.enroll_app or args.revoke_app or args.list_apps:
         from .tokenfile import (load_or_create_app_token, load_all_tokens,
                                 revoke_app_token)
@@ -48,14 +58,13 @@ def main(argv=None):
         return 0
     if args.serve:
         from .api import serve
-        serve(port=args.port, style_profile=dict(prefer_active=args.prefer_active,
-                   narrator=args.narrator, reader=args.reader))
+        serve(port=args.port, style_profile=style)
         return 0
     text = open(args.file, encoding='utf-8').read() if args.file else sys.stdin.read()
     suggs = check_text(text, use_rules=not args.no_rules,
                        use_parser=args.parser,
                        use_spelling=not args.no_spelling,
-                       style_profile=dict(prefer_active=args.prefer_active, narrator=args.narrator, reader=args.reader))
+                       style_profile=style)
     if args.json:
         print(json.dumps(suggestions_as_dicts(suggs), ensure_ascii=False, indent=2))
     else:

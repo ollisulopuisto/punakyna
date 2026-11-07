@@ -42,6 +42,21 @@ Python: `check_text(text, style_profile={...})` or `StyleProfile` from
 replacement, with `STYLE_ACTOR` / `STYLE_PERSON` identifiers. Grammar and
 spelling diagnostics win on overlapping spans; style does not suppress them.
 
+## Sentence length and the `virkakieli` profile (v0.1.6)
+
+`max_sentence_words` (default 0 = off; CLI `--max-sentence-words N`, API
+`style_profile.max_sentence_words`, integer 0-200) adds `STYLE_SENTENCE_LENGTH`
+on the first word beyond the limit. Sources: Kotus virkakielivinkki
+https://kotus.fi/valta-pitkia-virkkeita/ and Kielitoimiston ohjepankki
+https://kielitoimistonohjepankki.fi/vk/ohjeita-saadoskieleen/pitkat-virkkeet/ :
+over 15 words, consider splitting; there is no absolute limit and a long
+sentence can be clear. The message says so. Word count = word tokens in the
+sentence. The hint yields to any grammar/spelling flag on the same span.
+
+`--profile virkakieli` = prefer_active + 15 words. `--profile standard` (default)
+= no style hints. Not yet in the LibreOffice settings dialog (CLI, API and
+style.json only); Mac GUI is unverified anyway.
+
 ## Deliberate limits
 
 - Morphology only, no semantic understanding of who is speaking. Hints ask the
