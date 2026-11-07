@@ -1,0 +1,82 @@
+"""Sääntörekisteri: jokaiselle säännölle id, lähde, taso ja testit.
+
+Rekisteri on totuuden lähde docs/coverage-map.md:lle (scripts/gen_coverage_map.py).
+Sääntö ilman lähdettä ei kuulu rekisteriin (docs/grammar-inventory.md).
+`source_status`: 'verified' = pykälän otsikko luettu lähteestä 2026-11-07;
+'chapter' = vain luku tunnistettu, pykälä tarkistettava; 'engine' = ulkoisen
+moottorin sääntö (Voikko, parseri), ei Punakynän oma.
+"""
+from dataclasses import dataclass
+from typing import Tuple
+
+VISK = 'https://scripta.kotus.fi/visk/sisallys.php?p='
+OHJE = 'https://kielitoimistonohjepankki.fi/ohje/'
+
+
+@dataclass(frozen=True)
+class RuleSpec:
+    id: str
+    category: str          # inventory-taulukon aihepiiri
+    layer: str             # 'rules' | 'parser' | 'voikko-gc' | 'spelling' | 'neural'
+    severity: str          # 'error' | 'warning' | 'style' | 'info'
+    sources: Tuple[str, ...]
+    source_status: str     # 'verified' | 'chapter' | 'engine'
+    tests: Tuple[str, ...]  # testimoduulit (tests/-hakemisto)
+    default_on: bool = True
+    summary: str = ''
+
+
+REGISTRY = (
+    RuleSpec('PERFECT_PASSIVE_PARTICIPLE', 'Participle in compound tenses',
+             'rules', 'error', (VISK + '1292', VISK + '530'), 'verified',
+             ('test_perfect_passive_participle.py',),
+             summary='olen menty -> olen mennyt (rajattu intransitiiviverbeihin)'),
+    RuleSpec('SV_AGREEMENT', 'Subject-verb agreement', 'rules', 'error',
+             (VISK + '1267', VISK + '1270'), 'verified', ('test_rules.py',),
+             summary='nominatiivisubjekti + on/ovat'),
+    RuleSpec('PRON_VERB_AGREEMENT', 'Subject-verb agreement', 'rules', 'error',
+             (VISK + '1268', VISK + '1272', VISK + '1326'), 'verified',
+             ('test_pron_verb_agreement.py',),
+             summary='asemosana + viereinen finiittiverbi; me + passiivi sallittu'),
+    RuleSpec('NEG_CONNEGATIVE', 'Negation', 'rules', 'error',
+             (VISK + '108', VISK + '109', VISK + '1623'), 'verified',
+             ('test_rules.py',), summary='en tienneet -> en tiennyt'),
+    RuleSpec('NEG_NUMBER', 'Negation', 'rules', 'error',
+             (VISK + '108',), 'verified', ('test_rules.py',),
+             summary='minä emme -> minä en'),
+    RuleSpec('DOUBLE_WORD', 'Repetition (typo-level)', 'rules', 'error',
+             (VISK + '1736',), 'chapter', ('test_rules.py',),
+             summary='sama sana kahdesti peräkkäin; nimet ja pilkulliset luettelot ohitetaan'),
+    RuleSpec('CAP_COMMON_NOUN', 'Capitalisation', 'rules', 'style',
+             (OHJE + 'alkukirjain-kuukausien-nimet/',
+              OHJE + 'alkukirjain-esimerkkeja-pienesta-alkukirjaimesta/'),
+             'verified', ('test_rules.py',),
+             summary='kuukaudet, viikonpäivät, vuodenajat pienellä'),
+    RuleSpec('SPELL', 'Spelling', 'spelling', 'error', ('https://voikko.puimula.org/',),
+             'engine', ('test_rules.py',), summary='Voikko-oikoluku'),
+    RuleSpec('SPELL_UNKNOWN', 'Spelling', 'spelling', 'info',
+             ('https://voikko.puimula.org/',), 'engine', ('test_rules.py',),
+             default_on=False, summary='tuntematon sana ilman ehdotusta'),
+    RuleSpec('VOIKKO_GC', 'Voikko grammar checker (codes 1-18)', 'voikko-gc',
+             'warning', ('https://voikko.puimula.org/',), 'engine',
+             ('test_rules.py',), summary='libvoikko-kieliopintarkistin'),
+    RuleSpec('PSV_NUMBER', 'Subject-verb agreement (parser)', 'parser', 'error',
+             (VISK + '1267',), 'verified', ('test_parser_tier.py',)),
+    RuleSpec('PSV_PERSON', 'Subject-verb agreement (parser)', 'parser', 'error',
+             (VISK + '1268',), 'verified', ('test_parser_tier.py',)),
+    RuleSpec('PNEG_NUMBER', 'Negation (parser)', 'parser', 'error',
+             (VISK + '108',), 'verified', ('test_parser_tier.py',)),
+    RuleSpec('PNEG_CONNEG', 'Negation (parser)', 'parser', 'error',
+             (VISK + '109',), 'verified', ('test_parser_tier.py',)),
+    RuleSpec('PPERF_NUM', 'Participle in compound tenses (parser)', 'parser',
+             'error', (VISK + '1292', VISK + '1284'), 'verified',
+             ('test_parser_tier.py',)),
+    RuleSpec('PRED_NUM', 'Predicative agreement (parser)', 'parser', 'error',
+             (VISK + '1284',), 'verified', ('test_pred_num.py',)),
+    RuleSpec('NEURAL', 'Neural backend', 'neural', 'style',
+             ('https://github.com/ollisulopuisto/punakyna#neurotaso',),
+             'engine', ('test_rules.py',), default_on=False,
+             summary='ei käytössä; lisenssi ratkaisematta'),
+)
+
+BY_ID = {r.id: r for r in REGISTRY}
