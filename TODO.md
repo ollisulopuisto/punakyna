@@ -92,3 +92,5 @@
 - Torjuu MIME-tyypin nuuskimisen ja selaimen kehysupotuksen / clickjacking-riskit.
 - Testit: `tests/test_api_hardening.py` päivitetty kattamaan turvaotsakkeet.
 - v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.
+
+- LibreOffice update feed (2026-11-07): description.xml update-information, make_update_xml.py, update-feed.yml; first real check needs a published full release. Version bump left to the grammar PR line (avoids conflict with #21).

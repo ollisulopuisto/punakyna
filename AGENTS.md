@@ -87,3 +87,16 @@
 - Env note: test_lo_writer_gui and test_lo_xproofreader fail in this Linux sandbox
   (unopkg install fails; also fails on unmodified main for the GUI test).
 - Version bumped to 0.1.1 (pyproject, __init__, description.xml, browser manifest, uv.lock). No OXT built.
+
+## 2026-11-07: LibreOffice extension update feed (Olli: "native Libre office way")
+
+- description.xml now has update-information pointing at
+  https://github.com/ollisulopuisto/punakyna/releases/latest/download/punakyna.update.xml
+  (LibreOffice's own extension updater; Sparkle does not apply to an OXT).
+- make_update_xml.py writes the feed from description.xml's version and a release tag.
+  .github/workflows/update-feed.yml attaches it to published full releases that carry
+  punakyna-full-macos.oxt. Draft and pre-release candidates (what build-full-oxt makes)
+  never reach /releases/latest, so testers are not auto-updated. Free: ubuntu runner on a
+  public repo, one small release asset.
+- A new OXT version must raise the version in description.xml, or LibreOffice sees no update.
+- Not verified on a Mac: LibreOffice's Check for Updates against a real published release.

@@ -8,4 +8,7 @@
   <name lang="fi">Punakynä - suomen oikoluku (paikallinen)</name>
   <name lang="en">Punakynä - Finnish proofreading (local)</name>
  </display-name>
+ <update-information>
+  <src xlink:href="https://github.com/ollisulopuisto/punakyna/releases/latest/download/punakyna.update.xml"/>
+ </update-information>
 </description>
