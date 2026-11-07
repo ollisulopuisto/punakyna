@@ -155,3 +155,16 @@
 - Not done: LibreOffice settings dialog field, selkokieli preset (Selkokeskus gives
   no numeric threshold I could verify), nominal style / wordiness rules.
 - Version 0.1.6.
+
+## 2026-11-07: attribute agreement (v0.1.7, inventory step 4a)
+
+- ATTR_AGREEMENT: adjective attribute and noun in nominative disagree in number
+  ("isot talo" -> "isot talot"). Sources: VISK §1302 (etumääritteet kongruoivat
+  luvussa ja sijassa), §582. No automatic replacement.
+- Skipped on purpose: participles (Voikko tags nähnyt/ollut as adjectives), names,
+  quantifier-like words (moni, useat, muut, eri ...), "itse", non-nominative cases,
+  anything with ambiguous analyses, punctuation between the words.
+- Found while building: a first version flagged "nähneensä sävelet" and "suomalaiset itse"
+  on the wiki sweep; both fixed. Now 0 flags on the ~77k-word sweep and 0/34 on the clean smoke set.
+- Predicative (post-copula) agreement stays with the parser tier (PRED_NUM).
+- Version 0.1.7.

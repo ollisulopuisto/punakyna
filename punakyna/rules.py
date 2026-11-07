@@ -435,6 +435,76 @@ def check_numeral_noun_case(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Laatusanaattribuutti + substantiivi nominatiivissa: luku kongruoi ("isot talot",
+# ei "isot talo", ei "iso talot"). VISK §1302 (etumääritteiden kongruenssi:
+# luvussa ja sijassa) ja §582. Rajattu: kaikki molempien sanojen analyysit ovat
+# yksiselitteisesti nominatiivissa ja luvuiltaan eri, ei erisnimia, ei
+# määräilmauksia, ei valimerkkia valissa.
+_ATTR_SKIP = {
+    'moni', 'monet', 'usea', 'useat', 'harva', 'harvat', 'muu', 'muut',
+    'eri', 'eräs', 'eräät', 'toinen', 'toiset', 'kumpikin', 'molemmat',
+    'sellainen', 'sellaiset', 'tällainen', 'tällaiset', 'kaikki',
+}
+
+
+def _only_adj_number(analyses):
+    """Palauttaa 'singular'/'plural', jos kaikki analyysit ovat laatusanan nominatiivia samassa luvussa."""
+    if not analyses:
+        return None
+    nums = set()
+    for a in analyses:
+        if a.get('CLASS') not in ('laatusana', 'nimisana_laatusana') \
+                or a.get('SIJAMUOTO') != 'nimento' or a.get('PARTICIPLE'):
+            return None  # partisiipit (nähnyt, ollut) jätetään: ne eivät ole attribuutteja
+        nums.add(a.get('NUMBER'))
+    return nums.pop() if len(nums) == 1 else None
+
+
+def _only_noun_number(analyses):
+    if not analyses:
+        return None
+    nums = set()
+    for a in analyses:
+        if a.get('CLASS') != 'nimisana' or a.get('SIJAMUOTO') != 'nimento':
+            return None
+        if a.get('POSSESSIVE'):
+            return None
+        nums.add(a.get('NUMBER'))
+    return nums.pop() if len(nums) == 1 else None
+
+
+def check_attribute_agreement(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, (adj, noun) in enumerate(zip(words, words[1:])):
+        if sent_text[adj.end:noun.start].strip():
+            continue
+        if noun.text[:1].isupper() or (adj.text[:1].isupper() and i > 0):
+            continue  # nimet jatetaan; lauseen ensimmainen sana saa olla isolla
+        if adj.lower in _ATTR_SKIP:
+            continue
+        if noun.lower in ('itse', 'toisaalta', 'kyllä'):
+            continue  # adverbimaiset sanat: "suomalaiset itse"
+        a_an = _analyze(voikko, adj.text, cache)
+        n_an = _analyze(voikko, noun.text, cache)
+        a_num = _only_adj_number(a_an)
+        n_num = _only_noun_number(n_an)
+        if not a_num or not n_num or a_num == n_num:
+            continue
+        if any(a.get('CLASS') in ('sukunimi', 'etunimi', 'paikannimi') for a in n_an):
+            continue
+        # seuraava sana nimisana nominatiivissa: yhdyssana/luettelo, ei arvioida
+        if i + 2 < len(words) and not sent_text[noun.end:words[i + 2].start].strip():
+            if _only_noun_number(_analyze(voikko, words[i + 2].text, cache)):
+                continue
+        out.append(Suggestion(
+            rule='ATTR_AGREEMENT', category='grammar', severity='warning',
+            start=offset + adj.start, end=offset + noun.end,
+            message=('Kongruenssi: laatusana "%s" ja substantiivi "%s" ovat eri luvussa '
+                     '(esim. "isot talot", "iso talo").' % (adj.text, noun.text)),
+            replacements=[]))
+    return out
+
+
 def check_lowercase_names(sent_text, offset, words, voikko, cache):
     """Kuukausi/viikonpaiva/vuodenaika isolla alkukirjaimella lauseen sisalla."""
     out = []
@@ -678,6 +748,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_sg_subject_plural_verb(
         sent_text, offset, words, voikko, cache, before)
     out += check_numeral_noun_case(sent_text, offset, words, voikko, cache)
+    out += check_attribute_agreement(sent_text, offset, words, voikko, cache)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
         sent_text, offset, words, voikko, cache)
