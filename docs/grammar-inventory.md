@@ -1,4 +1,7 @@
-# Finnish grammar rule inventory (plan, v0.1.1)
+# Finnish proofreading rule inventory (plan, v0.1.1)
+
+Scope: grammar, spelling/typos, punctuation, capitalisation, numbers/units,
+and style/clarity (active voice, wordiness, sentence length, officialese).
 
 Status: PLAN. No implementation beyond the rules listed as "have". Written
 2026-11-07 after the "Minä olen menty" miss (PR #19). Aim: replace one-off
@@ -30,7 +33,25 @@ the registry so docs cannot drift.
    Topics: Merkit/numerot/lyhenteet, Nimet, Sana, Lause, Tyylivalinnat.
 3. Kielitoimiston sanakirja, https://www.kielitoimistonsanakirja.fi/ : word
    forms, inflection types, spelling.
-4. Hyvän virkakielen ohjeet (ohjepankin välilehti): style tier only.
+4. Hyvän virkakielen ohjeita (Kielitoimiston ohjepankki, virkakieli-osio),
+   https://kielitoimistonohjepankki.fi/virkakieli/ : sections "Selkeät
+   virkkeet, jäsennelty teksti", "Sanasto ja sananvalinta", "Ohjeita
+   säädöskieleen" (e.g. /vk/ohjeita-saadoskieleen/haitallisen-tiivis-ilmaisu/).
+   Style tier only.
+5. Selkokeskus, https://selkokeskus.fi/selkokieli/nain-kirjoitat-selkokielta/
+   (helpot kielen rakenteet, pikaopas): plain-language profile only. It is
+   stricter than general good style (e.g. avoid lauseenvastikkeet), so it is
+   a separate opt-in profile, never the default.
+6. Valtioneuvosto, Hyvän virkakielen toimintaohjelma and viestinnän ohjeet,
+   https://valtioneuvosto.fi/valtioneuvoston-viestinta/ohjeita-ja-suosituksia :
+   officialese profile.
+7. Kotus virkakielivinkit, via https://www.kotus.fi/ ; secondary commentary
+   such as Korpela's Nykyajan kielenopas (https://www.jkorpela.fi/kielenopas/)
+   may be cited as context but never as the sole source for a rule.
+
+Rule: a source with a numeric threshold (e.g. Kotus virkakielivinkki: over 15
+words in a sentence, consider splitting) becomes a configurable default, and
+the threshold is cited in the message.
 
 Not sources: forum pages, language-learning sites, model knowledge.
 
@@ -48,6 +69,9 @@ PERFECT_PASSIVE_PARTICIPLE (PR #19), optional Stanza parser tier, style
 advice profiles.
 
 ## Categories, sources, coverage, priority
+
+Rows 1-17 are correctness (priority 1-3); rows 18-25 are style (priority
+S1-S3, tiers above).
 
 Coverage: have = rule exists; GC = Voikko GC covers; none = gap. Priority
 1 = high frequency in native writing AND checkable with morphology only
@@ -73,7 +97,35 @@ contested norm.
 | 15 | Possessive suffix and reflexive (hän ... omaa; sen takia ... -nsa) | VISK Pronominit; Possessiivisuffiksi | none | 3 |
 | 16 | Word order / missing or extra main verb | VISK Sanajärjestys | GC 16-18 (style) | 3 |
 | 17 | Anglicisms/calques; "tehdä sense", "olla tarvetta" | ohjepankki Tyylivalinnat; Sana: vierassanat | none | style-only |
-| 18 | Passive overuse, active voice, person consistency | docs/style-advice.md | have (opt-in) | n/a |
+| 18 | Passive overuse, active voice, person consistency | Selkokeskus "Helpot kielen rakenteet" (prefer active; passive only if agent unknown or irrelevant); ohjepankki "Passiivi: passiivimaisia rakenteita"; docs/style-advice.md | have (opt-in, narrow) | S1 |
+| 19 | Sentence length, one idea per sentence, lone main clauses | Kotus virkakielivinkki "Vältä pitkiä virkkeitä" (over 15 words: consider splitting); ohjepankki virkakieli: selkeät virkkeet; Selkokeskus | none | S1 |
+| 20 | Nominal style, haitallisen tiivis ilmaisu (stacked nouns, participle/infinitive chains, lauseenvastikkeet) | ohjepankki /vk/ohjeita-saadoskieleen/haitallisen-tiivis-ilmaisu/ and selkea-tiivis-ilmaisu/; Selkokeskus (avoid lauseenvastikkeet, long attributes) | none | S2 |
+| 21 | Wordiness and officialese (turhat täytesanat, vanhahtavat virkakielen sanat, "suorittaa" + noun) | Hyvän virkakielen ohjeet: sanasto ja sananvalinta; valtioneuvosto toimintaohjelma | none | S2 (needs a cited word list) |
+| 22 | Repetition (same word/stem in adjacent sentences, same sentence opener) | virkakieli: sidosteisuus, jäsennelty teksti; style only | none | S3 |
+| 23 | List form consistency (luetelmat, parallel forms) | ohjepankki Tyylivalinnat, otsikot, luetelma; Selkokeskus | none | S3 |
+| 24 | Unclear reference, long distance between subject and verb | virkakieli: selkeät virkkeet | none | S3 (parser) |
+| 25 | Tone and address (te/sinä consistency, imperative vs. polite) | virkakieli: sävy; docs/style-advice.md person consistency | partial | S3 |
+
+## Style and clarity: severity tiers and configuration
+
+Style rules are advisory. They never use severity `error` and never block a
+grammar diagnostic on the same span (grammar wins, as in docs/style-advice.md).
+
+| tier | meaning | default |
+|---|---|---|
+| `error` | norm violation, source says "norminmukainen" | on |
+| `warning` | contested or context-dependent norm (VISK describes variation) | on |
+| `style` | advisory good-writing advice (active voice, sentence length) | off, opt-in |
+| `info` | plain-language (selkokieli) or officialese profile hints | off, profile opt-in |
+
+Configuration (Writer settings, CLI `--profile`, API `profile`): named
+profiles `standard` (errors + warnings), `writing` (adds style), `virkakieli`
+(adds officialese and tiivis ilmaisu hints), `selkokieli` (adds Selkokeskus
+rules, stricter thresholds). Each rule can be toggled by id; thresholds
+(sentence word count, passive share) are settings with the cited value as
+default. Messages are labelled "Ehdotus", not "Virhe", for style/info.
+Style rules skip quoted, code-like and ambiguous text, and make no automatic
+rewrites.
 
 ## Method (per category)
 
@@ -96,8 +148,9 @@ contested norm.
 3. Cat. 4 and 8 (number/case agreement; numeral+noun).
 4. Cat. 12, 14 (capitalisation, numbers/units/abbreviations) from the
    ohjepankki.
-5. Cat. 11 once a compound resource is cleared (ROADMAP 3).
-6. Cats. 5, 6, 9, 10 with parser tier; cat. 7, 15, 16 research only.
+5. Style S1 (cat. 18, 19) with profiles/config; then S2.
+6. Cat. 11 once a compound resource is cleared (ROADMAP 3).
+7. Cats. 5, 6, 9, 10 with parser tier; cat. 7, 15, 16 research only.
 
 ## Open questions for Olli
 
