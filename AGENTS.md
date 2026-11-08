@@ -244,3 +244,13 @@
   would be dotted, but references are a borderline register. Smoke eval:
   0 false alarms / 34 clean sentences.
 - Version 0.1.14. Stacked on the TYPO_RANGE_HYPHEN PR (v0.1.13).
+
+## 2026-11-08: TYPO_RANGE_HYPHEN guard fixes after #35/#36 review rounds (v0.1.15)
+
+- Equation guards (Devin rounds): pairs inside arithmetic are skipped both
+  sides ("2-1=1", "1=2-1", "2-1=x", "1+(2-1)"); assignments and explanations
+  still flagged ("Ikä=20-30 vuotta", "Tulos 2-1 = kotijoukkueen voitto").
+- Identifier guard: prev labels starting with issn/isbn/ismn/doi skip only
+  4+4-digit identifier-shaped pairs; small ranges after inflected labels
+  ("ISBN-numeron 5-8 merkkiä") are flagged.
+- Regression tests for all cited cases. Version 0.1.15.
