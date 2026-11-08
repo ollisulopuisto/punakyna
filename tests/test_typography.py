@@ -64,5 +64,5 @@ def test_range_hyphen():
               'Kone on Boeing 737-800 ja 737-700.', 'Moottori on CFM International 56-3.',
               'Lehden ISSN 0355-2047 näkyy kannessa.', 'Sarjan ISSN 1798-2014.',
               'Tiedosto on Sääntökirja%202021-2022%20v2.pdf.',
-              'Lasku 2-1=1.'):
+              'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
