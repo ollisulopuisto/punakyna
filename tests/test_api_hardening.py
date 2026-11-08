@@ -133,6 +133,26 @@ def test_security_headers_present(server):
     conn.close()
 
 
+def test_unsupported_methods_handled_securely(server):
+    """Käsittelemättömät metodit (501) palauttavat JSON:ia turvaotsakkeilla ilman Python-version vuotoa."""
+    for method in ('TRACE', 'CONNECT', 'HEAD', 'CUSTOM'):
+        conn = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=10)
+        conn.request(method, '/check')
+        resp = conn.getresponse()
+        assert resp.status == 501
+        assert resp.getheader('X-Content-Type-Options') == 'nosniff'
+        assert resp.getheader('X-Frame-Options') == 'DENY'
+        assert resp.getheader('Content-Type') == 'application/json; charset=utf-8'
+        server_header = resp.getheader('Server') or ''
+        assert 'Python' not in server_header
+        assert server_header == 'Punakyna/0.5'
+        data = resp.read()
+        if method != 'HEAD':
+            body = json.loads(data)
+            assert 'error' in body
+        conn.close()
+
+
 def test_options_preflight_rejected(server):
     status, _ = _req(server, '/check', method='OPTIONS',
                      headers={'Host': '127.0.0.1',

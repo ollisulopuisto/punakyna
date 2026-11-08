@@ -113,6 +113,14 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
         server_version = 'Punakyna/0.5'
         protocol_version = 'HTTP/1.1'
 
+        def version_string(self):
+            # Älä vuoda Python-alustan versionumeroa Server-otsakkeessa.
+            return self.server_version
+
+        def send_error(self, code, message=None, explain=None):
+            # Torju oletus-HTML-virhesivujen ja MIME-nuuskinnan riskit sisäänrakennetuissa virheissä.
+            self._send(code, {'error': message or str(code)})
+
         def setup(self):
             super().setup()
             self.connection.settimeout(READ_TIMEOUT)

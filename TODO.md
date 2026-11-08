@@ -91,6 +91,14 @@
   HTTP-palvelimen vastauksiin (`punakyna/api.py`).
 - Torjuu MIME-tyypin nuuskimisen ja selaimen kehysupotuksen / clickjacking-riskit.
 - Testit: `tests/test_api_hardening.py` päivitetty kattamaan turvaotsakkeet.
+
+## 2026-11-08: Fallback error handling & server banner hardening (Sentinel)
+
+- Kovennus: `send_error` ylikirjoitettu `punakyna/api.py`:ssa palauttamaan JSON-virheviesti
+  turvaotsakkeilla (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`) oletus-HTML-virhesivujen sijasta.
+- Kovennus: `version_string` ylikirjoitettu palauttamaan vain `Punakyna/0.5` ilman alustan
+  tai Python-version paljastamista `Server`-otsakkeessa.
+- Testit: `tests/test_api_hardening.py` laajennettu käsittelemättömien metodien ja bannerin testauksella.
 - v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.
 - v0.1.2 (2026-11-07): sääntörekisteri + kattavuuskartta (docs/coverage-map.md); ei toiminnallisia muutoksia.
 
