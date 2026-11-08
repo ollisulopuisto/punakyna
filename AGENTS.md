@@ -211,3 +211,19 @@
 - update-feed.yml: on a published (non-draft, pre-releases included) release that carries punakyna-full-macos.oxt, regenerate the feed for that tag and upload it to the `update-feed` release, creating it on first run. Drafts do not fire the event, so nothing updates until Olli publishes a release.
 - Already-installed OXTs (0.1.11 and older) keep the old URL; only an OXT built from this version on checks the new one. Needs a version bump in each new OXT or LibreOffice sees no update.
 - Not verified on a Mac: the real Check for Updates against a published release.
+
+## 2026-11-08: TYPO_RANGE_HYPHEN (v0.1.13)
+
+- New rule TYPO_RANGE_HYPHEN (warning): `20-30` -> `20-30` (ajatusviiva). Source:
+  ohjepankki "Ajatusviiva: rajakohdat ja osapuolet" (read 2026-11-08):
+  ajatusviiva lukujen rajakohdissa ja osapuolten tuloksissa ("9–12", "2–1").
+- Deliberately narrow: flags only pairs where either number is 1-2 digits
+  ("16-20", "2-1") or a 4-digit year 1800-2199 ("1853-1862"). Skipped on
+  purpose: 3+3-digit pairs (model numbers "737-800" vs ranges "305-310 km" -
+  the latter is a known recall gap), "56-3" series models, letter-adjacent
+  codes (UTF-8), URL-encoded filenames (%28...), chain identifiers
+  (ISBN 978-951-..., ISO dates 2026-11-08) and ISSN/ISBN/DOI contexts.
+- Precision: wiki sweep (24 fi.wikipedia articles, ~80k words): 9 hits, all
+  true instances of hyphen-for-en-dash (year ranges, page spans, placements).
+  Smoke eval: 0 false alarms on 34 clean sentences.
+- Version 0.1.13 (pyproject, __init__, description.xml, browser manifest, uv.lock).

@@ -760,6 +760,28 @@ _DEC_UNITS = (r'(?:[\u00a0 ]?%|[\u00a0 ]?°C|[\u00a0 ](?:kg|g|km|m|cm|mm|l|dl|cl
 _RE_DEC_POINT = re.compile(
     r'(?<![\w.,/:\-])(\d{1,3})\.(\d{1,2})(?=' + _DEC_UNITS + r'(?![\w]))', re.I)
 _RE_ABBR = re.compile(r'(?<![\w.-])(esim|jne|tms|yms|huom)(?![\w.:-])', re.I)
+# Ajatusviiva lukujen rajakohdissa ja osapuolten tuloksissa (ohjepankki):
+# 20-30 -> 20-30 (ajatusviiva), 2-1 -> 2-1. Ohitetaan tunnisteet (A380-800,
+# UTF-8), viivaketjut (ISBN 978-951-..., ISO-paivays 2026-11-08) ja molemmin-
+# puolin vahintaan 3-numeroiset mallinumerot (Boeing 737-800), ellei jompikumpi
+# ole 1-2-numeroinen tai vuosisadaluku 1800-2199.
+_RE_RANGE_HYPHEN = re.compile(r'(?<![\w\u2013.%-])(\d{1,4})-(\d{1,4})(?!-\d|[\w\u2013])')
+
+
+def _is_yearish(s):
+    return len(s) == 4 and 1800 <= int(s) <= 2199
+
+
+def _range_hyphen_ok(a, b):
+    # vuodet 1800-2199 kelpaavat aina; pienet (<=2-numeroiset) luvut ovat
+    # rajakohtia tai tuloksia ("16-20", "2-1"); 3+3-numeroiset yhdistelmat
+    # ("737-800") ja "56-3"-mallit ovat tunnisteita, ei rajakohtia
+    if _is_yearish(a) or _is_yearish(b):
+        return True
+    if len(a) <= 2 and len(b) <= 2:
+        return not (len(b) == 1 and len(a) >= 2)
+    return False
+
 
 
 def _check_clock(sent_text, offset):
@@ -811,6 +833,19 @@ def check_typography(sent_text, offset, clock=False):
             start=offset + m.start(), end=offset + m.end(),
             message=('Suomenkielisessä tekstissä desimaaliluvun erottimena on '
                      'pilkku ("%s"), ei piste.' % fixed),
+            replacements=[fixed]))
+    for m in _RE_RANGE_HYPHEN.finditer(sent_text):
+        if not _range_hyphen_ok(m.group(1), m.group(2)):
+            continue
+        prev = sent_text[max(0, m.start() - 8):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
+        if prev in ('issn', 'isbn', 'ismn', 'doi'):
+            continue  # standarditunnukset, ei rajakohta
+        fixed = '%s\u2013%s' % (m.group(1), m.group(2))
+        out.append(Suggestion(
+            rule='TYPO_RANGE_HYPHEN', category='style', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message=('Lukujen rajakohtien ja osapuolten tulosten v\u00e4liss\u00e4 '
+                     'k\u00e4ytet\u00e4\u00e4n ajatusviivaa ("%s"), ei yhdysmerkki\u00e4.' % fixed),
             replacements=[fixed]))
     for m in _RE_ABBR.finditer(sent_text):
         word = m.group(1)

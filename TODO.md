@@ -113,3 +113,5 @@
 - v0.1.10 (2026-11-08): TYPO_DECIMAL_POINT (ohjepankki, desimaaliluvut). Seuraavaksi: ajatusviiva lukuvälillä (20-30 -> 20–30), päivämäärät.
 - v0.1.11 (2026-11-08): opt-in debug-loki ja virhetyyppikokeilu LibreOffice-adapteriin (smear-vika Spelling-dialogissa). Oletus ei muutu.
 - v0.1.12 (2026-11-08): update-feed siirretty kiinteään update-feed-julkaisuun (releases/latest ei toimi luonnos-/esijulkaisuille).
+
+- v0.1.13 (2026-11-08): TYPO_RANGE_HYPHEN (ohjepankki, ajatusviiva rajakohdissa). Seuraavaksi: päivämäärämuodot (12/5/2025, ISO 2025-12-24). Katso AGENTS.md.
