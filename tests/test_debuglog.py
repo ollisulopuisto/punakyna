@@ -65,3 +65,17 @@ def test_malformed_values_do_not_break_other_options(tmp_path, monkeypatch):
         {'log': True, 'error_type': ['x'], 'drop_suggestions': True}))
     cfg = debuglog.load_config()
     assert cfg['log'] and cfg['drop_suggestions'] and cfg['error_type'] == 'proofreading'
+
+
+def test_concurrent_writers_respect_cap(tmp_path, monkeypatch):
+    import multiprocessing as mp
+    monkeypatch.setattr(debuglog.tempfile, 'gettempdir', lambda: str(tmp_path))
+    monkeypatch.setattr(debuglog, 'MAX_LOG_BYTES', 20000)
+
+    def work():
+        cfg = {'log': True, 'error_type': 'proofreading', 'drop_suggestions': False}
+        for _ in range(60):
+            debuglog.log_call(cfg, 'x' * 400, 0, 1, [])
+    ps = [mp.Process(target=work) for _ in range(4)]
+    [p.start() for p in ps]; [p.join() for p in ps]
+    assert (tmp_path / 'punakyna-debug.log').stat().st_size <= 20000

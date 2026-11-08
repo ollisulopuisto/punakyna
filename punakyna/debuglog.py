@@ -86,10 +86,16 @@ def log_call(cfg, text, start, end, errors, version='', note=''):
                 return
             if st.st_mode & 0o077:
                 os.fchmod(fd, 0o600)
-            if st.st_size + len(line) > MAX_LOG_BYTES:
+            try:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_EX)  # serialise size check + append
+            except Exception:
+                pass
+            size = os.fstat(fd).st_size  # re-read under the lock
+            if size + len(line) > MAX_LOG_BYTES:
                 os.ftruncate(fd, 0)
             os.write(fd, line)
         finally:
-            os.close(fd)
+            os.close(fd)  # closing releases the lock
     except Exception:
         pass

@@ -294,6 +294,8 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
                     self._dbg_note = 'server auth failure %s' % e.code
                     err = setup_error(_MSG_AUTH)
                     aRes.aErrors = (err,) if err else ()
+                else:
+                    self._dbg_note = 'server HTTP error %s' % e.code
                 return aRes
             except (urllib.error.URLError, OSError, TimeoutError):
                 self._setup_fail = (_msg_server(), time.monotonic())
