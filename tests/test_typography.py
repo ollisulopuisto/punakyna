@@ -73,7 +73,9 @@ def test_range_hyphen():
               'Lasku 1+(2-1) on nolla.', 'Yhtälö 2-1=x.',
               'Yhtälö 2-1 = x.', 'Lehden ISSN-koodi 0355-2047 näkyy kannessa.',
               'Lehden ISSN-nro 2020-1230 näkyy kannessa.',
-              'Tuotteen SKU-numero 2020-1230 on listalla.'):
+              'Tuotteen SKU-numero 2020-1230 on listalla.',
+              'Lehden ISSN-koodin 0355-2047 näkyy kannessa.',
+              'Yhtälö 2-1=x+0.', 'Yhtälö 2-1=x2.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
 
 

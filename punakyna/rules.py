@@ -884,8 +884,8 @@ def check_typography(sent_text, offset, clock=False):
             continue
         prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
         if len(m.group(1)) == 4 and len(m.group(2)) == 4 and \
-                (prev in ('issn', 'isbn', 'ismn', 'doi') or
-                 prev.rsplit('-', 1)[-1] in ('numero', 'tunnus', 'nro', 'koodi')):
+                (prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi', 'sku') or
+                 re.search(r'-(numero|tunnus|nro|koodi)\w*$', prev)):
             continue  # tunnuksenmuotoinen 4+4-pari ("ISSN-koodi 0355-2047",
             # "SKU-numero 2020-1230"); tavallinen pieni vali
             # ("ISBN-numeron 5-8 merkkiä") liputetaan
@@ -895,7 +895,8 @@ def check_typography(sent_text, offset, clock=False):
             rhs = after[1:].lstrip()
             if rhs and (rhs[0].isdigit() or rhs[0] in '+-(' or
                         (rhs[0].isalpha() and
-                         (len(rhs) == 1 or rhs[1] in ' .,:;!?)'))):
+                         (len(rhs) == 1 or rhs[1] in ' .,:;!?)+*/' or
+                          rhs[1].isdigit()))):
                 continue  # yhtalo ("2-1=1", "2-1=x"), ei rajakohta;
                 # "= kotijoukkueen voitto" on selitys, liputetaan
         if before and before[-1] in '=+-*/':
