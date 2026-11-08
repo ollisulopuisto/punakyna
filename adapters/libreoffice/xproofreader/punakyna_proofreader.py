@@ -52,6 +52,36 @@ if _here_file:
     if _here_dir not in _sys.path:
         _sys.path.insert(0, _here_dir)
 
+def _debug_config():
+    try:
+        from punakyna import debuglog
+        return debuglog.load_config()
+    except Exception:
+        return None
+
+
+def _debug_error_type(dbg, default):
+    if not dbg:
+        return default
+    from punakyna import debuglog
+    return debuglog.error_type_value(dbg, default)
+
+
+def _debug_log(dbg, text, start, end, errors):
+    if not dbg or not dbg.get('log'):
+        return
+    try:
+        from punakyna import debuglog, __version__
+        recs = [{'start': e.nErrorStart, 'length': e.nErrorLength,
+                 'type': e.nErrorType, 'rule': e.aRuleIdentifier,
+                 'message': e.aFullComment,
+                 'suggestions': list(e.aSuggestions),
+                 'properties': list(e.aProperties)} for e in errors]
+        debuglog.log_call(dbg, text, start, end, recs, __version__)
+    except Exception:
+        pass
+
+
 IMPLEMENTATION_NAME = 'org.punakyna.comp.pyuno.PunakynaProofreader'
 SERVICE_NAME = 'com.sun.star.linguistic2.Proofreader'
 MIN_TOKEN_LEN = 32
@@ -258,6 +288,7 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             except Exception:
                 return aRes  # tuntematon virhe: hiljainen degradaatio
 
+        dbg = _debug_config()
         errors = []
         for s in suggs:
             rule_id = 'punakyna.' + s['rule']
@@ -268,14 +299,17 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             err.nErrorStart = (nStartOfSentencePos
                                + _utf16_len(sentence[:s['start']]))
             err.nErrorLength = _utf16_len(sentence[s['start']:s['end']])
-            err.nErrorType = PROOFREADING
+            err.nErrorType = _debug_error_type(dbg, PROOFREADING)
             err.aRuleIdentifier = rule_id
             err.aShortComment = s['message'][:100]
             err.aFullComment = s['message']
-            err.aSuggestions = tuple(s.get('replacements', [])[:16])
+            err.aSuggestions = (() if dbg and dbg['drop_suggestions']
+                                else tuple(s.get('replacements', [])[:16]))
             err.aProperties = ()
             errors.append(err)
         aRes.aErrors = tuple(errors)
+        _debug_log(dbg, rText, nStartOfSentencePos, nSuggestedSentenceEndPos,
+                   errors)
         return aRes
 
     def _resolve_mode(self):

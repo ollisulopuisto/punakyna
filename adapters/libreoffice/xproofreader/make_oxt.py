@@ -16,7 +16,7 @@ FILES = ['punakyna_proofreader.py', 'Linguistic.xcu', 'description.xml',
 # paikallinen moottori mukaan pakettiin: ei pip-asennuksia kayttajalle
 PKG_DIR = os.path.normpath(os.path.join(HERE, '..', '..', '..', 'punakyna'))
 PKG_FILES = ['__init__.py', 'pipeline.py', 'rules.py', 'backend_voikko.py',
-             'voikko_gc.py', 'voikko_native.py', 'voikko_compat.py', 'style.py', 'style_settings.py']
+             'voikko_gc.py', 'voikko_native.py', 'voikko_compat.py', 'style.py', 'style_settings.py', 'debuglog.py']
 
 
 BUNDLE_DIR = os.path.join(HERE, 'bundle')

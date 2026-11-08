@@ -196,3 +196,7 @@
   close_connection and sends Connection: close, like the standard handler.
 - HEAD with no handler wrote the JSON body. _send now skips the body for HEAD, keeping Content-Length.
 - Raw-socket regression tests in tests/test_api_hardening.py (fail on unfixed code).
+
+## 2026-11-08: opt-in debug logging for the LibreOffice adapter (v0.1.11)
+- punakyna/debuglog.py: off by default. ~/.config/punakyna/debug.json (read per call) or PUNAKYNA_DEBUG=1. Options: log (JSONL to <tmpdir>/punakyna-debug.log, 5 MB cap, includes the document text), error_type ("proofreading" default | "spelling" experiment), drop_suggestions.
+- Purpose: diagnose the blue smear in LibreOffice's Spelling dialog on macOS (hypothesis: grammar-type error rendering; unproven). Default behaviour unchanged.
