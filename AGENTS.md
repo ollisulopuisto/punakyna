@@ -196,3 +196,8 @@
   close_connection and sends Connection: close, like the standard handler.
 - HEAD with no handler wrote the JSON body. _send now skips the body for HEAD, keeping Content-Length.
 - Raw-socket regression tests in tests/test_api_hardening.py (fail on unfixed code).
+
+## 2026-11-08: TYPO_DECIMAL_POINT (v0.1.10)
+- New rule TYPO_DECIMAL_POINT (warning): `3.5 kg` -> `3,5 kg`. Source: https://kielitoimistonohjepankki.fi/ohje/luvut-ja-numerot-desimaaliluvut/ (read directly; SFS 4175, "desimaalipistettä ei suositella suomenkielisiin teksteihin").
+- Deliberately narrow: fires only on `N.N` (1-3 digits, 1-2 decimals) directly followed by a unit (%, °C, kg, km, euroa, ...). Dates, clock times, section numbers, versions, IPs, thousands grouping (1.000) and the sports-time form 2.19,03 are not flagged.
+- Tests in tests/test_typography.py; wiki sweep (~77k words): 0 hits.
