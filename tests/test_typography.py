@@ -45,3 +45,29 @@ def test_decimal_point():
               'Se maksaa 1.000 euroa.', 'Hän syntyi 3.5.1980 kg.', 'Suurpujottelun voittoaika oli 2.19,03.',
               'Juhla on 12.5. kello 18.', 'Tiedosto v2.5 kg.fi on pieni.'):
         assert not hits(t, 'TYPO_DECIMAL_POINT'), t
+
+
+def test_range_hyphen():
+    for t, fix in (('Liike on auki kello 9-12.', '9–12'),
+                   ('Joukkueessa on 20-30 pelaajaa.', '20–30'),
+                   ('Hän työskenteli vuosina 1853-1862.', '1853–1862'),
+                   ('Ottelu päättyi 2-1.', '2–1'),
+                   ('Ikä=20-30 vuotta.', '20–30'),
+                   ('Ryhmä 1 (10-12-vuotiaat) osallistuu.', '10–12'),
+                   ('Ryhmä (20-30 henkilöä) saapuu.', '20–30'),
+                   ('Tulos 2-1 = kotijoukkueen voitto.', '2–1'),
+                   ('ISBN-numeron 5-8 merkkiä on painettu.', '5–8'),
+                   ('Lue sivut 5-8 ensin.', '5–8')):
+        r = hits(t, 'TYPO_RANGE_HYPHEN')
+        assert len(r) == 1 and r[0].replacements == [fix], t
+    for t in ('Liike on auki kello 9–12.', 'Joukkueessa on 20–30 pelaajaa.',
+              'Kone on Boeing 737-800.', 'Merkistö on UTF-8.',
+              'Päiväys on 2026-11-08.', 'Aikaleima 2026-11-08 12:30.',
+              'Tuotekoodi AB-123-CD kelpaa.', 'ISBN 978-951-123-456-7.',
+              'Katso kohta 2.1 ohjeesta.', 'Versio 1.2.3 on ulkona.',
+              'Kone on Boeing 737-800 ja 737-700.', 'Moottori on CFM International 56-3.',
+              'Lehden ISSN 0355-2047 näkyy kannessa.', 'Sarjan ISSN 1798-2014.',
+              'Tiedosto on Sääntökirja%202021-2022%20v2.pdf.',
+              'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.',
+              'Lasku 1+(2-1) on nolla.'):
+        assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
