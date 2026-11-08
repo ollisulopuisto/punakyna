@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Punakynä - suomen oikoluku",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Paikallinen suomen kielen oikoluku. Teksti ei lähde koneelta.",
   "permissions": ["nativeMessaging", "activeTab", "scripting"],
   "background": {"service_worker": "background.js"},

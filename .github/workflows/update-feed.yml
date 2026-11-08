@@ -1,10 +1,12 @@
 name: update-feed
 
-# LibreOffice checks the update feed named in description.xml
-# (releases/latest/download/punakyna.update.xml). When a full release is
-# published, attach that feed file to it. Runs only for published, non-draft,
-# non-pre-releases that carry the OXT; no storage beyond the release asset,
-# standard public runner.
+# LibreOffice checks the feed named in description.xml:
+#   https://github.com/ollisulopuisto/punakyna/releases/download/update-feed/punakyna.update.xml
+# /releases/latest never resolves for draft or pre-releases, so the feed lives on a
+# fixed release tagged `update-feed`. When a release carrying the OXT is published
+# (pre-releases included, drafts never fire this event), the feed is regenerated for
+# that tag and uploaded there. Standard public runner, one small release asset, no
+# Actions artifacts or cache.
 
 on:
   release:
@@ -15,14 +17,14 @@ permissions:
 
 jobs:
   feed:
-    if: ${{ !github.event.release.prerelease && !github.event.release.draft }}
+    if: ${{ github.event.release.tag_name != 'update-feed' && !github.event.release.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name }}
-      - name: Attach punakyna.update.xml if the release has the OXT
+      - name: Point the fixed update-feed release at this release's OXT
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
@@ -32,4 +34,9 @@ jobs:
             || { echo 'no OXT asset; no feed written'; exit 0; }
           python3 adapters/libreoffice/xproofreader/make_update_xml.py "$TAG" punakyna.update.xml
           cat punakyna.update.xml
-          gh release upload "$TAG" punakyna.update.xml --clobber
+          if ! gh release view update-feed >/dev/null 2>&1; then
+            gh release create update-feed --target "$GITHUB_SHA" --latest=false \
+              --title 'Punakynä update feed' \
+              --notes 'Only holds punakyna.update.xml, read by LibreOffice Check for Updates. Rewritten when a release with the OXT is published.'
+          fi
+          gh release upload update-feed punakyna.update.xml --clobber

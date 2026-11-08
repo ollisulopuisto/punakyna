@@ -112,3 +112,4 @@
 - v0.1.9 (2026-11-08): API: virhevastaus sulkee yhteyden, HEAD ilman runkoa (#29:n katselmoinnin korjaukset). Katso AGENTS.md.
 - v0.1.10 (2026-11-08): TYPO_DECIMAL_POINT (ohjepankki, desimaaliluvut). Seuraavaksi: ajatusviiva lukuvälillä (20-30 -> 20–30), päivämäärät.
 - v0.1.11 (2026-11-08): opt-in debug-loki ja virhetyyppikokeilu LibreOffice-adapteriin (smear-vika Spelling-dialogissa). Oletus ei muutu.
+- v0.1.12 (2026-11-08): update-feed siirretty kiinteään update-feed-julkaisuun (releases/latest ei toimi luonnos-/esijulkaisuille).
