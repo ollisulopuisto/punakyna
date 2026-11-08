@@ -484,11 +484,17 @@ def check_attribute_agreement(sent_text, offset, words, voikko, cache):
             continue
         if noun.lower in ('itse', 'toisaalta', 'kyllä'):
             continue  # adverbimaiset sanat: "suomalaiset itse"
+        # Suorituskyky: Varmistetaan ensin, että ensimmäinen sana on attribuuttina
+        # toimiva laatusana (a_num). Valtaosa peräkkäisistä sanoista tekstissä
+        # ei ala laatusanalla, joten ohitetaan toisen sanan kallis analyysi
+        # (_analyze) ja _only_noun_number varhaisella poistumisella.
         a_an = _analyze(voikko, adj.text, cache)
-        n_an = _analyze(voikko, noun.text, cache)
         a_num = _only_adj_number(a_an)
+        if not a_num:
+            continue
+        n_an = _analyze(voikko, noun.text, cache)
         n_num = _only_noun_number(n_an)
-        if not a_num or not n_num or a_num == n_num:
+        if not n_num or a_num == n_num:
             continue
         if any(a.get('CLASS') in ('sukunimi', 'etunimi', 'paikannimi') for a in n_an):
             continue
