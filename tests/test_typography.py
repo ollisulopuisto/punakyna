@@ -79,7 +79,9 @@ def test_range_hyphen():
               'Lehden ISSN-nro 2020-1230 näkyy kannessa.',
               'Tuotteen SKU-numero 2020-1230 on listalla.',
               'Lehden ISSN-koodin 0355-2047 näkyy kannessa.',
-              'Yhtälö 2-1=x+0.', 'Yhtälö 2-1=x2.'):
+              'Yhtälö 2-1=x+0.', 'Yhtälö 2-1=x2.', 'Yhtälö 2-1=X.',
+              'Yhtälö 2-1=X2.', 'Laitteen ID-koodin 2020-1230 voi tarkistaa.',
+              'Sarjan ID-numero 2020-2024 on listalla.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
 
 
