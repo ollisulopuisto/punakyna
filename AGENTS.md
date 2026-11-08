@@ -72,6 +72,12 @@
 - Protects clients and browsers from MIME type sniffing and iframe framing / UI redressing.
 - Added regression tests in `tests/test_api_hardening.py`.
 
+## 2026-11-08: Fallback error handling & server banner hardening (Sentinel)
+
+- Overrode `send_error` in `punakyna/api.py` to return JSON error responses with defense-in-depth security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`) instead of default HTML error responses.
+- Overrode `version_string` in `Handler` to emit only `Punakyna/0.5` without disclosing backend runtime platform/Python version.
+- Added regression tests in `tests/test_api_hardening.py`.
+
 ## 2026-11-07: PERFECT_PASSIVE_PARTICIPLE (v0.1.1)
 
 - Miss reported by Olli in LibreOffice: "Minä olen menty kotiin." was not flagged
