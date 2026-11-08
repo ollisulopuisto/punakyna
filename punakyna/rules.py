@@ -754,6 +754,11 @@ _RE_PERCENT = re.compile(r'(?<![\w.,/%-])(\d+(?:,\d+)?)(%)(?!\w)')
 _RE_CURRENCY = re.compile(r'(?<![\w.,/-])(\d+(?:,\d+)?)([€$£])(?![\w])')
 _RE_CLOCK_COLON = re.compile(r'\b(klo|kello) (\d{1,2}):(\d{2})(?![\d:])', re.I)
 _RE_CLOCK_ZERO = re.compile(r'\b(klo|kello) (0\d)(?:\.(\d{2}))?(?![\d:,]|\.\d)', re.I)
+_DEC_UNITS = (r'(?:[\u00a0 ]?%|[\u00a0 ]?°C|[\u00a0 ](?:kg|g|km|m|cm|mm|l|dl|cl|€|'
+              r'euroa|prosenttia|prosenttiyksikköä|metriä|kilometriä|kiloa|grammaa|'
+              r'litraa|senttiä|astetta|vuotta|kuukautta|tuntia))')
+_RE_DEC_POINT = re.compile(
+    r'(?<![\w.,/:\-])(\d{1,3})\.(\d{1,2})(?=' + _DEC_UNITS + r'(?![\w]))', re.I)
 _RE_ABBR = re.compile(r'(?<![\w.-])(esim|jne|tms|yms|huom)(?![\w.:-])', re.I)
 
 
@@ -799,6 +804,14 @@ def check_typography(sent_text, offset, clock=False):
             start=offset + m.start(), end=offset + m.end(),
             message='Numeron ja rahayksikön tunnuksen väliin tulee välilyönti ("29,90 €").',
             replacements=[m.group(1) + '\u00a0' + m.group(2)]))
+    for m in _RE_DEC_POINT.finditer(sent_text):
+        fixed = '%s,%s' % (m.group(1), m.group(2))
+        out.append(Suggestion(
+            rule='TYPO_DECIMAL_POINT', category='style', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message=('Suomenkielisessä tekstissä desimaaliluvun erottimena on '
+                     'pilkku ("%s"), ei piste.' % fixed),
+            replacements=[fixed]))
     for m in _RE_ABBR.finditer(sent_text):
         word = m.group(1)
         out.append(Suggestion(
