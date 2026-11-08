@@ -841,10 +841,10 @@ def check_typography(sent_text, offset, clock=False):
         prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
         if prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi'):
             continue  # standarditunnukset (myos "ISSN-numero"), ei rajakohta
-        before = sent_text[:m.start()].rstrip()
         after = sent_text[m.end():].lstrip()
-        if before.endswith('=') or after.startswith('='):
-            continue  # yhtalo ("2-1=1"), ei rajakohta
+        if after.startswith('='):
+            continue  # yhtalon vasen puloi ("2-1=1"), ei rajakohta;
+            # "=20-30 vuotta" -tyyppinen arvo on rajakohta ja liputetaan
         fixed = '%s\u2013%s' % (m.group(1), m.group(2))
         out.append(Suggestion(
             rule='TYPO_RANGE_HYPHEN', category='style', severity='warning',
