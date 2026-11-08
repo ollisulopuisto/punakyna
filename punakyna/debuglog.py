@@ -56,19 +56,40 @@ def error_type_value(cfg, default):
     return TYPES[cfg['error_type']]
 
 
-def log_call(cfg, text, start, end, errors, version=''):
-    """Append one JSON line. Never raises."""
+def log_call(cfg, text, start, end, errors, version='', note=''):
+    """Append one JSON line. Never raises.
+
+    The file is created 0600 (it holds document text), is never followed
+    through a symlink, is skipped if owned by someone else, and is cleared
+    before a write that would take it past MAX_LOG_BYTES. A single record
+    larger than the cap is replaced by a short stub.
+    """
     if not cfg.get('log'):
         return
     try:
-        p = log_path()
-        if p.exists() and p.stat().st_size > MAX_LOG_BYTES:
-            p.write_text('', encoding='utf-8')
         rec = {'t': time.strftime('%Y-%m-%dT%H:%M:%S'), 'version': version,
                'config': {k: cfg[k] for k in ('error_type', 'drop_suggestions')},
                'text': text, 'sentence_start': start, 'sentence_end': end,
                'errors': errors}
-        with p.open('a', encoding='utf-8') as f:
-            f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+        if note:
+            rec['note'] = note
+        line = (json.dumps(rec, ensure_ascii=False) + '\n').encode('utf-8')
+        if len(line) > MAX_LOG_BYTES:
+            line = (json.dumps({'t': rec['t'], 'version': version,
+                                'note': 'record too large, omitted',
+                                'bytes': len(line)}) + '\n').encode('utf-8')
+        flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, 'O_NOFOLLOW', 0)
+        fd = os.open(str(log_path()), flags, 0o600)
+        try:
+            st = os.fstat(fd)
+            if hasattr(os, 'getuid') and st.st_uid != os.getuid():
+                return
+            if st.st_mode & 0o077:
+                os.fchmod(fd, 0o600)
+            if st.st_size + len(line) > MAX_LOG_BYTES:
+                os.ftruncate(fd, 0)
+            os.write(fd, line)
+        finally:
+            os.close(fd)
     except Exception:
         pass

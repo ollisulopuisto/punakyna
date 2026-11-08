@@ -67,7 +67,7 @@ def _debug_error_type(dbg, default):
     return debuglog.error_type_value(dbg, default)
 
 
-def _debug_log(dbg, text, start, end, errors):
+def _debug_log(dbg, text, start, end, errors, note=''):
     if not dbg or not dbg.get('log'):
         return
     try:
@@ -77,7 +77,7 @@ def _debug_log(dbg, text, start, end, errors):
                  'message': e.aFullComment,
                  'suggestions': list(e.aSuggestions),
                  'properties': list(e.aProperties)} for e in errors]
-        debuglog.log_call(dbg, text, start, end, recs, __version__)
+        debuglog.log_call(dbg, text, start, end, recs, __version__, note)
     except Exception:
         pass
 
@@ -208,6 +208,17 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
 
     def doProofreading(self, nDocId, rText, rLocale, nStartOfSentencePos,
                        nSuggestedSentenceEndPos, rProperties):
+        self._dbg_note = ''
+        aRes = self._do_proofreading(nDocId, rText, rLocale,
+                                     nStartOfSentencePos,
+                                     nSuggestedSentenceEndPos, rProperties)
+        # valinnainen debug-loki kaikista paluupoluista (oletuksena pois)
+        _debug_log(_debug_config(), rText, nStartOfSentencePos,
+                   nSuggestedSentenceEndPos, aRes.aErrors, self._dbg_note)
+        return aRes
+
+    def _do_proofreading(self, nDocId, rText, rLocale, nStartOfSentencePos,
+                         nSuggestedSentenceEndPos, rProperties):
         aRes = uno.createUnoStruct(
             'com.sun.star.linguistic2.ProofreadingResult')
         aRes.aDocumentIdentifier = nDocId
@@ -246,6 +257,7 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
 
         if (self._setup_fail is not None
                 and time.monotonic() - self._setup_fail[1] < _SETUP_FAIL_TTL):
+            self._dbg_note = 'cached setup failure: %r' % (self._setup_fail[0],)
             err = setup_error(self._setup_fail[0])
             aRes.aErrors = (err,) if err else ()
             return aRes
@@ -258,6 +270,7 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             style_profile = None  # quotation can span several sentence callbacks
         mode = self._resolve_mode()
         if mode == 'fail':
+            self._dbg_note = 'setup failure: %r' % (self._setup_fail[0],)
             err = setup_error(self._setup_fail[0])
             aRes.aErrors = (err,) if err else ()
             return aRes
@@ -268,7 +281,8 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
                                      use_spelling=True,
                                      style_profile=style_profile))
                 self._setup_fail = None
-            except Exception:
+            except Exception as e:
+                self._dbg_note = 'local engine error: %r' % (e,)
                 return aRes  # moottorivika kesken ajan: hiljainen degradaatio
         else:
             try:
@@ -277,15 +291,18 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403):
                     self._setup_fail = (_MSG_AUTH, time.monotonic())
+                    self._dbg_note = 'server auth failure %s' % e.code
                     err = setup_error(_MSG_AUTH)
                     aRes.aErrors = (err,) if err else ()
                 return aRes
             except (urllib.error.URLError, OSError, TimeoutError):
                 self._setup_fail = (_msg_server(), time.monotonic())
+                self._dbg_note = 'server unreachable: %r' % (self._setup_fail[0],)
                 err = setup_error(self._setup_fail[0])
                 aRes.aErrors = (err,) if err else ()
                 return aRes
-            except Exception:
+            except Exception as e:
+                self._dbg_note = 'server error: %r' % (e,)
                 return aRes  # tuntematon virhe: hiljainen degradaatio
 
         dbg = _debug_config()
@@ -308,8 +325,6 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             err.aProperties = ()
             errors.append(err)
         aRes.aErrors = tuple(errors)
-        _debug_log(dbg, rText, nStartOfSentencePos, nSuggestedSentenceEndPos,
-                   errors)
         return aRes
 
     def _resolve_mode(self):
