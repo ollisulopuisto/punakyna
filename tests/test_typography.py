@@ -53,6 +53,10 @@ def test_range_hyphen():
                    ('Hän työskenteli vuosina 1853-1862.', '1853–1862'),
                    ('Ottelu päättyi 2-1.', '2–1'),
                    ('Ikä=20-30 vuotta.', '20–30'),
+                   ('Ryhmä 1 (10-12-vuotiaat) osallistuu.', '10–12'),
+                   ('Ryhmä (20-30 henkilöä) saapuu.', '20–30'),
+                   ('Tulos 2-1 = kotijoukkueen voitto.', '2–1'),
+                   ('ISBN-numeron 5-8 merkkiä on painettu.', '5–8'),
                    ('Lue sivut 5-8 ensin.', '5–8')):
         r = hits(t, 'TYPO_RANGE_HYPHEN')
         assert len(r) == 1 and r[0].replacements == [fix], t
@@ -64,5 +68,6 @@ def test_range_hyphen():
               'Kone on Boeing 737-800 ja 737-700.', 'Moottori on CFM International 56-3.',
               'Lehden ISSN 0355-2047 näkyy kannessa.', 'Sarjan ISSN 1798-2014.',
               'Tiedosto on Sääntökirja%202021-2022%20v2.pdf.',
-              'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.'):
+              'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.',
+              'Lasku 1+(2-1) on nolla.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t

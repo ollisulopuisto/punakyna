@@ -839,17 +839,27 @@ def check_typography(sent_text, offset, clock=False):
         if not _range_hyphen_ok(m.group(1), m.group(2)):
             continue
         prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
-        if prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi'):
-            continue  # standarditunnukset (myos "ISSN-numero"), ei rajakohta
+        if prev in ('issn', 'isbn', 'ismn', 'doi') or                 prev.endswith('-numero') or prev.endswith('-tunnus'):
+            continue  # standarditunnus tai sen lyhenne ("ISSN-numero 2020-1230");
+            # taivutettu muoto ("ISBN-numeron 5-8 merkkiä") on proosaa
         before = sent_text[:m.start()].rstrip()
         after = sent_text[m.end():].lstrip()
         if after.startswith('='):
-            continue  # yhtalon vasen puloi ("2-1=1"), ei rajakohta
-        if before and before[-1] in '=+-*/(':
+            rhs = after[1:].lstrip()
+            if rhs and (rhs[0].isdigit() or rhs[0] in '+-('):
+                continue  # yhtalon vasen puloi ("2-1=1"), ei rajakohta;
+                # "= kotijoukkueen voitto" on selitys, liputetaan
+        if before and before[-1] in '=+-*/':
             operand = before[:-1].rstrip()
             if operand and (operand[-1].isdigit() or operand[-1] in '+-*/('):
                 continue  # laskutoimituksen osa ("1=2-1", "5=3+2-1");
                 # sanan perassa oleva "=" on arvon antoa ("Ika=20-30 vuotta")
+        if before.endswith('('):
+            lead = sent_text[:m.start()].rstrip()[:-1]
+            prev_ch = lead[-1] if lead else ''
+            if prev_ch.isdigit() or prev_ch in '+-*/(':
+                continue  # aritmetiikan sulku ("1+(2-1)");
+                # "Ryhmä 1 (10-12-vuotiaat)" on otsikkotaso, liputetaan
         fixed = '%s\u2013%s' % (m.group(1), m.group(2))
         out.append(Suggestion(
             rule='TYPO_RANGE_HYPHEN', category='style', severity='warning',
