@@ -56,6 +56,7 @@ def test_range_hyphen():
                    ('Ryhmä 1 (10-12-vuotiaat) osallistuu.', '10–12'),
                    ('Ryhmä (20-30 henkilöä) saapuu.', '20–30'),
                    ('Tulos 2-1 = kotijoukkueen voitto.', '2–1'),
+                   ('Tulos 2-1 = A-joukkueen voitto.', '2–1'),
                    ('ISBN-numeron 5-8 merkkiä on painettu.', '5–8'),
                    ('Lue sivut 5-8 ensin.', '5–8')):
         r = hits(t, 'TYPO_RANGE_HYPHEN')
@@ -71,7 +72,8 @@ def test_range_hyphen():
               'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.',
               'Lasku 1+(2-1) on nolla.', 'Yhtälö 2-1=x.',
               'Yhtälö 2-1 = x.', 'Lehden ISSN-koodi 0355-2047 näkyy kannessa.',
-              'Lehden ISSN-nro 2020-1230 näkyy kannessa.'):
+              'Lehden ISSN-nro 2020-1230 näkyy kannessa.',
+              'Tuotteen SKU-numero 2020-1230 on listalla.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
 
 
