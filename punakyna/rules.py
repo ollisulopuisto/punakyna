@@ -785,6 +785,48 @@ def _range_hyphen_ok(a, b):
 
 
 
+_RE_DATE_ISO = re.compile(
+    r'(?<![\w/.-])(\d{4})-(\d{2})-(\d{2})(?![\w/-]|[ T]\d{2}[:.]\d{2})')
+_RE_DATE_SLASH = re.compile(
+    r'(?<![\w/.])(\d{1,2})/(\d{1,2})/(\d{4})(?![\w/])')
+
+
+def _check_dates(sent_text, offset):
+    """Paivaysmuodot (ohjepankki "Ajanilmaukset: paivays ja vuosiluku"):
+    suomessa nouseva paivays pistein (24.12.2025). ISO 2025-12-24 on
+    standardinmukainen mutta ei suositeltu suomenkielisessa tekstissa;
+    kauttaviivat 24/12/2025 ovat vieras kaytanto."""
+    out = []
+    for m in _RE_DATE_ISO.finditer(sent_text):
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if not (1 <= mo <= 12 and 1 <= d <= 31):
+            continue
+        fixed = '%d.%d.%d' % (d, mo, y)
+        out.append(Suggestion(
+            rule='TYPO_DATE_FORMAT', category='style', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message=('Suomenkielisessä tekstissä päiväys merkitään nousevasti '
+                     'pistein ("%s"). Laskeva ISO-muoto on standardinmukainen '
+                     'mutta ei suositeltu.' % fixed),
+            replacements=[fixed]))
+    for m in _RE_DATE_SLASH.finditer(sent_text):
+        a, b, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if a > 31 or b > 31 or a == 0 or b == 0:
+            continue
+        repl = []
+        if a > 12 and b <= 12:
+            repl = ['%d.%d.%d' % (a, b, y)]
+        elif b > 12 and a <= 12:
+            repl = ['%d.%d.%d' % (b, a, y)]
+        # molemmat <= 12: jarjestysta ei voi paatella, ei korjausta
+        out.append(Suggestion(
+            rule='TYPO_DATE_FORMAT', category='style', severity='warning',
+            start=offset + m.start(), end=offset + m.end(),
+            message='Suomenkielisessä tekstissä päiväys merkitään pistein, ei kauttaviivoin ("3.4.2025").',
+            replacements=repl))
+    return out
+
+
 def _check_clock(sent_text, offset):
     out = []
     for m in _RE_CLOCK_COLON.finditer(sent_text):
@@ -814,7 +856,9 @@ def check_typography(sent_text, offset, clock=False):
     libvoikko katkaisee virkkeen kaksoispisteeseen: 'klo 9:' + '15')."""
     out = []
     if clock:
-        return _check_clock(sent_text, offset)
+        # koko teksti: libvoikko katkaisee virkkeen kaksoispisteeseen
+        # ("klo 9:" + "15", "2025-04-03 12:" + "30")
+        return _check_clock(sent_text, offset) + _check_dates(sent_text, offset)
     for m in _RE_PERCENT.finditer(sent_text):
         out.append(Suggestion(
             rule='TYPO_PERCENT_SPACE', category='style', severity='warning',
