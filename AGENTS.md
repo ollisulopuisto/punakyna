@@ -200,3 +200,7 @@
 ## 2026-11-08: opt-in debug logging for the LibreOffice adapter (v0.1.11)
 - punakyna/debuglog.py: off by default. ~/.config/punakyna/debug.json (read per call) or PUNAKYNA_DEBUG=1. Options: log (JSONL to <tmpdir>/punakyna-debug.log, 5 MB cap, includes the document text), error_type ("proofreading" default | "spelling" experiment), drop_suggestions.
 - Purpose: diagnose the blue smear in LibreOffice's Spelling dialog on macOS (hypothesis: grammar-type error rendering; unproven). Default behaviour unchanged.
+## 2026-11-08: TYPO_DECIMAL_POINT (v0.1.10)
+- New rule TYPO_DECIMAL_POINT (warning): `3.5 kg` -> `3,5 kg`. Source: https://kielitoimistonohjepankki.fi/ohje/luvut-ja-numerot-desimaaliluvut/ (read directly; SFS 4175, "desimaalipistettä ei suositella suomenkielisiin teksteihin").
+- Deliberately narrow: fires only on `N.N` (1-3 digits, 1-2 decimals) directly followed by a unit (%, °C, kg, km, euroa, ...). Dates, clock times, section numbers, versions, IPs, thousands grouping (1.000) and the sports-time form 2.19,03 are not flagged.
+- Tests in tests/test_typography.py; wiki sweep (~77k words): 0 hits.
