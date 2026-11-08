@@ -117,3 +117,5 @@
 - v0.1.13 (2026-11-08): TYPO_RANGE_HYPHEN (ohjepankki, ajatusviiva rajakohdissa). Seuraavaksi: päivämäärämuodot (12/5/2025, ISO 2025-12-24). Katso AGENTS.md.
 
 - v0.1.14 (2026-11-08): TYPO_DATE_FORMAT (ohjepankki, päiväys pistein; ISO ja kauttaviiva liputetaan). Seuraavaksi: numeroiden ryhmittely, ss./vv. Katso AGENTS.md.
+
+- v0.1.15 (2026-11-08): TYPO_RANGE_HYPHEN-tarkistusten tarkennukset (yhtälöt, ISSN-tunnukset). Katso AGENTS.md.

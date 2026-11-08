@@ -69,7 +69,9 @@ def test_range_hyphen():
               'Lehden ISSN 0355-2047 näkyy kannessa.', 'Sarjan ISSN 1798-2014.',
               'Tiedosto on Sääntökirja%202021-2022%20v2.pdf.',
               'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.',
-              'Lasku 1+(2-1) on nolla.'):
+              'Lasku 1+(2-1) on nolla.', 'Yhtälö 2-1=x.',
+              'Yhtälö 2-1 = x.', 'Lehden ISSN-koodi 0355-2047 näkyy kannessa.',
+              'Lehden ISSN-nro 2020-1230 näkyy kannessa.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
 
 

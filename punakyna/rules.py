@@ -883,15 +883,17 @@ def check_typography(sent_text, offset, clock=False):
         if not _range_hyphen_ok(m.group(1), m.group(2)):
             continue
         prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
-        if prev in ('issn', 'isbn', 'ismn', 'doi') or                 prev.endswith('-numero') or prev.endswith('-tunnus'):
-            continue  # standarditunnus tai sen lyhenne ("ISSN-numero 2020-1230");
-            # taivutettu muoto ("ISBN-numeron 5-8 merkkiä") on proosaa
+        if prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi') and \
+                len(m.group(1)) == 4 and len(m.group(2)) == 4:
+            continue  # tunnuksenmuotoinen pari ("ISSN-koodi 0355-2047");
+            # tavallinen pieni vali ("ISBN-numeron 5-8 merkkiä") liputetaan
         before = sent_text[:m.start()].rstrip()
         after = sent_text[m.end():].lstrip()
         if after.startswith('='):
             rhs = after[1:].lstrip()
-            if rhs and (rhs[0].isdigit() or rhs[0] in '+-('):
-                continue  # yhtalon vasen puloi ("2-1=1"), ei rajakohta;
+            if rhs and (rhs[0].isdigit() or rhs[0] in '+-(' or
+                        (rhs[0].isalpha() and (len(rhs) == 1 or not rhs[1].isalpha()))):
+                continue  # yhtalo ("2-1=1", "2-1=x"), ei rajakohta;
                 # "= kotijoukkueen voitto" on selitys, liputetaan
         if before and before[-1] in '=+-*/':
             operand = before[:-1].rstrip()
