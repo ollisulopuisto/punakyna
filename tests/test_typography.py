@@ -57,6 +57,10 @@ def test_range_hyphen():
                    ('Ryhmä (20-30 henkilöä) saapuu.', '20–30'),
                    ('Tulos 2-1 = kotijoukkueen voitto.', '2–1'),
                    ('Tulos 2-1 = A-joukkueen voitto.', '2–1'),
+                   ('Tulos 2-1 = U17-joukkueen voitto.', '2–1'),
+                   ('Tulos 2-1 = A/B-testin tulos.', '2–1'),
+                   ('Lehden numerot 2020-2024 ilmestyivät.', '2020–2024'),
+                   ('Aku Ankka -numerot 2020-2024 ovat arkistossa.', '2020–2024'),
                    ('ISBN-numeron 5-8 merkkiä on painettu.', '5–8'),
                    ('Lue sivut 5-8 ensin.', '5–8')):
         r = hits(t, 'TYPO_RANGE_HYPHEN')
