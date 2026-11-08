@@ -52,6 +52,36 @@ if _here_file:
     if _here_dir not in _sys.path:
         _sys.path.insert(0, _here_dir)
 
+def _debug_config():
+    try:
+        from punakyna import debuglog
+        return debuglog.load_config()
+    except Exception:
+        return None
+
+
+def _debug_error_type(dbg, default):
+    if not dbg:
+        return default
+    from punakyna import debuglog
+    return debuglog.error_type_value(dbg, default)
+
+
+def _debug_log(dbg, text, start, end, errors, note=''):
+    if not dbg or not dbg.get('log'):
+        return
+    try:
+        from punakyna import debuglog, __version__
+        recs = [{'start': e.nErrorStart, 'length': e.nErrorLength,
+                 'type': e.nErrorType, 'rule': e.aRuleIdentifier,
+                 'message': e.aFullComment,
+                 'suggestions': list(e.aSuggestions),
+                 'properties': list(e.aProperties)} for e in errors]
+        debuglog.log_call(dbg, text, start, end, recs, __version__, note)
+    except Exception:
+        pass
+
+
 IMPLEMENTATION_NAME = 'org.punakyna.comp.pyuno.PunakynaProofreader'
 SERVICE_NAME = 'com.sun.star.linguistic2.Proofreader'
 MIN_TOKEN_LEN = 32
@@ -178,6 +208,17 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
 
     def doProofreading(self, nDocId, rText, rLocale, nStartOfSentencePos,
                        nSuggestedSentenceEndPos, rProperties):
+        self._dbg_note = ''
+        aRes = self._do_proofreading(nDocId, rText, rLocale,
+                                     nStartOfSentencePos,
+                                     nSuggestedSentenceEndPos, rProperties)
+        # valinnainen debug-loki kaikista paluupoluista (oletuksena pois)
+        _debug_log(_debug_config(), rText, nStartOfSentencePos,
+                   nSuggestedSentenceEndPos, aRes.aErrors, self._dbg_note)
+        return aRes
+
+    def _do_proofreading(self, nDocId, rText, rLocale, nStartOfSentencePos,
+                         nSuggestedSentenceEndPos, rProperties):
         aRes = uno.createUnoStruct(
             'com.sun.star.linguistic2.ProofreadingResult')
         aRes.aDocumentIdentifier = nDocId
@@ -216,6 +257,7 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
 
         if (self._setup_fail is not None
                 and time.monotonic() - self._setup_fail[1] < _SETUP_FAIL_TTL):
+            self._dbg_note = 'cached setup failure: %r' % (self._setup_fail[0],)
             err = setup_error(self._setup_fail[0])
             aRes.aErrors = (err,) if err else ()
             return aRes
@@ -228,6 +270,7 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             style_profile = None  # quotation can span several sentence callbacks
         mode = self._resolve_mode()
         if mode == 'fail':
+            self._dbg_note = 'setup failure: %r' % (self._setup_fail[0],)
             err = setup_error(self._setup_fail[0])
             aRes.aErrors = (err,) if err else ()
             return aRes
@@ -238,7 +281,8 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
                                      use_spelling=True,
                                      style_profile=style_profile))
                 self._setup_fail = None
-            except Exception:
+            except Exception as e:
+                self._dbg_note = 'local engine error: %r' % (e,)
                 return aRes  # moottorivika kesken ajan: hiljainen degradaatio
         else:
             try:
@@ -247,17 +291,23 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403):
                     self._setup_fail = (_MSG_AUTH, time.monotonic())
+                    self._dbg_note = 'server auth failure %s' % e.code
                     err = setup_error(_MSG_AUTH)
                     aRes.aErrors = (err,) if err else ()
+                else:
+                    self._dbg_note = 'server HTTP error %s' % e.code
                 return aRes
             except (urllib.error.URLError, OSError, TimeoutError):
                 self._setup_fail = (_msg_server(), time.monotonic())
+                self._dbg_note = 'server unreachable: %r' % (self._setup_fail[0],)
                 err = setup_error(self._setup_fail[0])
                 aRes.aErrors = (err,) if err else ()
                 return aRes
-            except Exception:
+            except Exception as e:
+                self._dbg_note = 'server error: %r' % (e,)
                 return aRes  # tuntematon virhe: hiljainen degradaatio
 
+        dbg = _debug_config()
         errors = []
         for s in suggs:
             rule_id = 'punakyna.' + s['rule']
@@ -268,11 +318,12 @@ class PunakynaProofreader(unohelper.Base, XProofreader, XServiceInfo,
             err.nErrorStart = (nStartOfSentencePos
                                + _utf16_len(sentence[:s['start']]))
             err.nErrorLength = _utf16_len(sentence[s['start']:s['end']])
-            err.nErrorType = PROOFREADING
+            err.nErrorType = _debug_error_type(dbg, PROOFREADING)
             err.aRuleIdentifier = rule_id
             err.aShortComment = s['message'][:100]
             err.aFullComment = s['message']
-            err.aSuggestions = tuple(s.get('replacements', [])[:16])
+            err.aSuggestions = (() if dbg and dbg['drop_suggestions']
+                                else tuple(s.get('replacements', [])[:16]))
             err.aProperties = ()
             errors.append(err)
         aRes.aErrors = tuple(errors)

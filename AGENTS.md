@@ -197,7 +197,17 @@
 - HEAD with no handler wrote the JSON body. _send now skips the body for HEAD, keeping Content-Length.
 - Raw-socket regression tests in tests/test_api_hardening.py (fail on unfixed code).
 
+## 2026-11-08: opt-in debug logging for the LibreOffice adapter (v0.1.11)
+- punakyna/debuglog.py: off by default. ~/.config/punakyna/debug.json (read per call) or PUNAKYNA_DEBUG=1. Options: log (JSONL to <tmpdir>/punakyna-debug.log, 5 MB cap, includes the document text), error_type ("proofreading" default | "spelling" experiment), drop_suggestions.
+- Purpose: diagnose the blue smear in LibreOffice's Spelling dialog on macOS (hypothesis: grammar-type error rendering; unproven). Default behaviour unchanged.
 ## 2026-11-08: TYPO_DECIMAL_POINT (v0.1.10)
 - New rule TYPO_DECIMAL_POINT (warning): `3.5 kg` -> `3,5 kg`. Source: https://kielitoimistonohjepankki.fi/ohje/luvut-ja-numerot-desimaaliluvut/ (read directly; SFS 4175, "desimaalipistettä ei suositella suomenkielisiin teksteihin").
 - Deliberately narrow: fires only on `N.N` (1-3 digits, 1-2 decimals) directly followed by a unit (%, °C, kg, km, euroa, ...). Dates, clock times, section numbers, versions, IPs, thousands grouping (1.000) and the sports-time form 2.19,03 are not flagged.
 - Tests in tests/test_typography.py; wiki sweep (~77k words): 0 hits.
+
+## 2026-11-08: Update feed moved to a fixed release (v0.1.12)
+- Olli's LibreOffice "Check for Updates" showed "releases/latest/download/punakyna.update.xml does not exist": every release here is a draft or pre-release, and /releases/latest never resolves to those.
+- description.xml now points at https://github.com/ollisulopuisto/punakyna/releases/download/update-feed/punakyna.update.xml (fixed tag `update-feed`).
+- update-feed.yml: on a published (non-draft, pre-releases included) release that carries punakyna-full-macos.oxt, regenerate the feed for that tag and upload it to the `update-feed` release, creating it on first run. Drafts do not fire the event, so nothing updates until Olli publishes a release.
+- Already-installed OXTs (0.1.11 and older) keep the old URL; only an OXT built from this version on checks the new one. Needs a version bump in each new OXT or LibreOffice sees no update.
+- Not verified on a Mac: the real Check for Updates against a published release.

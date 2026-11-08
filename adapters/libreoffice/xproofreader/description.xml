@@ -3,12 +3,12 @@
     xmlns:dep="http://openoffice.org/office/extension/2006/deployment"
     xmlns:xlink="http://www.w3.org/1999/xlink">
  <identifier value="fi.punakyna.proofreader"/>
- <version value="0.1.10"/>
+ <version value="0.1.12"/>
  <display-name>
   <name lang="fi">Punakynä - suomen oikoluku (paikallinen)</name>
   <name lang="en">Punakynä - Finnish proofreading (local)</name>
  </display-name>
  <update-information>
-  <src xlink:href="https://github.com/ollisulopuisto/punakyna/releases/latest/download/punakyna.update.xml"/>
+  <src xlink:href="https://github.com/ollisulopuisto/punakyna/releases/download/update-feed/punakyna.update.xml"/>
  </update-information>
 </description>
