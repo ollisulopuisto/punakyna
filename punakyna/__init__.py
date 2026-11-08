@@ -7,4 +7,4 @@ Kerrosarkkitehtuuri:
    Oletuksena pois paalta; mukana ei jaeta kolmannen osapuolen painoja.
 Pipeline ei koskaan kirjoita tekstia uudelleen: se palauttaa vain ehdotuksia.
 """
-__version__ = '0.1.8'
+__version__ = '0.1.9'

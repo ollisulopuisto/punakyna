@@ -119,7 +119,10 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
 
         def send_error(self, code, message=None, explain=None):
             # Torju oletus-HTML-virhesivujen ja MIME-nuuskinnan riskit sisäänrakennetuissa virheissä.
-            self._send(code, {'error': message or str(code)})
+            # Kuten oletuskäsittelijä: sulje yhteys, koska pyynnön runkoa ei ole
+            # luettu ja se rikkoisi seuraavan pyynnön kehystyksen.
+            self.close_connection = True
+            self._send(code, {'error': message or str(code)}, close=True)
 
         def setup(self):
             super().setup()
@@ -128,7 +131,7 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
         def log_message(self, fmt, *args):
             pass  # tekstisisältöä ei logata
 
-        def _send(self, code, payload):
+        def _send(self, code, payload, close=False):
             body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
             self.send_response(code)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -136,10 +139,13 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
             # Turvaotsakkeet: estä MIME-tyypin nuuskiminen ja upotus kehyksiin selaimessa.
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.send_header('X-Frame-Options', 'DENY')
+            if close:
+                self.send_header('Connection', 'close')
             # Tietoisesti EI Access-Control-Allow-Origin -otsaketta:
             # sivustojen ei pidä lukea vastauksia selaimessa.
             self.end_headers()
-            self.wfile.write(body)
+            if self.command != 'HEAD':  # HEAD-vastauksessa ei ole runkoa
+                self.wfile.write(body)
 
         def _reject(self):
             self._send(404, {'error': 'tuntematon polku'})

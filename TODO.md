@@ -109,3 +109,4 @@
 - v0.1.6 (2026-11-07): STYLE_SENTENCE_LENGTH + --profile virkakieli (opt-in). Katso docs/style-advice.md, AGENTS.md.
 - v0.1.7 (2026-11-07): ATTR_AGREEMENT (isot talo -> isot talot; VISK §1302, §582). Katso AGENTS.md.
 - v0.1.8 (2026-11-07): TYPO_PERCENT_SPACE, TYPO_CURRENCY_SPACE, TYPO_CLOCK_FORMAT, TYPO_ABBR_DOT (ohjepankki). Katso docs/ohjepankki-candidates.md, AGENTS.md.
+- v0.1.9 (2026-11-08): API: virhevastaus sulkee yhteyden, HEAD ilman runkoa (#29:n katselmoinnin korjaukset). Katso AGENTS.md.

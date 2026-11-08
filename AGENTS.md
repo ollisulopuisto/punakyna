@@ -188,3 +188,11 @@
 - Precision: 1 hit on the ~77k-word Wikipedia sweep ("Kello 10:45", a true instance of the
   style advice), 0 on the clean smoke set.
 - This PR is stacked on #26 (ATTR_AGREEMENT, v0.1.7). Version 0.1.8.
+
+## 2026-11-08: API fallback fixes after review of #29 (v0.1.9)
+
+- send_error override (from #29) left HTTP/1.1 connections open with the request body unread, so
+  leftover bytes became the next request ("junkGET" -> a second 501). It now sets
+  close_connection and sends Connection: close, like the standard handler.
+- HEAD with no handler wrote the JSON body. _send now skips the body for HEAD, keeping Content-Length.
+- Raw-socket regression tests in tests/test_api_hardening.py (fail on unfixed code).
