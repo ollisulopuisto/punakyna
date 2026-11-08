@@ -214,7 +214,7 @@
 
 ## 2026-11-08: TYPO_RANGE_HYPHEN (v0.1.13)
 
-- New rule TYPO_RANGE_HYPHEN (warning): `20-30` -> `20-30` (ajatusviiva). Source:
+- New rule TYPO_RANGE_HYPHEN (warning): `20-30` -> `20–30` (ajatusviiva). Source:
   ohjepankki "Ajatusviiva: rajakohdat ja osapuolet" (read 2026-11-08):
   ajatusviiva lukujen rajakohdissa ja osapuolten tuloksissa ("9–12", "2–1").
 - Deliberately narrow: flags only pairs where either number is 1-2 digits

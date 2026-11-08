@@ -773,11 +773,12 @@ def _is_yearish(s):
 
 
 def _range_hyphen_ok(a, b):
-    # vuodet 1800-2199 kelpaavat aina; pienet (<=2-numeroiset) luvut ovat
-    # rajakohtia tai tuloksia ("16-20", "2-1"); 3+3-numeroiset yhdistelmat
-    # ("737-800") ja "56-3"-mallit ovat tunnisteita, ei rajakohtia
+    # vuodet 1800-2199 kelpaavat aina, paitsi vuosi-kuukausi ("2026-11");
+    # pienet (<=2-numeroiset) luvut ovat rajakohtia tai tuloksia ("16-20",
+    # "2-1"); 3+3-numeroiset yhdistelmat ("737-800") ja "56-3"-mallit ovat
+    # tunnisteita, ei rajakohtia
     if _is_yearish(a) or _is_yearish(b):
-        return True
+        return not (len(a) == 4 and len(b) == 2 and 1 <= int(b) <= 12)
     if len(a) <= 2 and len(b) <= 2:
         return not (len(b) == 1 and len(a) >= 2)
     return False
@@ -837,9 +838,13 @@ def check_typography(sent_text, offset, clock=False):
     for m in _RE_RANGE_HYPHEN.finditer(sent_text):
         if not _range_hyphen_ok(m.group(1), m.group(2)):
             continue
-        prev = sent_text[max(0, m.start() - 8):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
-        if prev in ('issn', 'isbn', 'ismn', 'doi'):
-            continue  # standarditunnukset, ei rajakohta
+        prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
+        if prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi'):
+            continue  # standarditunnukset (myos "ISSN-numero"), ei rajakohta
+        before = sent_text[:m.start()].rstrip()
+        after = sent_text[m.end():].lstrip()
+        if before.endswith('=') or after.startswith('='):
+            continue  # yhtalo ("2-1=1"), ei rajakohta
         fixed = '%s\u2013%s' % (m.group(1), m.group(2))
         out.append(Suggestion(
             rule='TYPO_RANGE_HYPHEN', category='style', severity='warning',

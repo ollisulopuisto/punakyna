@@ -73,7 +73,7 @@ REGISTRY = (
     RuleSpec('TYPO_RANGE_HYPHEN', 'En dash in number ranges', 'rules', 'warning',
              ('https://kielitoimistonohjepankki.fi/ohje/ajatusviiva-rajakohdat-ja-osapuolet-20-29-vuotiaat-suomi-ruotsi-maaottelu/',), 'verified',
              ('test_typography.py',),
-             summary='20-30 -> 20-30 (ajatusviiva); tunnisteet, viivaketjut ja 3+3-numeroiset mallinumerot ohitetaan'),
+             summary='20-30 -> 20–30 (ajatusviiva); tunnisteet, viivaketjut ja 3+3-numeroiset mallinumerot ohitetaan'),
     RuleSpec('STYLE_SENTENCE_LENGTH', 'Sentence length (style)', 'style', 'style',
              ('https://kotus.fi/valta-pitkia-virkkeita/',
               'https://kielitoimistonohjepankki.fi/vk/ohjeita-saadoskieleen/pitkat-virkkeet/'),
