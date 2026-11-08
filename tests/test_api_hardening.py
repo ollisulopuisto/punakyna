@@ -484,3 +484,39 @@ def test_revoke_takes_effect_without_restart(tmp_path):
         assert status == 401  # heti, ei uudelleenkäynnistystä
     finally:
         srv.shutdown(); srv.server_close()
+
+
+def _raw(srv, data, read_timeout=5):
+    import socket
+    sock = socket.create_connection(('127.0.0.1', srv.server_address[1]), timeout=read_timeout)
+    sock.sendall(data)
+    chunks = []
+    try:
+        while True:
+            c = sock.recv(65536)
+            if not c:
+                break
+            chunks.append(c)
+    except socket.timeout:
+        chunks.append(b'<<TIMEOUT>>')
+    sock.close()
+    return b''.join(chunks)
+
+
+def test_unsupported_method_with_body_closes_connection(server):
+    # send_error ei lue runkoa: yhteys on suljettava, ettei "junk" muutu seuraavaksi pyynnöksi.
+    out = _raw(server, b'CUSTOM /check HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 4\r\n\r\n'
+                       b'junkGET /health HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n')
+    head = out.split(b'\r\n\r\n', 1)[0].lower()
+    assert b'501' in out.split(b'\r\n', 1)[0]
+    assert b'connection: close' in head
+    assert b'<<timeout>>' not in out  # palvelin sulki yhteyden itse
+    assert out.count(b'HTTP/1.') == 1  # ei toista vastausta jäännösrungosta
+
+
+def test_head_fallback_has_no_body(server):
+    out = _raw(server, b'HEAD /check HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n')
+    head, _, body = out.partition(b'\r\n\r\n')
+    assert b'501' in head.split(b'\r\n', 1)[0]
+    assert b'content-length' in head.lower()
+    assert body == b''
