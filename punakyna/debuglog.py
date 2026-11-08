@@ -42,7 +42,7 @@ def load_config():
     if isinstance(data, dict):
         if isinstance(data.get('log'), bool):
             cfg['log'] = data['log']
-        if data.get('error_type') in TYPES:
+        if isinstance(data.get('error_type'), str) and data['error_type'] in TYPES:
             cfg['error_type'] = data['error_type']
         if isinstance(data.get('drop_suggestions'), bool):
             cfg['drop_suggestions'] = data['drop_suggestions']
