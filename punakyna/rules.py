@@ -897,7 +897,8 @@ def check_typography(sent_text, offset, clock=False):
             tok = rhs.split()[0].rstrip('.,;:!?)]') if rhs else ''
             if tok and (tok[0].isdigit() or tok[0] in '+-(' or
                         re.fullmatch(r'[A-Za-z\u00c5\u00c4\u00d6\u00e5\u00e4\u00f6]\d*'
-                                     r'(?:[+\-*/^]\d+)*', tok)):
+                                     r'(?:[+\-*/^][A-Za-z\u00c5\u00c4\u00d6\u00e5\u00e4\u00f6]?\d*)*'
+                                     r'[\u00b2\u00b3\u00b9\u2070\u2074-\u2079]?', tok)):
                 continue  # yhtalo ("2-1=1", "2-1=x"), ei rajakohta;
                 # "= kotijoukkueen voitto" on selitys, liputetaan
         if before and before[-1] in '=+-*/':
