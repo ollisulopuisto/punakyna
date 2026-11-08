@@ -71,3 +71,21 @@ def test_range_hyphen():
               'Lasku 2-1=1.', 'Tulos on 1=2-1.', 'Summa 5=3+2-1.',
               'Lasku 1+(2-1) on nolla.'):
         assert not hits(t, 'TYPO_RANGE_HYPHEN'), t
+
+
+def test_date_format():
+    for t, fix in (('Sopimus päättyy 2025-04-03.', '3.4.2025'),
+                   ('Sopimus päättyy 3/4/2025.', None),
+                   ('Sopimus päättyy 25/4/2025.', '25.4.2025'),
+                   ('Sopimus päättyy 04/25/2025.', '25.4.2025')):
+        r = hits(t, 'TYPO_DATE_FORMAT')
+        assert len(r) == 1, t
+        if fix:
+            assert r[0].replacements == [fix], t
+        else:
+            assert r[0].replacements == [], t
+    for t in ('Sopimus päättyy 3.4.2025.', 'Loma alkaa 24.12.',
+              'Aikaleima 2025-04-03 12:30:00.', 'Tiedosto on log-2025-04-03.txt.',
+              'Osoite on a.fi/2025/04/03/x.', 'Hän sai 3/4 osuuden.',
+              'Katso versio 2025-04-03 10.00.'):
+        assert not hits(t, 'TYPO_DATE_FORMAT'), t

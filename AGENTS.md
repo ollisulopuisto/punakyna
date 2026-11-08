@@ -227,3 +227,20 @@
   true instances of hyphen-for-en-dash (year ranges, page spans, placements).
   Smoke eval: 0 false alarms on 34 clean sentences.
 - Version 0.1.13 (pyproject, __init__, description.xml, browser manifest, uv.lock).
+
+## 2026-11-08: TYPO_DATE_FORMAT (v0.1.14)
+
+- New rule TYPO_DATE_FORMAT (warning): ISO date `2025-12-24` -> `24.12.2025`
+  and slash date `24/12/2025` -> `24.12.2025`. Source: ohjepankki
+  "Ajanilmaukset: päiväys ja vuosiluku" (read 2026-11-08): Finnish uses the
+  ascending dotted date; ISO is standard but not recommended in Finnish text,
+  slashes are a foreign convention.
+- Slash dates: automatic replacement only when the order is unambiguous
+  (one group > 12); `3/4/2025` is flagged without a replacement.
+  ISO dates run on the whole text (libvoikko splits at "12:") and skip
+  timestamps ("2025-04-03 12:30").
+- Precision: wiki sweep (24 articles, ~80k words): 2 hits, both ISO
+  access-dates in citations ("Viitattu 2024-05-06") - the ohjepankki form
+  would be dotted, but references are a borderline register. Smoke eval:
+  0 false alarms / 34 clean sentences.
+- Version 0.1.14. Stacked on the TYPO_RANGE_HYPHEN PR (v0.1.13).
