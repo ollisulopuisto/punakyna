@@ -254,3 +254,14 @@
   4+4-digit identifier-shaped pairs; small ranges after inflected labels
   ("ISBN-numeron 5-8 merkkiä") are flagged.
 - Regression tests for all cited cases. Version 0.1.15.
+
+## 2026-11-08: TYPO_RANGE_HYPHEN equation guard - variable operands (v0.1.16)
+
+- Devin finding on merged #37: "2-1=x+y" and "2-1=x²" got false range
+  suggestions. Equation-RHS variable token now allows single-letter
+  variable operands after operators and trailing superscript exponents.
+- Prose labels still flagged ("kotijoukkueen voitto", "A-joukkueen",
+  "U17-joukkueen", "A/B-testin tulos").
+- Regression tests for x+y and x² plus all prior cited cases. Full suite
+  213 passed (2 LO sandbox deselects); smoke eval 0 false alarms / 34
+  clean. Version 0.1.16.

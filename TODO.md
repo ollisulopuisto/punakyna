@@ -119,3 +119,5 @@
 - v0.1.14 (2026-11-08): TYPO_DATE_FORMAT (ohjepankki, päiväys pistein; ISO ja kauttaviiva liputetaan). Seuraavaksi: numeroiden ryhmittely, ss./vv. Katso AGENTS.md.
 
 - v0.1.15 (2026-11-08): TYPO_RANGE_HYPHEN-tarkistusten tarkennukset (yhtälöt, ISSN-tunnukset). Katso AGENTS.md.
+
+- v0.1.16 (2026-11-08): yhtälösuoja sallii muuttujatermit (x+y) ja yläindeksieksponentit (x²). Katso AGENTS.md.
