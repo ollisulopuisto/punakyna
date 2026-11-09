@@ -17,3 +17,8 @@
 **Vulnerability:** The local loopback HTTP server omitted standard security headers (`X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY`), leaving browser interactions reliant solely on content-type enforcement and lack of CORS headers.
 **Learning:** Even loopback servers communicating via JSON can be probed or embedded by web applications running in local browsers if additional browser-level security headers are missing.
 **Prevention:** Always set `X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY` on all responses (including errors) in HTTP servers to reinforce defense in depth.
+
+## 2026-11-09 - Inconsistent Identifier Validation During Credential Enumeration
+**Vulnerability:** `load_all_tokens` enumerated files in the token directory without validating filename identifiers against the application allowlist (`_validate_app_name`), allowing hidden or malformed token files to authenticate requests while being unrevocable via standard management routines.
+**Learning:** Directory-based credential loaders must enforce the exact same naming and format constraints as creation and revocation functions, otherwise orphaned or malformed credentials can persist and authenticate while evading management tooling.
+**Prevention:** Always apply the resource identifier validation function across directory enumeration and bulk-loading routines.

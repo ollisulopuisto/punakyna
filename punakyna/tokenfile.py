@@ -99,6 +99,7 @@ def load_all_tokens(tokens_dir=None, fallback_path=None):
     if tokens_dir.is_dir():
         for p in sorted(tokens_dir.iterdir()):
             try:
+                _validate_app_name(p.name)
                 out[p.name] = _validate_and_read(p)
             except (FileNotFoundError, TokenError, OSError):
                 continue

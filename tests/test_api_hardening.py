@@ -443,7 +443,7 @@ def test_app_name_strict_allowlist_validation(tmp_path):
     """Sovellustunnisteen sallijalistatarkistus: hylkää ohjausmerkit,
     välimerkit, rivinvaihdot, piilotiedostot ja ylipituuden."""
     from punakyna.tokenfile import (load_or_create_app_token, read_app_token,
-                                    revoke_app_token, TokenError)
+                                    revoke_app_token, load_all_tokens, TokenError)
     tokens_dir = tmp_path / 'tokens'
     # Hyväksytyt
     for valid_name in ('app', 'libreoffice', 'firefox-e2e', 'my_app.1'):
@@ -464,6 +464,26 @@ def test_app_name_strict_allowlist_validation(tmp_path):
             read_app_token(invalid, tokens_dir=tokens_dir)
         with pytest.raises(TokenError):
             revoke_app_token(invalid, tokens_dir=tokens_dir)
+
+
+def test_load_all_tokens_skips_invalid_app_names(tmp_path):
+    """load_all_tokens ohittaa tiedostot, joiden nimet eivät läpäise _validate_app_name-tarkistusta."""
+    from punakyna.tokenfile import load_all_tokens, load_or_create_app_token
+    tokens_dir = tmp_path / 'tokens'
+    tokens_dir.mkdir()
+    valid_tok = load_or_create_app_token('valid-app', tokens_dir=tokens_dir)
+
+    # Luodaan tiedostoja, joiden nimet ovat epäkelpoja (piilotiedosto, erikoismerkit)
+    for bad_name in ('.hidden_token', 'bad@app#name', 'app name'):
+        bad_file = tokens_dir / bad_name
+        bad_file.write_text('b' * 40 + '\n', encoding='utf-8')
+        bad_file.chmod(0o600)
+
+    loaded = load_all_tokens(tokens_dir=tokens_dir, fallback_path=tmp_path / 'nonexistent')
+    assert loaded == {'valid-app': valid_tok}
+    assert '.hidden_token' not in loaded
+    assert 'bad@app#name' not in loaded
+    assert 'app name' not in loaded
 
 
 def test_revoke_takes_effect_without_restart(tmp_path):

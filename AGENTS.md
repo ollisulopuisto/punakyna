@@ -78,6 +78,12 @@
 - Overrode `version_string` in `Handler` to emit only `Punakyna/0.5` without disclosing backend runtime platform/Python version.
 - Added regression tests in `tests/test_api_hardening.py`.
 
+## 2026-11-09: Token loading application identifier validation (Sentinel)
+
+- Enforced `_validate_app_name` in `load_all_tokens` (`punakyna/tokenfile.py`) so token files in `tokens/` whose names fail application identifier validation (e.g. hidden files, non-allowlist filenames) are safely ignored.
+- Prevents unrevocable or hidden token files from authenticating API requests.
+- Added regression tests in `tests/test_api_hardening.py`.
+
 ## 2026-11-07: PERFECT_PASSIVE_PARTICIPLE (v0.1.1)
 
 - Miss reported by Olli in LibreOffice: "Minä olen menty kotiin." was not flagged
