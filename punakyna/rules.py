@@ -859,66 +859,73 @@ def check_typography(sent_text, offset, clock=False):
         # koko teksti: libvoikko katkaisee virkkeen kaksoispisteeseen
         # ("klo 9:" + "15", "2025-04-03 12:" + "30")
         return _check_clock(sent_text, offset) + _check_dates(sent_text, offset)
-    for m in _RE_PERCENT.finditer(sent_text):
-        out.append(Suggestion(
-            rule='TYPO_PERCENT_SPACE', category='style', severity='warning',
-            start=offset + m.start(), end=offset + m.end(),
-            message='Numeron ja prosenttimerkin väliin tulee välilyönti ("10 %").',
-            replacements=[m.group(1) + '\u00a0%']))
-    for m in _RE_CURRENCY.finditer(sent_text):
-        out.append(Suggestion(
-            rule='TYPO_CURRENCY_SPACE', category='style', severity='warning',
-            start=offset + m.start(), end=offset + m.end(),
-            message='Numeron ja rahayksikön tunnuksen väliin tulee välilyönti ("29,90 €").',
-            replacements=[m.group(1) + '\u00a0' + m.group(2)]))
-    for m in _RE_DEC_POINT.finditer(sent_text):
-        fixed = '%s,%s' % (m.group(1), m.group(2))
-        out.append(Suggestion(
-            rule='TYPO_DECIMAL_POINT', category='style', severity='warning',
-            start=offset + m.start(), end=offset + m.end(),
-            message=('Suomenkielisessä tekstissä desimaaliluvun erottimena on '
-                     'pilkku ("%s"), ei piste.' % fixed),
-            replacements=[fixed]))
-    for m in _RE_RANGE_HYPHEN.finditer(sent_text):
-        if not _range_hyphen_ok(m.group(1), m.group(2)):
-            continue
-        prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
-        if len(m.group(1)) == 4 and len(m.group(2)) == 4 and \
-                (m.group(1).startswith('0') or m.group(2).startswith('0') or
-                 prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi', 'sku', 'id') or
-                 re.search(r'-(numero|tunnus|nro|koodi)$', prev)):
-            continue  # tunnuksenmuotoinen 4+4-pari ("ISSN-koodi 0355-2047",
-            # "SKU-numero 2020-1230"); tavallinen pieni vali
-            # ("ISBN-numeron 5-8 merkkiä") liputetaan
-        before = sent_text[:m.start()].rstrip()
-        after = sent_text[m.end():].lstrip()
-        if after.startswith('='):
-            rhs = after[1:].lstrip()
-            tok = rhs.split()[0].rstrip('.,;:!?)]') if rhs else ''
-            if tok and (tok[0].isdigit() or tok[0] in '+-(' or
-                        re.fullmatch(r'[A-Za-z\u00c5\u00c4\u00d6\u00e5\u00e4\u00f6]\d*'
-                                     r'(?:[+\-*/^][A-Za-z\u00c5\u00c4\u00d6\u00e5\u00e4\u00f6]?\d*)*'
-                                     r'[\u00b2\u00b3\u00b9\u2070\u2074-\u2079]?', tok)):
-                continue  # yhtalo ("2-1=1", "2-1=x"), ei rajakohta;
-                # "= kotijoukkueen voitto" on selitys, liputetaan
-        if before and before[-1] in '=+-*/':
-            operand = before[:-1].rstrip()
-            if operand and (operand[-1].isdigit() or operand[-1] in '+-*/('):
-                continue  # laskutoimituksen osa ("1=2-1", "5=3+2-1");
-                # sanan perassa oleva "=" on arvon antoa ("Ika=20-30 vuotta")
-        if before.endswith('('):
-            lead = sent_text[:m.start()].rstrip()[:-1]
-            prev_ch = lead[-1] if lead else ''
-            if prev_ch.isdigit() or prev_ch in '+-*/(':
-                continue  # aritmetiikan sulku ("1+(2-1)");
-                # "Ryhmä 1 (10-12-vuotiaat)" on otsikkotaso, liputetaan
-        fixed = '%s\u2013%s' % (m.group(1), m.group(2))
-        out.append(Suggestion(
-            rule='TYPO_RANGE_HYPHEN', category='style', severity='warning',
-            start=offset + m.start(), end=offset + m.end(),
-            message=('Lukujen rajakohtien ja osapuolten tulosten v\u00e4liss\u00e4 '
-                     'k\u00e4ytet\u00e4\u00e4n ajatusviivaa ("%s"), ei yhdysmerkki\u00e4.' % fixed),
-            replacements=[fixed]))
+    # Suorituskyky: Nopeat merkkisisältötarkistukset ('in') ennen regex-hakuja.
+    # Valtaosassa luonnollisen kielen virkkeitä ei esiinny prosenttimerkkejä,
+    # valuuttasymboleita, desimaalipisteitä tai yhdysmerkkejä.
+    if '%' in sent_text:
+        for m in _RE_PERCENT.finditer(sent_text):
+            out.append(Suggestion(
+                rule='TYPO_PERCENT_SPACE', category='style', severity='warning',
+                start=offset + m.start(), end=offset + m.end(),
+                message='Numeron ja prosenttimerkin väliin tulee välilyönti ("10 %").',
+                replacements=[m.group(1) + '\u00a0%']))
+    if '€' in sent_text or '$' in sent_text or '£' in sent_text:
+        for m in _RE_CURRENCY.finditer(sent_text):
+            out.append(Suggestion(
+                rule='TYPO_CURRENCY_SPACE', category='style', severity='warning',
+                start=offset + m.start(), end=offset + m.end(),
+                message='Numeron ja rahayksikön tunnuksen väliin tulee välilyönti ("29,90 €").',
+                replacements=[m.group(1) + '\u00a0' + m.group(2)]))
+    if '.' in sent_text:
+        for m in _RE_DEC_POINT.finditer(sent_text):
+            fixed = '%s,%s' % (m.group(1), m.group(2))
+            out.append(Suggestion(
+                rule='TYPO_DECIMAL_POINT', category='style', severity='warning',
+                start=offset + m.start(), end=offset + m.end(),
+                message=('Suomenkielisessä tekstissä desimaaliluvun erottimena on '
+                         'pilkku ("%s"), ei piste.' % fixed),
+                replacements=[fixed]))
+    if '-' in sent_text:
+        for m in _RE_RANGE_HYPHEN.finditer(sent_text):
+            if not _range_hyphen_ok(m.group(1), m.group(2)):
+                continue
+            prev = sent_text[max(0, m.start() - 12):m.start()].rstrip().rsplit(' ', 1)[-1].rstrip(':').lower()
+            if len(m.group(1)) == 4 and len(m.group(2)) == 4 and \
+                    (m.group(1).startswith('0') or m.group(2).startswith('0') or
+                     prev.split('-')[0] in ('issn', 'isbn', 'ismn', 'doi', 'sku', 'id') or
+                     re.search(r'-(numero|tunnus|nro|koodi)$', prev)):
+                continue  # tunnuksenmuotoinen 4+4-pari ("ISSN-koodi 0355-2047",
+                # "SKU-numero 2020-1230"); tavallinen pieni vali
+                # ("ISBN-numeron 5-8 merkkiä") liputetaan
+            before = sent_text[:m.start()].rstrip()
+            after = sent_text[m.end():].lstrip()
+            if after.startswith('='):
+                rhs = after[1:].lstrip()
+                tok = rhs.split()[0].rstrip('.,;:!?)]') if rhs else ''
+                if tok and (tok[0].isdigit() or tok[0] in '+-(' or
+                            re.fullmatch(r'[A-Za-z\u00c5\u00c4\u00d6\u00e5\u00e4\u00f6]\d*'
+                                         r'(?:[+\-*/^][A-Za-z\u00c5\u00c4\u00d6\u00e5\u00e4\u00f6]?\d*)*'
+                                         r'[\u00b2\u00b3\u00b9\u2070\u2074-\u2079]?', tok)):
+                    continue  # yhtalo ("2-1=1", "2-1=x"), ei rajakohta;
+                    # "= kotijoukkueen voitto" on selitys, liputetaan
+            if before and before[-1] in '=+-*/':
+                operand = before[:-1].rstrip()
+                if operand and (operand[-1].isdigit() or operand[-1] in '+-*/('):
+                    continue  # laskutoimituksen osa ("1=2-1", "5=3+2-1");
+                    # sanan perassa oleva "=" on arvon antoa ("Ika=20-30 vuotta")
+            if before.endswith('('):
+                lead = sent_text[:m.start()].rstrip()[:-1]
+                prev_ch = lead[-1] if lead else ''
+                if prev_ch.isdigit() or prev_ch in '+-*/(':
+                    continue  # aritmetiikan sulku ("1+(2-1)");
+                    # "Ryhmä 1 (10-12-vuotiaat)" on otsikkotaso, liputetaan
+            fixed = '%s\u2013%s' % (m.group(1), m.group(2))
+            out.append(Suggestion(
+                rule='TYPO_RANGE_HYPHEN', category='style', severity='warning',
+                start=offset + m.start(), end=offset + m.end(),
+                message=('Lukujen rajakohtien ja osapuolten tulosten v\u00e4liss\u00e4 '
+                         'k\u00e4ytet\u00e4\u00e4n ajatusviivaa ("%s"), ei yhdysmerkki\u00e4.' % fixed),
+                replacements=[fixed]))
     for m in _RE_ABBR.finditer(sent_text):
         word = m.group(1)
         out.append(Suggestion(
