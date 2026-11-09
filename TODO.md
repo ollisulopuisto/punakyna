@@ -100,6 +100,13 @@
 - Kovennus: `version_string` ylikirjoitettu palauttamaan vain `Punakyna/0.5` ilman alustan
   tai Python-version paljastamista `Server`-otsakkeessa.
 - Testit: `tests/test_api_hardening.py` laajennettu käsittelemättömien metodien ja bannerin testauksella.
+
+## 2026-11-09: Token loading application identifier validation (Sentinel)
+
+- Kovennus: `load_all_tokens` `punakyna/tokenfile.py`:ssa validoi tiedostonimet
+  kutsumalla `_validate_app_name`, jolloin piilotiedostot ja epäkelvot tiedostonimet
+  ohitetaan automaattisesti eivätkä toimi tunnistautumisessa.
+- Testit: `tests/test_api_hardening.py` laajennettu varmistamaan epäkelpojen tiedostojen ohitus.
 - v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.
 - v0.1.2 (2026-11-07): sääntörekisteri + kattavuuskartta (docs/coverage-map.md); ei toiminnallisia muutoksia.
 
