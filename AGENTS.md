@@ -12,6 +12,7 @@
 - Bolt (2026-11-06): Suorituskykyoptimointi tehty `punakyna/rules.py`:ssa säännölle `check_double_word` (varhainen poistuminen `prev.lower != cur.lower` ennen merkkijonoviipalointia, `.strip()`-kutsua ja `isupper()`-tarkistuksia; sääntökohtainen suoritusnopeutus ~61,7 %).
 - Bolt (2026-11-07): Suorituskykyoptimointi tehty `punakyna/rules.py`:ssa säännölle `check_attribute_agreement` (varhainen poistuminen `if not a_num: continue` ennen toisen sanan `_analyze`- ja `_only_noun_number`-kutsuja; sääntökohtainen suoritusnopeutus ~26,7 %, koko putken latenssi -6,6 %).
 - Bolt (2026-11-08): Suorituskykyoptimointi tehty `punakyna/rules.py`:ssa säännölle `check_typography` (merkkisisältötarkistukset `in` ennen regex-hakuja `%`, `€/$ /£`, `.` ja `-`; sääntökohtainen suoritusnopeutus ~64,0 %, koko putken latenssi -11,3 %).
+- Bolt (2026-11-09): Suorituskykyoptimointi tehty `punakyna/pipeline.py`:ssa oikeinkirjoitustarkistukselle (`_spelling_suggestions` tallentaa ja lukee `voikko.spell`-tulokset dokumenttikohtaiseen `spell_cache`-sanakirjaan; sääntökohtainen suoritusnopeutus ~60,1 %, koko putken latenssi -11,2 %).
 - Precision first: a new rule must not add false alarms on eval/smoke_clean.jsonl.
   If a rule cannot be made clean-set-safe, leave it out or mark it severity=info.
 - Finnish user-facing strings are checked against Kielitoimiston sanakirja

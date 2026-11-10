@@ -103,7 +103,7 @@ def _is_probably_name(tok):
     return tok.text[:1].isupper()
 
 
-def _spelling_suggestions(sent_text, offset, tokens, voikko):
+def _spelling_suggestions(sent_text, offset, tokens, voikko, spell_cache=None):
     out = []
     for tok in tokens:
         if not tok.is_word:
@@ -121,7 +121,15 @@ def _spelling_suggestions(sent_text, offset, tokens, voikko):
             continue
         if w.isupper():
             continue  # lyhenne, esim. EU
-        if voikko.spell(w):
+        # Suorituskyky: vältetään toistuvat C-FFI / ctypes -kutsut (voikko.spell)
+        # samoille sanoille tekstin sisällä käyttämällä dokumenttikohtaista välimuistia.
+        if spell_cache is not None:
+            ok = spell_cache.get(w)
+            if ok is None:
+                ok = spell_cache[w] = voikko.spell(w)
+            if ok:
+                continue
+        elif voikko.spell(w):
             continue
         suggs = voikko.suggest(w) or []
         if _is_probably_name(tok):
@@ -166,6 +174,7 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
     voikko = voikko or get_voikko()
     out: List[Suggestion] = []
     cache = {}
+    spell_cache = {}
     style_out = []
     style_allowed = profile.enabled and not excluded_text(text)
     pos = 0
@@ -208,7 +217,7 @@ def _check_text_unlocked(text, voikko=None, use_rules=True, use_spelling=True,
             ))
             tpos = tidx + tlen
         if use_spelling:
-            out += _spelling_suggestions(sent_text, s_off, toks, voikko)
+            out += _spelling_suggestions(sent_text, s_off, toks, voikko, spell_cache)
         if use_rules:
             out += run_rules(sent_text, s_off, toks, voikko, cache,
                              before=text[max(0, s_off - 40):s_off])
