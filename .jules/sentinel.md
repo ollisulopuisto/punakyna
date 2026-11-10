@@ -22,3 +22,8 @@
 **Vulnerability:** `load_all_tokens` enumerated files in the token directory without validating filename identifiers against the application allowlist (`_validate_app_name`), allowing hidden or malformed token files to authenticate requests while being unrevocable via standard management routines.
 **Learning:** Directory-based credential loaders must enforce the exact same naming and format constraints as creation and revocation functions, otherwise orphaned or malformed credentials can persist and authenticate while evading management tooling.
 **Prevention:** Always apply the resource identifier validation function across directory enumeration and bulk-loading routines.
+
+## 2026-11-09 - Client-Side Loopback Target Validation
+**Vulnerability:** Client adapter library accepted arbitrary destination host parameters, allowing bearer authentication tokens and document content to be dispatched over network connections to external addresses if configured with an untrusted host.
+**Learning:** Hardening server endpoints to bind exclusively to loopback addresses only protects inbound access; client connection utilities must enforce matching boundary checks so credentials and private text cannot be directed outbound to external endpoints.
+**Prevention:** Validate destination hosts against strict loopback allowlists on client libraries that transmit local authentication tokens or sensitive user payloads.

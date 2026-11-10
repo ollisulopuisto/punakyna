@@ -85,6 +85,12 @@
 - Prevents unrevocable or hidden token files from authenticating API requests.
 - Added regression tests in `tests/test_api_hardening.py`.
 
+## 2026-11-09: Client loopback destination host validation (Sentinel)
+
+- Enforced loopback host validation in `punakyna/client.py` (`check`): rejects non-loopback destination hosts with `ValueError`.
+- Ensures bearer authentication tokens and document content are never dispatched to external network endpoints.
+- Added regression tests in `tests/test_client.py`.
+
 ## 2026-11-07: PERFECT_PASSIVE_PARTICIPLE (v0.1.1)
 
 - Miss reported by Olli in LibreOffice: "Minä olen menty kotiin." was not flagged

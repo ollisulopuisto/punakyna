@@ -43,3 +43,9 @@ def test_client_wrong_token_raises(running):
     with pytest.raises(urllib.error.HTTPError) as e:
         client.check('hei', port=srv.server_address[1], token='vaara-tunnus-00000000000000000000')
     assert e.value.code == 401
+
+
+def test_client_refuses_non_loopback_hosts():
+    for bad_host in ('evil.com', '192.168.1.1', '10.0.0.1', '127.0.0.1.evil.com', 'example.org'):
+        with pytest.raises(ValueError, match='vain loopback sallittu'):
+            client.check('hei', host=bad_host, token='testi-tunnus-000000000000000000000')

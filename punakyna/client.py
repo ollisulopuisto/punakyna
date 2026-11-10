@@ -22,6 +22,7 @@ _OPENER = urllib.request.build_opener(
     urllib.request.ProxyHandler({}), _NoRedirect)
 
 DEFAULT_PORT = 8377
+LOOPBACK_HOSTS = frozenset(('127.0.0.1', 'localhost', '::1', '[::1]'))
 
 
 def read_token(path=TOKEN_PATH):
@@ -36,6 +37,9 @@ def check(text, port=DEFAULT_PORT, host='127.0.0.1', token=None,
     Heittää ConnectionErrorin jos palvelin ei vastaa (käynnistä:
     python -m punakyna --serve).
     """
+    # Turvatarkistus: teksti ja tunnus eivät saa koskaan lähteä koneelta ulos.
+    if host not in LOOPBACK_HOSTS:
+        raise ValueError(f'kielletty osoite: {host!r} - vain loopback sallittu')
     if token is None:
         token = read_token()
     payload = json.dumps({
