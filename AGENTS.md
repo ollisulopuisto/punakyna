@@ -91,6 +91,7 @@
 - Enforced loopback host validation in `punakyna/client.py` (`check`): rejects non-loopback destination hosts with `ValueError`.
 - Ensures bearer authentication tokens and document content are never dispatched to external network endpoints.
 - Added regression tests in `tests/test_client.py`.
+- Next: keep the loopback rejection regression tests passing when changing client destination parsing or transport.
 
 ## 2026-11-07: PERFECT_PASSIVE_PARTICIPLE (v0.1.1)
 
