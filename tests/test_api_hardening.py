@@ -540,3 +540,20 @@ def test_head_fallback_has_no_body(server):
     assert b'501' in head.split(b'\r\n', 1)[0]
     assert b'content-length' in head.lower()
     assert body == b''
+
+
+def test_invalid_content_length_closes_connection(server):
+    """Virheellinen Content-Length (ei kokonaisluku): yhteys on suljettava
+    virhevastauksella (400), jotta puskuroitu jäännösrunko ei saastuta
+    seuraavia pyyntöjä."""
+    out = _raw(server, b'POST /check HTTP/1.1\r\nHost: 127.0.0.1\r\n'
+                       b'Content-Type: application/json\r\n'
+                       b'Authorization: Bearer ' + TOKEN.encode() + b'\r\n'
+                       b'Content-Length: not-a-number\r\n\r\n'
+                       b'junk_body_bytes'
+                       b'GET /health HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n')
+    head = out.split(b'\r\n\r\n', 1)[0].lower()
+    assert b'400' in out.split(b'\r\n', 1)[0]
+    assert b'connection: close' in head
+    assert b'<<timeout>>' not in out  # palvelin sulki yhteyden
+    assert out.count(b'HTTP/1.') == 1  # ei toista vastausta saastuneesta jäännösrungosta
