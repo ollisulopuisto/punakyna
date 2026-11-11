@@ -725,6 +725,11 @@ def check_active_perfect_passive_participle(sent_text, offset, words, voikko, ca
         nxt = words[j]
         if sent_text[words[j - 1].end:nxt.start].strip():
             continue  # valimerkki valissa
+        # Suorituskyky: Passiivin menneen ajan TU-partisiipit päättyvät aina
+        # päätteeseen 'tu' tai 'ty' (vokaalisointu). Vältetään kallis C-FFI:n
+        # morfologinen analyysi (_analyze) sanoille, jotka eivät voi olla TU-partisiippeja.
+        if not nxt.lower.endswith(('tu', 'ty')):
+            continue
         forms = _INTRANSITIVE_NUT
         analyses = _analyze(voikko, nxt.text, cache)
         verb = _passive_only_participle_verb(analyses)
