@@ -27,3 +27,8 @@
 **Vulnerability:** Client adapter library accepted arbitrary destination host parameters, allowing bearer authentication tokens and document content to be dispatched over network connections to external addresses if configured with an untrusted host.
 **Learning:** Hardening server endpoints to bind exclusively to loopback addresses only protects inbound access; client connection utilities must enforce matching boundary checks so credentials and private text cannot be directed outbound to external endpoints.
 **Prevention:** Validate destination hosts against strict loopback allowlists on client libraries that transmit local authentication tokens or sensitive user payloads.
+
+## 2026-11-10 - Connection Desynchronization on Invalid Request Framing Headers
+**Vulnerability:** When requests contained invalid framing headers such as non-numeric Content-Length, error responses were returned without closing the underlying connection, leaving unread body bytes to desynchronize subsequent HTTP pipelined requests.
+**Learning:** Any request header error that affects framing boundaries makes calculating the remainder of the request body impossible; persistent connections must always be terminated immediately upon encountering malformed framing metadata.
+**Prevention:** Immediately drain available bytes, mark connections for closure, and emit `Connection: close` whenever request framing headers fail validation.

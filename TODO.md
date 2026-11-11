@@ -116,6 +116,13 @@
   ja sallii vain loopback-osoitteet (`127.0.0.1`, `localhost`, `::1`, `[::1]`).
   Torjuu paikallisen Bearer-tunnuksen ja dokumenttitekstin vuotamisen ulkoverkkoon.
 - Testit: `tests/test_client.py` päivitetty kattamaan ei-loopback-osoitteiden hylkäämisen.
+
+## 2026-11-10: Connection close on invalid Content-Length (Sentinel)
+
+- Kovennus: `punakyna/api.py`:ssa epäkelpo Content-Length sulkee yhteyden (`Connection: close`,
+  `close_connection = True`) ja tyhjentää saapuneen puskurin (`_drain_available`).
+  Torjuu HTTP-yhteyden desynkronisaation ja request smuggling -riskin pysyvillä yhteyksillä.
+- Testit: `tests/test_api_hardening.py` laajennettu kattamaan yhteyden sulkeminen virheellisellä Content-Lengthilla.
 - v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.
 - v0.1.2 (2026-11-07): sääntörekisteri + kattavuuskartta (docs/coverage-map.md); ei toiminnallisia muutoksia.
 
