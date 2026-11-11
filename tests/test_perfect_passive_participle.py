@@ -40,3 +40,10 @@ def test_transitive_passive_participle_predicative_left_alone():
     for s in ('Olen kiusattu koulussa.', 'Olemme petetty.',
               'He ovat hylätty.', 'Olen tehty puusta.'):
         assert not hits(s), s
+
+
+def test_clitic_bearing_participle_flagged():
+    # Devin #45: "mentykin" ei saa kadota esisuodattimeen (vaatii libvoikko).
+    h = hits('Minä olen mentykin kotiin.')
+    assert len(h) == 1
+    assert h[0].replacements == ['mennytkin']

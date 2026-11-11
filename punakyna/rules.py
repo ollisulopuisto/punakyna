@@ -684,6 +684,25 @@ _PERFECT_ADVERBS = {'jo', 'vasta', 'juuri', 'aina', 'myös', 'vielä',
                     'sitten', 'koskaan', 'kyllä'}
 
 
+_TU_CLITICS = ('kaan', 'kään', 'kin', 'han', 'hän', 'ko', 'kö', 'pa', 'pä')
+
+
+def _split_tu_clitic(word):
+    """Jaa TU/TY-loppuinen sana ja mahdollinen liitepartikkeli.
+
+    Palauttaa (runko, liite): ("mentykin",) -> ("menty", "kin"). Palauttaa
+    ('', '') jos sana ei ole TU/TY-loppuinen edes liitteen irrottamisen
+    jalkeen. Liite '-s' jätetään tarkoituksella tunnistamatta (liian
+    monimerkityksinen).
+    """
+    if word.endswith(('tu', 'ty')):
+        return word, ''
+    for suf in _TU_CLITICS:
+        if word.endswith(suf) and word[:-len(suf)].endswith(('tu', 'ty')):
+            return word[:-len(suf)], word[len(word) - len(suf):]
+    return '', ''
+
+
 def _passive_only_participle_verb(analyses):
     """Palauta verbin perusmuoto, jos sana on vain passiivin TU-partisiippi."""
     verbs = set()
@@ -725,21 +744,45 @@ def check_active_perfect_passive_participle(sent_text, offset, words, voikko, ca
         nxt = words[j]
         if sent_text[words[j - 1].end:nxt.start].strip():
             continue  # valimerkki valissa
+        # Suorituskyky: Passiivin menneen ajan TU-partisiipit päättyvät aina
+        # päätteeseen 'tu' tai 'ty' (vokaalisointu), mahdollinen liitepartikkeli
+        # ("mentykin") irrotetaan ensin. Vältetään kallis C-FFI:n morfologinen
+        # analyysi (_analyze) sanoille, jotka eivät voi olla TU-partisiippeja.
+        base, clitic = _split_tu_clitic(nxt.lower)
+        if not base:
+            continue
         forms = _INTRANSITIVE_NUT
         analyses = _analyze(voikko, nxt.text, cache)
         verb = _passive_only_participle_verb(analyses)
         if verb not in forms:
             continue
         sg, pl = forms[verb]
-        repl = pl if number == 'plural' else sg
+        # Muut liitteet säilytetään korjauksessa: "olen mentykin" ->
+        # "olen mennytkin". Kysymysliite -ko/-kö kuuluu apuverbiin
+        # ("Olenko mennyt?"), joten yhden sanan korjausta ei tarjota.
+        base_repl = pl if number == 'plural' else sg
+        question = clitic in ('ko', 'kö')
+        repl = base_repl if question else base_repl + clitic
+        if question:
+            # Liite koko apuverbiokonaisuuteen: kielteisessä perfektissä
+            # kieltoverbiin ("enkö ole mennyt"), myönteisessä olla-verbiin.
+            # Olla-muodoissa on aina takavokaali, joten liite on -ko.
+            if tok.lower == 'ole' and i > 0 and words[i - 1].lower in _NEG_FOR_OLE:
+                example = f'{words[i - 1].text}kö ole {base_repl}'
+            else:
+                example = f'{tok.text}ko {base_repl}'
+            hint = f' Kysymysliite siirretään apuverbiin: "{example}".'
+        else:
+            hint = ''
+
         out.append(Suggestion(
             rule='PERFECT_PASSIVE_PARTICIPLE', category='grammar',
             severity='error', start=offset + nxt.start, end=offset + nxt.end,
             message=('Aktiivin perfekti muodostetaan NUT-partisiipilla '
                      f'("{tok.text} {repl}"). TU-partisiippi kuuluu passiivin '
                      f'perfektiin, jossa apuverbi on yksikön 3. persoonassa '
-                     f'("on {nxt.text}").'),
-            replacements=[repl]))
+                     f'("on {nxt.text}").' + hint),
+            replacements=[] if question else [repl]))
     return out
 
 
