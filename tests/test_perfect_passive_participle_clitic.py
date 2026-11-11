@@ -56,3 +56,12 @@ def test_clitic_word_without_participle_analysis_not_flagged():
     # Liiteloppuinen sana ilman passiivipartisiippianalyysia ei liputeta.
     assert not _hits('olen mentykin', participles=())
     assert not _hits('olen talossakin')
+
+
+def test_question_clitic_gets_no_one_word_replacement():
+    # -ko/-kö kuuluu apuverbiin ("Olenko mennyt?"), ei partisiippiin:
+    # yhden sanan korjaus "mennytkö" olisi epäkieliopillinen.
+    h = _hits('olen mentykö', participles=('mentykö',))
+    assert len(h) == 1
+    assert h[0].replacements == []
+    assert 'mennyt' in h[0].message

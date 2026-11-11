@@ -757,16 +757,22 @@ def check_active_perfect_passive_participle(sent_text, offset, words, voikko, ca
         if verb not in forms:
             continue
         sg, pl = forms[verb]
-        # Liite säilytetään korjauksessa: "olen mentykin" -> "olen mennytkin".
-        repl = (pl if number == 'plural' else sg) + clitic
+        # Muut liitteet säilytetään korjauksessa: "olen mentykin" ->
+        # "olen mennytkin". Kysymysliite -ko/-kö kuuluu apuverbiin
+        # ("Olenko mennyt?"), joten yhden sanan korjausta ei tarjota.
+        base_repl = pl if number == 'plural' else sg
+        question = clitic in ('ko', 'kö')
+        repl = base_repl if question else base_repl + clitic
+        hint = (f' Kysymysliite siirretään apuverbiin: "{tok.text}kö '
+                f'{base_repl}".' if question else '')
         out.append(Suggestion(
             rule='PERFECT_PASSIVE_PARTICIPLE', category='grammar',
             severity='error', start=offset + nxt.start, end=offset + nxt.end,
             message=('Aktiivin perfekti muodostetaan NUT-partisiipilla '
                      f'("{tok.text} {repl}"). TU-partisiippi kuuluu passiivin '
                      f'perfektiin, jossa apuverbi on yksikön 3. persoonassa '
-                     f'("on {nxt.text}").'),
-            replacements=[repl]))
+                     f'("on {nxt.text}").' + hint),
+            replacements=[] if question else [repl]))
     return out
 
 
