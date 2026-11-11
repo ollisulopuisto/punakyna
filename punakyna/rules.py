@@ -763,8 +763,18 @@ def check_active_perfect_passive_participle(sent_text, offset, words, voikko, ca
         base_repl = pl if number == 'plural' else sg
         question = clitic in ('ko', 'kö')
         repl = base_repl if question else base_repl + clitic
-        hint = (f' Kysymysliite siirretään apuverbiin: "{tok.text}kö '
-                f'{base_repl}".' if question else '')
+        if question:
+            # Liite koko apuverbiokonaisuuteen: kielteisessä perfektissä
+            # kieltoverbiin ("enkö ole mennyt"), myönteisessä olla-verbiin.
+            # Olla-muodoissa on aina takavokaali, joten liite on -ko.
+            if tok.lower == 'ole' and i > 0 and words[i - 1].lower in _NEG_FOR_OLE:
+                example = f'{words[i - 1].text}kö ole {base_repl}'
+            else:
+                example = f'{tok.text}ko {base_repl}'
+            hint = f' Kysymysliite siirretään apuverbiin: "{example}".'
+        else:
+            hint = ''
+
         out.append(Suggestion(
             rule='PERFECT_PASSIVE_PARTICIPLE', category='grammar',
             severity='error', start=offset + nxt.start, end=offset + nxt.end,

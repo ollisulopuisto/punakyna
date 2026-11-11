@@ -65,3 +65,18 @@ def test_question_clitic_gets_no_one_word_replacement():
     assert len(h) == 1
     assert h[0].replacements == []
     assert 'mennyt' in h[0].message
+
+
+def test_question_hint_uses_correct_auxiliary():
+    # Vokaalisointu: "olenko", ei "olenkö".
+    h = _hits('olen mentykö', participles=('mentykö',))
+    assert 'olenko mennyt' in h[0].message
+    assert 'olenkö' not in h[0].message
+
+
+def test_question_hint_in_negative_goes_on_negative_verb():
+    # Kielteinen perfekti: liite kieltoverbiin, "enkö ole mennyt".
+    h = _hits('en ole mentykö', participles=('mentykö',))
+    assert len(h) == 1
+    assert 'enkö ole mennyt' in h[0].message
+    assert 'olekö' not in h[0].message
