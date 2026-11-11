@@ -93,6 +93,12 @@
 - Added regression tests in `tests/test_client.py`.
 - Next: keep the loopback rejection regression tests passing when changing client destination parsing or transport.
 
+## 2026-11-10: Connection close on invalid Content-Length (Sentinel)
+
+- When `Content-Length` header in `punakyna/api.py` fails numeric parsing, the server now drains available input bytes, sets `self.close_connection = True`, and sends `Connection: close` with the 400 Bad Request response.
+- Prevents HTTP connection desynchronization / request smuggling where unparsed body bytes poison subsequent HTTP requests on persistent connections.
+- Added regression test in `tests/test_api_hardening.py`.
+
 ## 2026-11-07: PERFECT_PASSIVE_PARTICIPLE (v0.1.1)
 
 - Miss reported by Olli in LibreOffice: "Minä olen menty kotiin." was not flagged

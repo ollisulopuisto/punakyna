@@ -214,7 +214,9 @@ def make_server(port=8377, host='127.0.0.1', token=None, allowed_origins=(),
             try:
                 length = int(raw_length)
             except ValueError:
-                return self._send(400, {'error': 'virheellinen Content-Length'})
+                self._drain_available()
+                self.close_connection = True
+                return self._send(400, {'error': 'virheellinen Content-Length'}, close=True)
             if length < 0 or length > MAX_BODY:
                 self._drain_available()
                 self.close_connection = True
