@@ -300,7 +300,15 @@
   3 F841-kasinkorjausta, 1 F541; `punakyna/api.py`:n TokenError-re-export
   sailytetty eksplisiittisena aliaksena (testit tuovat sen punakyna.api:sta).
 - Paikallinen ajo (sandbox-Linux, libvoikko 4.3.1 + voikko-fi 2.4 deb-paketeista):
-  224 passed, 6 skipped, 2 failed (test_lo_writer_gui, test_lo_xproofreader;
-  unopkg add epaonnistuu tassa sandboxissa myos muuttamattomalla mainilla).
-  Savutesti: 0 vaaraa halytysta / 34 puhdasta lausetta, kaikki saannot loytavat.
+  226 passed, 6 skipped. Savutesti: 0 vaaraa halytysta / 34 puhdasta lausetta.
+- CI:n ensimmainen ajo paljasti kolme ymparistovikaa, kaikki korjattu:
+  (1) unopkg/soffice kaatui std::bad_alloc:iin kun PATH:in ensimmainen python
+  oli virtualenvin (uv run) - LO-apuprosesseille puhdistettu LO_ENV
+  (tests/test_lo_xproofreader.py, tests/test_lo_writer_gui.py); tama oli myos
+  aiemmin AGENTS.md:ssa mainittu "unopkg fails in Linux sandbox" -ongelman juuri.
+  (2) test_oversized_413: Python 3.12+:ssa asiakas nakee BrokenPipen kun
+  palvelin hylkaa ylisuuren rungon ennen lukemista; testi hyvaksyy molemmat.
+  (3) test_browser_e2e: allekirjoittamaton tilapainen laajennos latautuu vain
+  Firefox ESR:ssa; CI asentaa ESR:n mozilla.org:sta.
+  CI-ajo 43312317082 vihrea: 226 passed, 6 skipped, ruff siisti, eval 0 FP.
 - Ei versiobumpia: CI-muutos ei muuta sovellusta eika mene OXT-pakettiin.
