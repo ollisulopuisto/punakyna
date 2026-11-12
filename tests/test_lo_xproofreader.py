@@ -104,9 +104,12 @@ def test_xproofreader_headless_end_to_end(tmp_path):
     subprocess.run([sys.executable,
                     os.path.join(XPDIR, 'make_oxt.py'), oxt],
                    check=True, capture_output=True)
-    subprocess.run([UNOPKG, 'add', '-f', oxt,
-                    f'-env:UserInstallation={profile_uri}'],
-                   check=True, capture_output=True, timeout=120)
+    r = subprocess.run([UNOPKG, 'add', '-f', oxt,
+                        f'-env:UserInstallation={profile_uri}'],
+                       capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f'unopkg add epaonnistui ({r.returncode}):\nstdout: {r.stdout}\n'
+        f'stderr: {r.stderr}')
 
     soffice = subprocess.Popen(
         [SOFFICE, '--headless', '--norestore', '--nologo',

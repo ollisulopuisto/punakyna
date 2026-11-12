@@ -27,7 +27,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libvoikko1 voikko-fi python3-uno xvfb
+            libvoikko1 voikko-fi python3-uno xvfb libreoffice-writer
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
@@ -40,7 +40,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Yksikkotestit
-        run: uv run python -m pytest tests/ -q
+        run: uv run python -m pytest tests/ -q -rs
 
       - name: Savutestiarviointi (informatiivinen, ei portaava)
         run: uv run python eval/evaluate.py
