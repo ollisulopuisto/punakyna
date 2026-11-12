@@ -4,7 +4,7 @@ Palauttaa vain ehdotuksia alkuperaisen tekstin merkkisijainneilla;
 ei koskaan normalisoi tai muuta kayttajan tekstia.
 """
 from dataclasses import asdict
-from typing import List, Optional
+from typing import List
 
 from .voikko_compat import Token
 

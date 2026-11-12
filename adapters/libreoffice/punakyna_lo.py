@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 
 import uno
-from com.sun.star.beans import PropertyValue
 
 
 def connect(port):

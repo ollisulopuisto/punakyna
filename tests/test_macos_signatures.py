@@ -51,7 +51,6 @@ def test_signing_happens_after_fixups_and_before_packing():
 
 
 def test_all_final_libraries_are_signed_then_verified(tmp_path, monkeypatch):
-    import sys
     path = ROOT / 'adapters/libreoffice/xproofreader'
     monkeypatch.syspath_prepend(str(path))
     import bundle_native

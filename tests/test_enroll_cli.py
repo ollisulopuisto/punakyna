@@ -1,5 +1,4 @@
 """Enrollment-CLI: rekisteröinti, listaus, peruutus."""
-import os
 
 
 def test_enroll_list_revoke(tmp_path, monkeypatch):

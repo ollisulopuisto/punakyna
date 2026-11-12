@@ -6,9 +6,8 @@ Ei riippuvuuksia standardikirjaston ulkopuolelle.
 """
 import json
 import urllib.request
-from pathlib import Path
 
-from .tokenfile import TOKEN_PATH, TokenError, load_or_create_token
+from .tokenfile import TOKEN_PATH, load_or_create_token
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):

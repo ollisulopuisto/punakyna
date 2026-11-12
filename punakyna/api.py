@@ -22,17 +22,14 @@ siihen käsiksi selaimen kautta. Siksi rajapinta:
 """
 import hmac
 import json
-import os
-import secrets
 import select
-import stat
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from .pipeline import check_text, suggestions_as_dicts
-from .tokenfile import (TOKEN_PATH, TokenError, load_all_tokens,
-                        load_or_create_token)
+from .tokenfile import (TOKEN_PATH, TokenError as TokenError,
+                        load_all_tokens, load_or_create_token)
 
 MAX_BODY = 1024 * 1024  # 1 MB
 MAX_TEXT = 200_000      # merkkiä

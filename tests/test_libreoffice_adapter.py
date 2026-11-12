@@ -3,7 +3,6 @@ EI Mac-validointi eikä asennettu laajennos. Skippaa jos soffice/uno puuttuu.
 UNO-ajot tehdaan jarjestelman /usr/bin/python3:lla (venv:ssa ei uno-moduulia)."""
 import shutil
 import subprocess
-import sys
 import threading
 
 import pytest

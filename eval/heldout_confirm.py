@@ -125,9 +125,8 @@ def main():
     sev_clean = {s: 0 for s in SEVERITY_SETS}
     sev_clean_rules = {s: Counter() for s in SEVERITY_SETS}
     exact_fix = 0
-    fixable = 0
     for i, k in enumerate(keys):
-        corrupt_text, ctypes_ = pairs_ctypes = test_pairs[k]['corrupted']
+        corrupt_text, ctypes_ = test_pairs[k]['corrupted']
         clean_text = test_pairs[k]['clean'][0]
         suggs = check_text(corrupt_text, **kw)
         for sev_name, sevs in SEVERITY_SETS.items():

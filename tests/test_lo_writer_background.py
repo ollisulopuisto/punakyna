@@ -53,7 +53,6 @@ RATKAISTU KASIN 2026-11-03 (automaatio viela kesken):
   Punakynalta (teksti ilman kirjoitusvirheita -> dialogi avautuu suoraan
   kielioppivirheeseen).
 """
-import json
 import os
 import shutil
 import socket

@@ -12,7 +12,6 @@ taustaprosessi käynnistää proofreaderit. Pikseliväite aaltoviivasta
 jää tarkoituksella pois - Macilla suomen sanasto on yleensä olemassa,
 mutta sitä ei ole varmistettu. Kuvakaappaus tallennetaan artefaktiksi.
 """
-import json
 import os
 import shutil
 import socket

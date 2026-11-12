@@ -14,7 +14,7 @@ import ctypes.util
 import os
 import sys
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 VOIKKO_OPT_ACCEPT_UNFINISHED_PARAGRAPHS_IN_GC = 14
 
