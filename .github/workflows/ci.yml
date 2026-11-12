@@ -27,7 +27,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libvoikko1 voikko-fi python3-uno xvfb libreoffice-writer
+            libvoikko1 voikko-fi python3-uno xvfb libreoffice-writer imagemagick
+
+      - name: Asenna Firefox ESR (valiaikainen laajennuslataus toimii vain ESR:ssa)
+        run: |
+          curl -sL 'https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US' \
+            -o "$RUNNER_TEMP/firefox-esr.tar.xz"
+          sudo tar -xJf "$RUNNER_TEMP/firefox-esr.tar.xz" -C /opt
+          sudo ln -sf /opt/firefox/firefox /usr/local/bin/firefox-esr
+          firefox-esr --version
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
