@@ -287,3 +287,20 @@
 - Regression tests for x+y and x² plus all prior cited cases. Full suite
   213 passed (2 LO sandbox deselects); smoke eval 0 false alarms / 34
   clean. Version 0.1.16.
+
+## 2026-11-12: GitHub Actions CI (ruff + pytest + savutesti)
+
+- Uusi `.github/workflows/ci.yml`: PR- ja main-push-triggeri, ubuntu-latest,
+  `permissions: contents: read`, SHA-pinatut actionit, ei artefakteja eika valimuistia.
+  Vaiheet: apt (libvoikko1, voikko-fi, python3-uno, xvfb) -> uv sync --frozen
+  -> ruff (F-kategoria) -> pytest tests/ -> eval/evaluate.py (informatiivinen).
+- Ruff lisatty dev-riippuvuuteen ja lukittu uv.lock:iin; portti F-kategoriaan
+  (pyflakes). E-tyyliluokat (E401/E402/E701/E702/E741) eivat viela portaa.
+- F-korjaukset erillisessa commitissa: 28 turhaa importtia poistettu,
+  3 F841-kasinkorjausta, 1 F541; `punakyna/api.py`:n TokenError-re-export
+  sailytetty eksplisiittisena aliaksena (testit tuovat sen punakyna.api:sta).
+- Paikallinen ajo (sandbox-Linux, libvoikko 4.3.1 + voikko-fi 2.4 deb-paketeista):
+  224 passed, 6 skipped, 2 failed (test_lo_writer_gui, test_lo_xproofreader;
+  unopkg add epaonnistuu tassa sandboxissa myos muuttamattomalla mainilla).
+  Savutesti: 0 vaaraa halytysta / 34 puhdasta lausetta, kaikki saannot loytavat.
+- Ei versiobumpia: CI-muutos ei muuta sovellusta eika mene OXT-pakettiin.
