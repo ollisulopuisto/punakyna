@@ -23,6 +23,8 @@ import time
 
 import pytest
 
+from lo_env import clean_lo_env
+
 from punakyna.api import make_server
 from punakyna.tokenfile import (
     load_or_create_token, load_or_create_app_token, load_all_tokens,
@@ -46,10 +48,7 @@ except Exception:
 # LibreOffice-valiprosessit (unopkg/soffice) kaatuvat std::bad_alloc:iin,
 # jos PATH:in ensimmainen python on virtualenvin (esim. `uv run` alla):
 # LO:n python-tarjoaja lataa vaaran tulkin. Puhdistettu ymparisto naille.
-LO_ENV = dict(os.environ)
-LO_ENV.pop('VIRTUAL_ENV', None)
-LO_ENV['PATH'] = os.pathsep.join(
-    p for p in LO_ENV.get('PATH', '').split(os.pathsep) if '/.venv' not in p)
+LO_ENV = clean_lo_env()
 
 pytestmark = pytest.mark.skipif(
     not (SOFFICE and os.path.exists(UNOPKG) and HAS_UNO),
