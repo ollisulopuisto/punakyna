@@ -1,0 +1,46 @@
+name: ci
+
+# PR- ja main-CI: yksikkotestit, ruff (F-kategoria) ja savutestiarviointi.
+# Standard public Ubuntu runner: free compute on public repos, no Actions
+# artifacts or cache. Packaging stays manual in build-full-oxt.yml.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Asenna libvoikko, suomen sanasto ja LibreOffice-testien vaatimat osat
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libvoikko1 voikko-fi python3-uno xvfb
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+
+      - name: Asenna riippuvuudet lukitustiedostosta
+        run: uv sync --frozen --extra dev
+
+      - name: Ruff (F-kategoria)
+        run: uv run ruff check .
+
+      - name: Yksikkotestit
+        run: uv run python -m pytest tests/ -q
+
+      - name: Savutestiarviointi (informatiivinen, ei portaava)
+        run: uv run python eval/evaluate.py
