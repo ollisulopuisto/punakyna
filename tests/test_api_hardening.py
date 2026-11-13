@@ -2,8 +2,6 @@
 import http.client
 import json
 import threading
-import urllib.request
-import urllib.error
 
 import pytest
 
@@ -254,7 +252,6 @@ def test_token_file_created_0600(tmp_path):
 
 # --- Kierros 2: tunnustiedoston kovennus ja rajat ---
 
-import os
 from punakyna.api import load_or_create_token as _lct, TokenError, make_server as _ms
 
 
@@ -443,7 +440,7 @@ def test_app_name_strict_allowlist_validation(tmp_path):
     """Sovellustunnisteen sallijalistatarkistus: hylkää ohjausmerkit,
     välimerkit, rivinvaihdot, piilotiedostot ja ylipituuden."""
     from punakyna.tokenfile import (load_or_create_app_token, read_app_token,
-                                    revoke_app_token, load_all_tokens, TokenError)
+                                    revoke_app_token, TokenError)
     tokens_dir = tmp_path / 'tokens'
     # Hyväksytyt
     for valid_name in ('app', 'libreoffice', 'firefox-e2e', 'my_app.1'):

@@ -15,8 +15,10 @@
   SENT_START_CASE korvattu Voikon omalla tarkistuksella, CAP_COMMON_NOUN
   tarkennettu (erisnimivaraus, style-taso), 13 yksikkotestia, savutesti
   25 virhe- / 28 puhdasta lausetta, 0 vaaraa halytysta. Katso README.
-- Open: repo home decision (where does this live), then CI (GitHub Actions:
-  pytest + eval, build libvoikko from source in workflow).
+- Done (2026-11-12): repo home = ollisulopuisto/punakyna; CI lisatty
+  (GitHub Actions: ruff F + pytest + savutesti-eval PR:eille ja
+  main-pushauksille; libvoikko ja voikko-fi apt-paketeista, ei koostetta
+  lahdekoodista).
 - Open: FinnGEC authors to be asked about weight/data licensing.
 - v0.3 (2026-11-03): held-out eval DaLA Finnish correction/test (n=10000
   paria); omat saannot tarkennettu loydettyjen FP-luokkien osalta

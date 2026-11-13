@@ -13,8 +13,7 @@ Kirjaston ja sanaston loytaminen:
 import ctypes as C
 import ctypes.util
 import os
-import sys
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterator, List
 
 from .voikko_gc import (VOIKKO_OPT_ACCEPT_UNFINISHED_PARAGRAPHS_IN_GC,
                         _resolve_libfile, discover_dict_path,

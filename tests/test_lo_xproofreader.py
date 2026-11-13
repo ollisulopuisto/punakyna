@@ -23,6 +23,8 @@ import time
 
 import pytest
 
+from lo_env import clean_lo_env
+
 from punakyna.api import make_server
 from punakyna.tokenfile import (
     load_or_create_token, load_or_create_app_token, load_all_tokens,
@@ -42,6 +44,11 @@ try:
     HAS_UNO = True
 except Exception:
     HAS_UNO = False
+
+# LibreOffice-valiprosessit (unopkg/soffice) kaatuvat std::bad_alloc:iin,
+# jos PATH:in ensimmainen python on virtualenvin (esim. `uv run` alla):
+# LO:n python-tarjoaja lataa vaaran tulkin. Puhdistettu ymparisto naille.
+LO_ENV = clean_lo_env()
 
 pytestmark = pytest.mark.skipif(
     not (SOFFICE and os.path.exists(UNOPKG) and HAS_UNO),
@@ -104,16 +111,19 @@ def test_xproofreader_headless_end_to_end(tmp_path):
     subprocess.run([sys.executable,
                     os.path.join(XPDIR, 'make_oxt.py'), oxt],
                    check=True, capture_output=True)
-    subprocess.run([UNOPKG, 'add', '-f', oxt,
-                    f'-env:UserInstallation={profile_uri}'],
-                   check=True, capture_output=True, timeout=120)
+    r = subprocess.run([UNOPKG, 'add', '-f', oxt,
+                        f'-env:UserInstallation={profile_uri}'],
+                       capture_output=True, text=True, timeout=120, env=LO_ENV)
+    assert r.returncode == 0, (
+        f'unopkg add epaonnistui ({r.returncode}):\nstdout: {r.stdout}\n'
+        f'stderr: {r.stderr}')
 
     soffice = subprocess.Popen(
         [SOFFICE, '--headless', '--norestore', '--nologo',
          f'--accept=socket,host=127.0.0.1,port={UNO_PORT};urp;'
          'StarOffice.ServiceManager',
          f'-env:UserInstallation={profile_uri}'],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        env=LO_ENV, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     script = tmp_path / 'uno_check.py'
     script.write_text(UNO_SCRIPT)
     try:

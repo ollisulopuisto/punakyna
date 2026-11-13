@@ -6,8 +6,13 @@ requires-python = ">=3.10"
 dependencies = ["libvoikko"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
 
 [tool.uv]
 # ei rakenneta asennettavaa pakettia - ajetaan suoraan lähdepuusta
 package = false
+
+[tool.ruff.lint]
+# Vaiheittainen portti: F-kategoria (pyflakes) portattuna nyt.
+# E-tyyliluokat (E401/E402/E701/E702/E741) eivat viela portaa; ks. PR-kuvaus.
+select = ["F"]

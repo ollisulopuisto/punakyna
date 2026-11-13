@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Optional style advice settings. Explicit profile, no document rewrites."""
 import os
-import uno
 import unohelper
 from com.sun.star.task import XJob
 from com.sun.star.lang import XServiceInfo

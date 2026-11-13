@@ -69,8 +69,23 @@ def test_bad_payload_400(server):
 
 
 def test_oversized_413(server):
-    status, _ = _post(server, '/check', None, raw=b'x' * (1024 * 1024 + 1))
-    assert status == 413
+    # Python 3.12+: palvelin lahettaa 413:n ja sulkee yhteyden ennen kuin
+    # megatavun runko ehtii siirtya; asiakas nakee BrokenPipen vastauksen
+    # sijaan. Molemmat todistavat, etta ylisuuri runko hylattiin.
+    data = b'x' * (1024 * 1024 + 1)
+    req = urllib.request.Request(
+        f'http://127.0.0.1:{server.server_address[1]}/check', data=data,
+        headers={'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req) as resp:
+            assert resp.status == 413
+    except urllib.error.HTTPError as e:
+        assert e.code == 413
+    except urllib.error.URLError as e:
+        assert isinstance(e.reason, (BrokenPipeError, ConnectionResetError)), e
+    # Palvelin jatkoi normaalisti hajonnutta lahetysta jalkeen.
+    status, _ = _post(server, '/check', {'text': 'Tämä lause on oikein.'})
+    assert status == 200
 
 
 def test_refuses_non_loopback():

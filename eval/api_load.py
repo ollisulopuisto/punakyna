@@ -4,7 +4,6 @@ Huom: sandbox-Linuxin luvut eivät ole Mac-viitteenä. Ajetaan paikallista
 palvelinta vastaan erillisessä säikeessä.
 """
 import json
-import statistics
 import sys
 import threading
 import time

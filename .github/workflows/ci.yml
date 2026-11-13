@@ -1,0 +1,65 @@
+name: ci
+
+# PR- ja main-CI: yksikkotestit, ruff (F-kategoria) ja savutestiarviointi.
+# Standard public Ubuntu runner: free compute on public repos, no Actions
+# artifacts or cache. Packaging stays manual in build-full-oxt.yml.
+
+on:
+  pull_request:
+    paths-ignore: ["**.md"]
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Asenna libvoikko, suomen sanasto ja LibreOffice-testien vaatimat osat
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libvoikko1 voikko-fi python3-uno xvfb libreoffice-writer imagemagick
+
+      - name: Asenna Firefox ESR (valiaikainen laajennuslataus toimii vain ESR:ssa)
+        env:
+          # Kiinnitetty versio ja SHA-256. Arvo on Mozillan allekirjoitetusta
+          # SHA256SUMS-tiedostosta (release-avain 14F2 6682 D091 6CDD 81E3
+          # 7B6D 61B7 B526 D98F 0353, gpg --verify OK):
+          # https://archive.mozilla.org/pub/firefox/releases/153.7.0esr/SHA256SUMS
+          # Paivita versio ja summa yhdessa; sha256sum -c kaataa ajon, jos tavut eroavat.
+          FIREFOX_ESR_VERSION: 153.7.0esr
+          FIREFOX_ESR_SHA256: 7d2eb92ca3a7b2a83de092eb9b94c853980214de2fbfdccb2ac39d61c593c5a5
+        run: |
+          curl -sfL "https://archive.mozilla.org/pub/firefox/releases/${FIREFOX_ESR_VERSION}/linux-x86_64/en-US/firefox-${FIREFOX_ESR_VERSION}.tar.xz" \
+            -o "$RUNNER_TEMP/firefox-esr.tar.xz"
+          echo "${FIREFOX_ESR_SHA256}  $RUNNER_TEMP/firefox-esr.tar.xz" | sha256sum -c -
+          sudo tar -xJf "$RUNNER_TEMP/firefox-esr.tar.xz" -C /opt
+          sudo ln -sf /opt/firefox/firefox /usr/local/bin/firefox-esr
+          firefox-esr --version
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+
+      - name: Asenna riippuvuudet lukitustiedostosta
+        run: uv sync --frozen --extra dev
+
+      - name: Ruff (F-kategoria)
+        run: uv run ruff check .
+
+      - name: Yksikkotestit
+        run: uv run python -m pytest tests/ -q -rs
+
+      - name: Savutestiarviointi (informatiivinen, ei portaava)
+        run: uv run python eval/evaluate.py

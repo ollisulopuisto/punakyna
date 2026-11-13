@@ -83,7 +83,7 @@ def main():
     for t in sorted(det_tot):
         n = det_tot[t]
         print(f'  {t}: {det[t]}/{n} = {100*det[t]/n:.1f} %')
-    print(f'\n=== yli-korjaus puhtaissa kontrolleissa ===')
+    print('\n=== yli-korjaus puhtaissa kontrolleissa ===')
     print(f'  liputettuja: {clean_flagged}/{len(keys)} = '
           f'{100*clean_flagged/max(1,len(keys)):.2f} %')
     print(f'  saannoittain: {dict(clean_flags.most_common())}')

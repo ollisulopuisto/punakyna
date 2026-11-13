@@ -1,6 +1,5 @@
 """Regression: 8 rinnakkaista asiakasta kaatoi ennen palvelimen libvoikko-
 heap-korruptioon. Ajetaan aliprosessissa, jotta kaatuminen olisi nakyva."""
-import json
 import subprocess
 import sys
 import textwrap

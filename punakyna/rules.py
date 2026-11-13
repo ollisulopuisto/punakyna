@@ -6,7 +6,7 @@ on tarkeampaa kuin herkkyys. Saannot toimivat libvoikko-tokenisoinnin ja
 """
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from .voikko_compat import Token
 

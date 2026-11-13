@@ -1,7 +1,6 @@
 """Native messaging -isännän protokollatesti: kehystys ja pyyntö/vastaus."""
 import json
 import struct
-import subprocess
 import sys
 import threading
 
@@ -52,7 +51,6 @@ def _run_host(stack, frames, monkeypatch):
         def __init__(self, data=b''):
             self.buffer = self._Buf(data)
     fake_in, fake_out = FakeStream(frames), FakeStream()
-    import io
     real_in, real_out = sys.stdin, sys.stdout
     sys.stdin, sys.stdout = fake_in, fake_out
     try:

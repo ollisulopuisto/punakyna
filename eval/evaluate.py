@@ -8,7 +8,7 @@ tulokset aina taman huomion kanssa. Oikea arviointi: FinnGEC-testiaineisto
 import json
 import os
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from punakyna.pipeline import check_text  # noqa
@@ -33,7 +33,6 @@ def main():
         det = Counter()
         det_ok = Counter()
         clean_fp = Counter()
-        cat_tot = Counter(e['category'] for e in errors)
         for item in errors:
             suggs = check_text(item['text'], **kw)
             rules = {s.rule for s in suggs}

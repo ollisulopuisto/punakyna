@@ -12,7 +12,6 @@ taustaprosessi käynnistää proofreaderit. Pikseliväite aaltoviivasta
 jää tarkoituksella pois - Macilla suomen sanasto on yleensä olemassa,
 mutta sitä ei ole varmistettu. Kuvakaappaus tallennetaan artefaktiksi.
 """
-import json
 import os
 import shutil
 import socket
@@ -22,6 +21,8 @@ import threading
 import time
 
 import pytest
+
+from lo_env import clean_lo_env
 
 from punakyna.api import make_server
 from punakyna.tokenfile import (
@@ -44,6 +45,11 @@ try:
     HAS_UNO = True
 except Exception:
     HAS_UNO = False
+
+# LibreOffice-valiprosessit (unopkg/soffice) kaatuvat std::bad_alloc:iin,
+# jos PATH:in ensimmainen python on virtualenvin (esim. `uv run` alla):
+# LO:n python-tarjoaja lataa vaaran tulkin. Puhdistettu ymparisto naille.
+LO_ENV = clean_lo_env()
 
 pytestmark = pytest.mark.skipif(
     not (SOFFICE and os.path.exists(UNOPKG) and HAS_UNO and XVFB and IMPORT),
@@ -123,13 +129,16 @@ def test_writer_gui_proofreader_end_to_end(tmp_path):
     subprocess.run([sys.executable, os.path.join(XPDIR, 'make_oxt.py'), oxt],
                    check=True, capture_output=True)
     profile_uri = 'file://' + str(tmp_path / 'louser')
-    subprocess.run([UNOPKG, 'add', '-f', oxt,
-                    f'-env:UserInstallation={profile_uri}'],
-                   check=True, capture_output=True, timeout=120)
+    r = subprocess.run([UNOPKG, 'add', '-f', oxt,
+                        f'-env:UserInstallation={profile_uri}'],
+                       capture_output=True, text=True, timeout=120, env=LO_ENV)
+    assert r.returncode == 0, (
+        f'unopkg add epaonnistui ({r.returncode}):\nstdout: {r.stdout}\n'
+        f'stderr: {r.stderr}')
 
     xvfb = subprocess.Popen([XVFB, DISPLAY, '-screen', '0', '1280x1024x24'])
     time.sleep(2)
-    env = dict(os.environ, DISPLAY=DISPLAY)
+    env = dict(LO_ENV, DISPLAY=DISPLAY)
     soffice = subprocess.Popen(
         [SOFFICE, '--writer', '--norestore', '--nologo',
          f'--accept=socket,host=127.0.0.1,port={UNO_PORT};urp;'
