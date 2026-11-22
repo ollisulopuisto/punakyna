@@ -21,6 +21,31 @@
 - Do not add third-party model weights or datasets to the repo. License
   status of FinnGEC weights/data is unresolved; see README section Neurotaso.
 
+## 2026-11-22: TYPO_NUMBER_GROUP + ABBR_SS_VV (v0.1.17)
+
+- TYPO_NUMBER_GROUP (warning): numeroiden ryhmittely kolmen ryhmiin lopusta
+  ("5603075" -> "5 603 075"). Lähde: ohjepankki "Luvut ja numerot: numeroiden
+  ryhmittely" (luettu 2026-11-22): neli- ja useampinumeroiset ryhmitellaan;
+  vuosiluvut, tunnukset, puhelin- ja postinumerot poikkeuksia.
+- Rajoitettu tarkoituksella: vahintaan 5-numeroinen aina; 4-numeroinen vain
+  yksikon edessa ("4000 euroa"). Ohitetaan etunollalliset (puhelinnumerot),
+  10+ numeroiset (tilinumerot), tunnuskontekstit (#, =, +, *, /, (, ^, piste/
+  kaksoispiste/viiva + numero), yhdyssanajatkeet ("80387-matematiikkasuoritin"),
+  isokirjaimisen lyhenteen perassa ("ISO 26262") ja postinumerot
+  ("33100 Tampere"). Yksikkotarkistus on aakkoskoosta riippuvainen, jottei
+  "1938 MM-kisoissa" liputu (mm-yksikko vs MM-kisat).
+- ABBR_SS_VV (style): "ss." -> "s.", "vv." -> "v." (vanhentuneet).
+  Lahteet: ohjepankin lyhenteet-pisteelliset-sivun Tiesitko-ohje ja
+  Kielikello "Vanhentunut vv." (luetut 2026-11-22). 'ss'/'vv' lisatty
+  pipeline._ABBREV-joukkoon, jottei SPELL liputa kahta kertaa.
+- Ryhmittely ajetaan koko tekstille (_check_numgroup, kuten kello/paivays),
+  koska libvoikko katkaisee virkkeen kaksoispisteeseen ("30:12345").
+- Tarkkuus: wiki sweep 24 artikkelia (~88k sanaa): 1 osuma, tosi
+  ("7000 vuotta sitten"); savutesti 0 vaaraa halytysta / 38 puhdasta.
+- Versio 0.1.17 (pyproject, __init__, description.xml, browser manifest, uv.lock).
+- Seuraavaksi (sivussa): eaa./eKr. luettu - molemmat muodot kelpaavat
+  ohjepankin mukaan, ei saantoa; pilkku + mutta/vaan -tyon alla erillisessa PR:ssa.
+
 ## 2026-11-04: bundled extension stack recovery
 
 - Integrated the surviving #9 merge commit from local-oxt onto current main,

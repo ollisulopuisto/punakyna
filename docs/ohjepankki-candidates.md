@@ -23,9 +23,9 @@ any rule is written.
 | date as d.m.yyyy with a dot after day and month, no space | ajanilmaukset-paivays-ja-vuosiluku | read |
 | en dash in ranges (kello 9–12, 1995–2003) instead of hyphen | ajatusviiva-rajakohdat-ja-osapuolet-20-29-vuotiaat-suomi-ruotsi-maaottelu | read |
 | decimal comma, not decimal point | luvut-ja-numerot-desimaaliluvut | read (ambiguous with dates and versions, so narrow context only) |
-| 4+ digit numbers grouped by spaces from the end | luvut-ja-numerot-numeroiden-ryhmittely | read |
-| eaa. / eKr. forms | ajanilmaukset-eaa-vai-ekr | title |
-| ss./vv. are outdated, use s. and v. | lyhenteet-pisteelliset ("Tiesitkö?" box) | read |
+| 4+ digit numbers grouped by spaces from the end | luvut-ja-numerot-numeroiden-ryhmittely | done v0.1.17 TYPO_NUMBER_GROUP (5+ digits always, 4 only before a unit) |
+| eaa. / eKr. forms | ajanilmaukset-eaa-vai-ekr | read: both types are acceptable in general text, no rule (2026-11-22) |
+| ss./vv. are outdated, use s. and v. | lyhenteet-pisteelliset ("Tiesitkö?" box) | done v0.1.17 ABBR_SS_VV |
 
 ## Tier B: punctuation (commas are the most common real-world error class)
 

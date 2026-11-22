@@ -102,3 +102,44 @@ def test_date_format():
               'Osoite on a.fi/2025/04/03/x.', 'Hän sai 3/4 osuuden.',
               'Katso versio 2025-04-03 10.00.'):
         assert not hits(t, 'TYPO_DATE_FORMAT'), t
+
+
+def test_number_group():
+    for t, fix in (('Suomessa asuu 5603075 ihmistä.', '5 603 075'),
+                   ('Vuonna 1998 asukkaita oli 52300.', '52 300'),
+                   ('Kurssi maksaa 4000 euroa.', '4 000'),
+                   ('Syvyys on 1609 m.', '1 609'),
+                   ('Asukkaita 23500, työpaikkoja 12000.', '23 500'),
+                   ('Vaihto oli 123456789 euroa.', '123 456 789')):
+        r = hits(t, 'TYPO_NUMBER_GROUP')
+        assert r and r[0].replacements == [fix], t
+    for t in ('Suomessa asuu 5 603 075 ihmistä.', 'Vuonna 1998 syntyi.',
+              'Postinumero on 33100 Tampere.', 'Puhelinnumero on 0401234567.',
+              'Tilinumero on 1234567890123.', 'Ositus 30:12345 laskussa.',
+              'Versio 1.23456 julkaistiin.', 'Lasku 5=3+20000 euroa.',
+              'Sijainnit 60.1699, 24.9384.', 'Luku oli 999 euroa.',
+              'Kurssi maksaa 4 000 euroa.', 'Nopeus 100 km/h.'):
+        assert not hits(t, 'TYPO_NUMBER_GROUP'), t
+
+
+def test_abbr_ss_vv():
+    r = hits('Hinnat olivat vv. 2009–2011 nousseet.', 'ABBR_SS_VV')
+    assert len(r) == 1 and r[0].replacements == ['v.']
+    assert r[0].severity == 'style'
+    r = hits('Katso ss. 45–47.', 'ABBR_SS_VV')
+    assert len(r) == 1 and r[0].replacements == ['s.']
+    for t in ('Katso s. 45.', 'Hinnat olivat v. 2020 nousseet.',
+              'Se kesti 10 s.', 'Nopeus on 5 m/s.', 'Kurssi on SS-luokka.'):
+        assert not hits(t, 'ABBR_SS_VV'), t
+
+
+def test_number_group_fp_guards():
+    for t in ('80387-matematiikkasuorittimen vaadittiin.',
+              'Koneessa oli Motorola 68000 -suorittimia.',
+              'Hyväksynnän myönsi ISO 26262 ja IEC 61508 standardien mukaan.',
+              'Vuoden 1938 MM-kisoissa tehtiin maaleja.',
+              'Vuosien 1970 ja 1986 MM-loppuottelut pelattiin.'):
+        assert not hits(t, 'TYPO_NUMBER_GROUP'), t
+    # tosi osuma: maara, ei vuosiluku
+    r = hits('Viininviljely alkoi noin 7000 vuotta sitten.', 'TYPO_NUMBER_GROUP')
+    assert len(r) == 1 and r[0].replacements == ['7 000']

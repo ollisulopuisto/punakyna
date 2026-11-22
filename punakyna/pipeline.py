@@ -57,6 +57,7 @@ _ABBREV = {
     'esim', 'ts', 'ns', 'n', 'v', 'vs', 'vm', 'jne', 'etc', 'ym', 'yms',
     'tms', 'os', 's', 'lkm', 'no', 'huom', 'ks', 'emt', 'ent', 'ekr', 'jkr',
     'mm', 'ml', 'pl', 't', 'hlö', 'tai', 'toim', 'prof', 'FT', 'FM',
+    'ss', 'vv',  # vanhentuneet mutta tunnetut lyhenteet; ABBR_SS_VV neuvoo
 }
 
 # Suorituskyky: nopea joukko numeromerkeille numerotarkistusta varten
