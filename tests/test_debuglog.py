@@ -76,6 +76,11 @@ def test_concurrent_writers_respect_cap(tmp_path, monkeypatch):
         cfg = {'log': True, 'error_type': 'proofreading', 'drop_suggestions': False}
         for _ in range(60):
             debuglog.log_call(cfg, 'x' * 400, 0, 1, [])
-    ps = [mp.Process(target=work) for _ in range(4)]
+    # Python 3.14 vaihtoi Linuxin oletusstarttimetodiksi forkserverin, joka
+    # ei pysty picklaamaan sulkeumaa (monkeypatch-tila ei myoskaan sirtyisi
+    # lapsiin). fork konteksti sailyttaa testin semantiikan.
+    ctx = (mp.get_context('fork') if 'fork' in mp.get_all_start_methods()
+           else mp.get_context())
+    ps = [ctx.Process(target=work) for _ in range(4)]
     [p.start() for p in ps]; [p.join() for p in ps]
     assert (tmp_path / 'punakyna-debug.log').stat().st_size <= 20000
