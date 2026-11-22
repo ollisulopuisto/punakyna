@@ -803,6 +803,28 @@ _DEC_UNITS = (r'(?:[\u00a0 ]?%|[\u00a0 ]?°C|[\u00a0 ](?:kg|g|km|m|cm|mm|l|dl|cl
 _RE_DEC_POINT = re.compile(
     r'(?<![\w.,/:\-])(\d{1,3})\.(\d{1,2})(?=' + _DEC_UNITS + r'(?![\w]))', re.I)
 _RE_ABBR = re.compile(r'(?<![\w.-])(esim|jne|tms|yms|huom)(?![\w.:-])', re.I)
+# Numeroiden ryhmittely kolmen ryhmiin lopusta alkaen (ohjepankki,
+# "Luvut ja numerot: numeroiden ryhmittely", luettu 2026-11-22):
+# "5 603 075". Vahintaan 5-numeroinen kokonaisluku liputetaan sellaisenaan;
+# 4-numeroinen vain yksikon edessa (vuosiluvut jäävät rauhaan).
+# Ohitetaan: etunollalliset (puhelinnumerot "0401234567"), 10+ numeroiset
+# (tilinumerot ja muut tunnukset), tunnus- ja laskentakontekstit
+# (edessa # = + - * / ( ^ tai piste/kaksoispiste/viiva).
+_RE_NUMGROUP5 = re.compile(r'(?<![\w.,:;/\-=+*\^(#])([1-9]\d{4,8})(?!\d)(?![.,:;/\-]\d)')
+_RE_NUMGROUP4 = re.compile(
+    r'(?<![\w.,:;/\-=+*\^(#])([1-9]\d{3})(?=' + _DEC_UNITS + r'(?![\w]))')
+_RE_SS_VV = re.compile(r'(?<![\w.])(ss|vv)(\.)(?![\w])')
+_DIGIT_CHARS = frozenset('0123456789')
+
+
+def _group_digits(num):
+    """Ryhmittele numeromerkkijono kolmen ryhmiin lopusta sitovalla valilla."""
+    parts = []
+    while len(num) > 3:
+        parts.append(num[-3:])
+        num = num[:-3]
+    parts.append(num)
+    return '\u00a0'.join(reversed(parts))
 # Ajatusviiva lukujen rajakohdissa ja osapuolten tuloksissa (ohjepankki):
 # 20-30 -> 20-30 (ajatusviiva), 2-1 -> 2-1. Ohitetaan tunnisteet (A380-800,
 # UTF-8), viivaketjut (ISBN 978-951-..., ISO-paivays 2026-11-08) ja molemmin-
@@ -894,6 +916,43 @@ def _check_clock(sent_text, offset):
     return out
 
 
+def _check_numgroup(sent_text, offset):
+    """Numeroiden ryhmittely koko tekstille (libvoikko katkaisee virkkeen
+    kaksoispisteeseen, joten osuu-suhde "30:12345" nakyisi palasina)."""
+    out = []
+    if _DIGIT_CHARS.isdisjoint(sent_text):
+        return out
+    for m in _RE_NUMGROUP5.finditer(sent_text):
+        num = m.group(1)
+        if re.match(r'\s*-[a-zåäö]', sent_text[m.end():]):
+            continue  # yhdyssanan jatke ("80387-matematiikkasuorittimen")
+        prev = sent_text[max(0, m.start() - 24):m.start()].rstrip()
+        prev_word = prev.rsplit(' ', 1)[-1] if prev else ''
+        if len(prev_word) >= 2 and prev_word.isalpha() and prev_word.isupper():
+            continue  # standardi/tunnus ("ISO 26262", "IEC 61508")
+        if len(num) == 5:
+            rest = sent_text[m.end():].lstrip(' \u00a0')
+            if rest[:1].isupper():
+                continue  # postinumero ("33100 Tampere")
+        fixed = _group_digits(num)
+        out.append(Suggestion(
+            rule='TYPO_NUMBER_GROUP', category='style', severity='warning',
+            start=offset + m.start(1), end=offset + m.end(1),
+            message=('Luku ryhmitellään kolmen numeron ryhmiin lopusta '
+                     'alkaen ("%s").' % fixed),
+            replacements=[fixed]))
+    for m in _RE_NUMGROUP4.finditer(sent_text):
+        num = m.group(1)
+        fixed = _group_digits(num)
+        out.append(Suggestion(
+            rule='TYPO_NUMBER_GROUP', category='style', severity='warning',
+            start=offset + m.start(1), end=offset + m.end(1),
+            message=('Luku ryhmitellään kolmen numeron ryhmiin lopusta '
+                     'alkaen ("%s").' % fixed),
+            replacements=[fixed]))
+    return out
+
+
 def check_typography(sent_text, offset, clock=False):
     """clock=True: vain kellonaikasäännöt (ajetaan koko tekstille, koska
     libvoikko katkaisee virkkeen kaksoispisteeseen: 'klo 9:' + '15')."""
@@ -901,7 +960,8 @@ def check_typography(sent_text, offset, clock=False):
     if clock:
         # koko teksti: libvoikko katkaisee virkkeen kaksoispisteeseen
         # ("klo 9:" + "15", "2025-04-03 12:" + "30")
-        return _check_clock(sent_text, offset) + _check_dates(sent_text, offset)
+        return (_check_clock(sent_text, offset) + _check_dates(sent_text, offset)
+                + _check_numgroup(sent_text, offset))
     # Suorituskyky: Nopeat merkkisisältötarkistukset ('in') ennen regex-hakuja.
     # Valtaosassa luonnollisen kielen virkkeitä ei esiinny prosenttimerkkejä,
     # valuuttasymboleita, desimaalipisteitä tai yhdysmerkkejä.
@@ -976,6 +1036,16 @@ def check_typography(sent_text, offset, clock=False):
             start=offset + m.start(), end=offset + m.end(),
             message='Lyhenteen perässä on piste ("%s.").' % word.lower(),
             replacements=[word + '.']))
+    if 'ss.' in sent_text or 'vv.' in sent_text:
+        for m in _RE_SS_VV.finditer(sent_text):
+            old = m.group(1) + '.'
+            fixed = m.group(1)[0] + '.'
+            out.append(Suggestion(
+                rule='ABBR_SS_VV', category='style', severity='style',
+                start=offset + m.start(), end=offset + m.end(),
+                message=('Lyhenne "%s" on vanhentunut; nykyisin käytetään '
+                         'lyhennettä "%s".' % (old, fixed)),
+                replacements=[fixed]))
     return out
 
 
