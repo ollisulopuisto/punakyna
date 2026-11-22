@@ -28,3 +28,4 @@
 {"text": "Meillä on kolme lapsi.", "expect": ["NUM_NOUN_CASE"], "category": "grammar"}
 {"text": "Suomessa asuu 5603075 ihmistä.", "expect": ["TYPO_NUMBER_GROUP"], "category": "style"}
 {"text": "Hinnat olivat vv. 2009–2011 nousseet.", "expect": ["ABBR_SS_VV"], "category": "style"}
+{"text": "Mies tuli kotiin mutta nainen lähti töihin.", "expect": ["PUNCT_COMMA_MUTTA_VAAN"], "category": "style"}

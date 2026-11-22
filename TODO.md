@@ -129,6 +129,8 @@
 - v0.1.17 (2026-11-22): TYPO_NUMBER_GROUP (5603075 -> 5 603 075) ja ABBR_SS_VV
   (ss. -> s., vv. -> v.). Katso AGENTS.md. Seuraavaksi: pilkku mutta/vaan
   (kokonainen paalause seuraa), eaa./eKr. luettu eika ole saantoaineisto.
+- v0.1.18 (2026-11-22): PUNCT_COMMA_MUTTA_VAAN (pilkku ennen mutta/vaan +
+  kokonaista paalausetta). Katso AGENTS.md.
 - v0.1.1 (2026-11-07): PERFECT_PASSIVE_PARTICIPLE-saanto ("olen menty" -> "olen mennyt"; VISK §1292, §530). Katso AGENTS.md.
 - v0.1.2 (2026-11-07): sääntörekisteri + kattavuuskartta (docs/coverage-map.md); ei toiminnallisia muutoksia.
 

@@ -21,6 +21,26 @@
 - Do not add third-party model weights or datasets to the repo. License
   status of FinnGEC weights/data is unresolved; see README section Neurotaso.
 
+## 2026-11-22: PUNCT_COMMA_MUTTA_VAAN (v0.1.18, stacked on v0.1.17)
+
+- Uusi saanto (warning): puuttuva pilkku ennen mutta/vaan-konjunktiota, kun
+  sen jalkeen seuraa kokonainen paalause ("Mies tuli kotiin mutta nainen
+  lahti toihin."). Lahde: ohjepankki "Pilkku ja mutta, vaan"
+  (luettu 2026-11-22): kokonaiset paalauseet -> aina pilkku; jos mutta-jakso
+  ei ole kokonainen paalause, pilkku on uuden saannon mukaan valinnainen.
+- Tarkkuustunnistus: heti konjunktion jalkeen nominatiivinen subjekti-
+  ehdokas (nimisana/asemosana/nimi, ei partisiippia) ja suoraan sen jalkeen
+  finiittiverbi (tai kieltoverbi, joka kattaa "mutta kukaan ei kuunnellut").
+  Ohitetaan: pilkku jo paikallaan, konjunktiota suoraan seuraava kieltoverbi
+  ("mutta eivat ginsengjuurta" = yhteinen subjekti), virkkeen alku.
+- Tietoiset recall-railot: "mutta viikonloppuisin siella kay" (subjekti ei
+  suoraan konjunktion jalkeen) ja muut valissa olevat sanat.
+- Adverbiaali/adjektiivi-FP:t estetty vaatimalla subjekti+verbi-pari
+  ("Hidas mutta varma tie vie" ei liputu).
+- Tarkkuus: wiki sweep 12 artikkelia (~50k sanaa): 1 osuma, tosi
+  ("...eivat sijaitse pisteessa vaan ne sijaitsevat..." - paalause vaan-sanan
+  jalkeen); savutesti 0 vaaraa halytysta / 41 puhdasta lausetta. Versio 0.1.18.
+
 ## 2026-11-22: TYPO_NUMBER_GROUP + ABBR_SS_VV (v0.1.17)
 
 - TYPO_NUMBER_GROUP (warning): numeroiden ryhmittely kolmen ryhmiin lopusta
