@@ -1061,8 +1061,63 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
         sent_text, offset, words, voikko, cache, before)
     out += check_numeral_noun_case(sent_text, offset, words, voikko, cache)
     out += check_attribute_agreement(sent_text, offset, words, voikko, cache)
+    out += check_comma_mutta_vaan(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
         sent_text, offset, words, voikko, cache)
+    return out
+
+
+# Pilkku mutta/vaan-konjunktion edella, kun jalkeen seuraa kokonainen
+# paalause (ohjepankki, "Pilkku ja mutta, vaan", luettu 2026-11-22):
+# "Arkisin salilla on hiljaista, mutta viikonloppuisin siella kay
+# paljon asiakkaita." Kun mutta-jakso EI ole kokonainen paalause
+# ("...mutta eivat ginsengjuurta"), pilkku on uuden saannon mukaan
+# valinnainen -> ei liputeta. Tunnistus tarkkuus edella: heti
+# mutta-sanan jalkeen nominatiivinen subjektiehdokas, jota seuraa
+# suoraan finiittiverbi (tai kieltoverbi); muussa tapauksessa ohitus,
+# joten esim. "mutta viikonloppuisin siella kay" jaa liputtamatta.
+
+
+def _nom_subject(analyses):
+    return any(a.get('SIJAMUOTO') == 'nimento'
+               and a.get('CLASS') in ('nimisana', 'asemosana', 'etunimi',
+                                      'sukunimi', 'paikannimi')
+               and not a.get('PARTICIPLE')
+               for a in analyses)
+
+
+def _finite_person_verb(analyses):
+    return any(a.get('CLASS') == 'teonsana' and a.get('PERSON') in ('1', '2', '3')
+               and a.get('MOOD') in ('indicative', 'conditional', 'potential')
+               and not a.get('PARTICIPLE') and not a.get('INFINITIVE')
+               and a.get('NEGATIVE') not in ('true', True)
+               for a in analyses)
+
+
+def check_comma_mutta_vaan(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        if tok.lower not in ('mutta', 'vaan') or i == 0:
+            continue
+        if ',' in sent_text[words[i - 1].end:tok.start]:
+            continue  # pilkku on jo
+        if i + 2 >= len(words):
+            continue
+        nxt = words[i + 1]
+        if _neg_base(nxt.lower) in _KIELTO or nxt.lower.startswith('älä'):
+            continue  # "mutta eivat ginsengjuurta": yhteinen subjekti
+        subj_an = _analyze(voikko, nxt.text, cache)
+        if not subj_an or not _nom_subject(subj_an):
+            continue
+        verb = words[i + 2]
+        if _neg_base(verb.lower) not in _KIELTO and                 not _finite_person_verb(_analyze(voikko, verb.text, cache)):
+            continue
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_MUTTA_VAAN', category='style', severity='warning',
+            start=offset + tok.start, end=offset + tok.end,
+            message=('Kokonaisia päälauseita erottavan konjunktion "%s" '
+                     'edellä on pilkku (", %s").' % (tok.text, tok.text)),
+            replacements=[', ' + tok.text]))
     return out
