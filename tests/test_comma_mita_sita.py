@@ -55,3 +55,11 @@ def test_mita_sita_replacement():
     s = hits('Mitä enemmän harjoittelet sitä parempi tuloksista tulee.')
     assert len(s) == 1
     assert s[0].replacements == [', ']
+
+
+def test_conjunction_before_second_member_no_flag():
+    # ohjepankin sivu ei vaadi pilkkua, kun jäsenet yhdistää ja/mutta
+    for t in ('Hän on osaksi suomalainen ja osaksi ruotsalainen.',
+              'Kirja on toisaalta hauska ja toisaalta surullinen.',
+              'Hän kertoi milloin lähtee ja milloin palaa.'):
+        assert hits(t) == [], t

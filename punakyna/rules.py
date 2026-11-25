@@ -1752,7 +1752,7 @@ def check_comma_mita_sita(sent_text, offset, words, voikko, cache):
                 continue
             if first_seen and tok.lower == second:
                 prev, missing = _missing_comma(i)
-                if missing:
+                if missing and prev.lower not in ('ja', 'sekä', 'tai', 'eli', 'mutta', 'vaan'):
                     out.append(Suggestion(
                         rule='PUNCT_COMMA_MITA_SITA', category='style',
                         severity='warning',
