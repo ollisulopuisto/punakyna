@@ -1610,6 +1610,63 @@ def check_comma_indirect_question(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Nimea tasmentavien perusmuotoisten titteleiden valiin tulee pilkku:
+# "toimitusjohtaja, ekonomi Liisa Jarvinen" (ohjepankki, "Pilkku
+# titteleiden valissa: johtaja, insinoori Virta", luettu 2026-11-25).
+# Kun ensimmaisella tittelilla on oma määrite ("laitoksen johtaja"),
+# pilkku on valinnainen -> liputetaan vain kahden perusmuotoisen
+# tittelin suora perakkaisyys ilman pilkkua.
+
+_TITLES = {
+    'toimitusjohtaja', 'johtaja', 'päällikkö', 'lehtori', 'rehtori',
+    'professori', 'dosentti', 'dekaani', 'ekonomi', 'maisteri',
+    'tohtori', 'lisensiaatti', 'insinööri', 'arkkitehti', 'opettaja',
+    'neuvos', 'puheenjohtaja', 'sihteeri', 'kapteeni', 'valmentaja',
+    'päätoimittaja', 'yliopettaja', 'apulaisprofessori', 'tutkija',
+    'pääjohtaja', 'konsuli', 'ministeri', 'arkkienkeli', 'piispa',
+    'rovasti', 'pastori', 'ylilääkäri', 'lääkäri', 'hammaslääkäri',
+    'asessori', 'esimies', 'varatuomari', 'ft',
+}
+
+
+def check_comma_titles(sent_text, offset, words, voikko, cache):
+    out = []
+    for i in range(len(words) - 2):
+        a, b, c = words[i], words[i + 1], words[i + 2]
+        if a.lower not in _TITLES or b.lower not in _TITLES:
+            continue
+        if sent_text[a.end:b.start].strip() != '':
+            continue  # pilkku tai muu merkki jo valissa
+        # vaadi perusmuoto (nimento) molemmille: ohje koskee vain
+        # määritteettomia perusmuotoja; FT-tyyppiset lyhenteet kelpaavat
+        def base_form(w):
+            return any(an.get('CLASS') in ('nimisana', 'lyhenne')
+                       and an.get('SIJAMUOTO') in ('nimento', None)
+                       for an in _analyze(voikko, w.text, cache))
+        if not base_form(a) or not base_form(b):
+            continue
+        # edeltava omanto on ensimmaisen tittelin määrite
+        # ("Laitoksen johtaja tohtori") -> pilkku valinnainen, ohitetaan
+        if i > 0 and any(an.get('SIJAMUOTO') == 'omanto'
+                         for an in _analyze(voikko, words[i - 1].text, cache)):
+            continue
+        # titteliparin jalkeen tulee nimi (iso alkukirjain)
+        if not c.text[:1].isupper():
+            continue
+        if b.text[:1].isupper() and not b.text.isupper():
+            continue  # isolla alkava toinen sana on sukunimi ("kapteeni Piispa")
+        if i > 0 and any(an.get('CLASS') == 'nimisana_laatusana'
+                         for an in _analyze(voikko, words[i - 1].text, cache)):
+            continue  # "entinen ministeri professori": määrite, pilkku valinnainen
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_TITLES', category='style', severity='warning',
+            start=offset + a.end, end=offset + b.start,
+            message=('Nimeä täsmentävien perusmuotoisten titteleiden '
+                     'välissä on pilkku ("%s, %s").' % (a.text, b.text)),
+            replacements=[', ']))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1632,6 +1689,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_lauseenvastike(sent_text, offset, words, voikko, cache)
     out += check_comma_list_ja(sent_text, offset, words, voikko, cache)
     out += check_comma_indirect_question(sent_text, offset, words, voikko, cache)
+    out += check_comma_titles(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(

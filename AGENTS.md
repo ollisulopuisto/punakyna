@@ -21,6 +21,22 @@
 - Do not add third-party model weights or datasets to the repo. License
   status of FinnGEC weights/data is unresolved; see README section Neurotaso.
 
+## 2026-11-25: PUNCT_COMMA_TITLES (v0.1.25, stacked on #56)
+
+- Uusi warning-saanto: kahden perusmuotoisen tittelin valiin tulee pilkku
+  ennen nimea ("toimitusjohtaja, ekonomi Liisa Jarvinen"). Lahde:
+  ohjepankki "Pilkku titteleiden valissa" (luettu 2026-11-25).
+- FP-suojat: ohjeen valinnaisuustapaus (ensimmaisella tittelilla oma
+  määrite, esim. "Laitoksen johtaja tohtori") ohitetaan edeltavan
+  omanto-sanan tunnistuksella; vaaditaan nimi (iso alkukirjain) titteliparin
+  jalkeen; FT-tyyppiset lyhennetittelit kelpaavat.
+- Skippattu: pilkku-maaritteiden-valissa (pilkku muuttaa merkitysta,
+  molemmat vaihtoehdot oikein -> ei deterministista saantoa; dokumentoitu).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa puhtaassa aineistossa;
+  sensitivisyys ohjepankin esimerkeilla. Savutesti 0 vaaraa / 41;
+  177 testia lapi; ruff F puhdas.
+- Versio 0.1.25. Stacked PR:n #56 (typo-quote-mark) paalle.
+
 ## 2026-11-25: TYPO_QUOTE_MARK (v0.1.24, stacked on #55)
 
 - Uusi warning-saanto: suorat ASCII-lainausmerkit (") suomenkielisessa
