@@ -20,9 +20,9 @@ any rule is written.
 | number + € $ £ needs a space | rahasummat | done v0.1.8 TYPO_CURRENCY_SPACE |
 | clock time with a dot, no leading zero (style, not error) | ajanilmaukset-kellonajat-merkinta-ja-taivutus | done v0.1.8 TYPO_CLOCK_FORMAT |
 | dot after esim., jne., tms., yms., huom. | lyhenteet-pisteelliset | done v0.1.8 TYPO_ABBR_DOT |
-| date as d.m.yyyy with a dot after day and month, no space | ajanilmaukset-paivays-ja-vuosiluku | read |
-| en dash in ranges (kello 9–12, 1995–2003) instead of hyphen | ajatusviiva-rajakohdat-ja-osapuolet-20-29-vuotiaat-suomi-ruotsi-maaottelu | read |
-| decimal comma, not decimal point | luvut-ja-numerot-desimaaliluvut | read (ambiguous with dates and versions, so narrow context only) |
+| date as d.m.yyyy with a dot after day and month, no space | ajanilmaukset-paivays-ja-vuosiluku | read 2026-11-26 and SKIPPED: no deterministic error shape to detect |
+| en dash in ranges (kello 9–12, 1995–2003) instead of hyphen | ajatusviiva-rajakohdat-ja-osapuolet-20-29-vuotiaat-suomi-ruotsi-maaottelu | read 2026-11-26 and SKIPPED: in real text digit-hyphen-digit is overwhelmingly URLs, filenames, ISBNs, ISO standards and model numbers (737-800); filtering those is not feasible |
+| decimal comma, not decimal point | luvut-ja-numerot-desimaaliluvut | read 2026-11-26 and SKIPPED: Finnish dates use dots (31.8.), so digit.digit is ambiguous head-on, and unit context does not disambiguate ("7.1 s") |
 | 4+ digit numbers grouped by spaces from the end | luvut-ja-numerot-numeroiden-ryhmittely | done v0.1.17 TYPO_NUMBER_GROUP (5+ digits always, 4 only before a unit) |
 | eaa. / eKr. forms | ajanilmaukset-eaa-vai-ekr | read: both types are acceptable in general text, no rule (2026-11-22) |
 | ss./vv. are outdated, use s. and v. | lyhenteet-pisteelliset ("Tiesitkö?" box) | done v0.1.17 ABBR_SS_VV |
@@ -80,7 +80,7 @@ generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
 
 ## Tier C: word-level (needs lexical knowledge, medium precision)
 
-yhdyssana-vai-ei pages (about 20), yhdysmerkki pages, alkukirjain pages (months and seasons are
+yhdyssana-vai-ei lexical subpages SKIPPED 2026-11-26 (both spellings exist with a meaning difference, e.g. aidinkieli vs aidin kieli; not decidable), yhdysmerkki pages, alkukirjain pages (months and seasons are
 already covered by the lowercase-names rule), taivutustyyppeja pages, vierassanojen taivutuspaate,
 ajan-ja-maaran-ilmauksia (luin tunnin / en lukenut tuntia). All **title**.
 

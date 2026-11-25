@@ -1844,7 +1844,7 @@ _KUN_KUIN_TO_KUIN = {  # virhe: kun, oikein: kuin (vertailu)
 }
 
 _KUN_KUIN_TO_KUN = {  # virhe: kuin, oikein: kun (aikasuhde)
-    'aina', 'heti', 'silloin', 'sitten', 'asti', 'jälkeen', 'kerran',
+    'heti', 'silloin', 'sitten', 'asti', 'jälkeen', 'kerran',
 }
 
 def check_kun_kuin(sent_text, offset, words):

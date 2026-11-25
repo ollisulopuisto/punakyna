@@ -29,7 +29,9 @@
   kun vai kuin?" (luettu 2026-11-25).
 - Listat sivun taulukosta: kuin-suunta {aivan, ikaan, niin, samoin, sama,
   samaa, samanlainen, samanarvoinen, erilainen, ennen} + kun, kun-suunta
-  {aina, heti, silloin, sitten, asti, jalkeen, kerran} + kuin. Vain suorat
+  {heti, silloin, sitten, asti, jalkeen, kerran} + kuin ("aina kuin" on
+  myos oikea vertailu: "aina kuin lapsi", joten se poistettiin listasta
+  arvostelun perusteella). Vain suorat
   sanaparit ilman valimerkkia liputetaan.
 - Molempia sallivat liitot (samaan aikaan, samalla, sen aikaa, sita mukaa,
   sikali kun/kuin) ohitetaan tietoisesti; samoin "niin kauan kun/kun".

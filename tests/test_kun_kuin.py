@@ -29,12 +29,6 @@ def test_sama_erilainen_kun_flagged():
         assert s[0].replacements == ['kuin'], t
 
 
-def test_aina_kuin_flagged():
-    s = hits('Aina kuin tulen, hän lähtee.')
-    assert len(s) == 1
-    assert s[0].replacements == ['kun']
-
-
 def test_more_kuin_to_kun_flagged():
     for t in ('Heti kuin saavuin, aloin työskennellä.',
               'Sen jälkeen kuin sade lakkasi, lähdimme ulos.',
@@ -65,3 +59,10 @@ def test_both_allowed_not_flagged():
               'Hän lähti samalla kuin muutkin.',
               'Odotin niin kauan kun jaksoin.'):
         assert hits(t) == [], t
+
+
+def test_aina_kuin_comparison_not_flagged():
+    from punakyna.pipeline import check_text
+    for t in ('Hän on aina kuin lapsi.', 'Se näyttää aina kuin uudelta.'):
+        assert [s for s in check_text(t, use_spelling=False, use_gc=False)
+                if s.rule == 'WORD_KUN_KUIN'] == [], t
