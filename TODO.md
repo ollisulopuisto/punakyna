@@ -69,6 +69,33 @@
   pilkku-kuin-ilmauksissa, pilkku-lainauksen-ja-johtolauseen-jaljessa
   (kaikki viela title-tasolla, sivut luettava ennen saantoa).
 
+## 2026-11-25: PUNCT_COMMA_RINNASTUS + _KUIN + _JOHTOLAUSE (v0.1.20, stacked on #51)
+
+- Kolme pilkkusaantoa ohjepankista (kaikki warning):
+  - PUNCT_COMMA_RINNASTUS: puuttuva pilkku kahden kokonaisen paalauseen
+    valissa (ja/tai/silla + nominatiivisubjekti + aktiivinen 3. pers.
+    verbi). Lahde: ohjepankki "Pilkku paalauseiden valissa".
+  - PUNCT_COMMA_KUIN: liallinen pilkku suoraan kuin-sanan edella.
+    Lahde: ohjepankki "Pilkku kuin-ilmauksissa".
+  - PUNCT_COMMA_JOHTOLAUSE: puuttuva pilkku lainauksen ja johtolauseen
+    valissa (”...” ministeri vastasi). Lahde: ohjepankki "Pilkku
+    lainauksen ja johtolauseen jaljessa".
+- FP-suojat (RINNASTUS): ohjepankin valinnaisuudet (1./2. persoonan ja
+  passiivin verbit, hyvin lyhyet lauseet i<3); luettelosubjekti
+  ("maanviljely ja karjanhoito yleistyivat" = nominatiivi + monikko-
+  verbi); ripustettu yhdyssana ("Etela- ja lounais-"); analysoimaton
+  sana; konjunktioparit; sillan adessiivikaytto ("silla kynalla").
+- FP-suojat (KUIN): vain suoraan edeltava pilkku; edeltavat
+  ikaan/ennen/toisin/samoin/aivan/niin (valinnainen tauottava pilkku).
+- FP-suojat (JOHTOLAUSE): lainaus paattyy ?/!/…/... -> ei pilkkua /
+  valinnainen; tunnistus rajattu yleisimpiin johtoverbeihin +
+  mahdolliseen subjektiin.
+- Tarkkuus: fi.wikipedia ~21k sanaa: 23 osumaa ennen suojia (13 FP) ->
+  10 osumaa, kaikki tosia. KUIN- ja JOHTOLAUSE-saannoilla 0 osumaa
+  puhtaassa aineistossa (sensitivisyys varmistettu yksikkotesteilla).
+  Savutesti 0 vaaraa halytysta / 41 puhdasta; 145 testia lapi; ruff F puhdas.
+- Versio 0.1.20. Stacked PR:n #51 (comma-subord-relative) paalle.
+
 ## Kehitysjono (TDT-löydökset 2026-11-03, ei viritetty)
 
 - NEG_CONNEGATIVE: puhekielen "et" (=että) jäsentyy kieltoverbiksi ->
