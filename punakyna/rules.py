@@ -1351,6 +1351,135 @@ def check_comma_johtolause(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Lauseenvastiketta (ja ilman-/tekemalla-rakennetta) ei eroteta muusta
+# lauseesta pilkulla, olipa vastike virkkeen alussa tai lopussa
+# (ohjepankki, "Pilkku ja lauseenvastike: auringon noustua lahdimme",
+# luettu 2026-11-25). Poikkeus: vastikkeen jalkeen tuleva etta-sivulause
+# erotetaan pilkulla ("uskoen, etta voin auttaa").
+
+_LV_CONJ = {'että', 'jos', 'kun', 'ja', 'tai', 'mutta', 'vaan', 'sillä',
+            'koska', 'vaikka', 'kuin', 'niin', 'eli', 'sekä', 'vai',
+            'jotta', 'mikäli'}
+
+
+def _lv_marker(voikko, cache, word):
+    """E-/A-infinitiivi tai menneen toiminnan partisiippi omalla
+    possessiivisuffiksilla, tai ma-infinitiivin adessiivi (tekemalla)."""
+    for a in _analyze(voikko, word, cache):
+        mood = a.get('MOOD')
+        if mood in ('E-infinitive', 'A-infinitive') and a.get('POSSESSIVE'):
+            return True
+        if mood == 'MA-infinitive' and a.get('SIJAMUOTO') == 'ulkoolento' \
+                and a.get('CLASS') == 'teonsana':
+            return True
+        if a.get('PARTICIPLE') == 'past_passive' and a.get('POSSESSIVE'):
+            return True
+    return False
+
+
+def _lv_gen_pattern_marker(voikko, cache, word):
+    """Omanto-subjektin vastikkeen loppusana: 'auringon noustua',
+    'Suomen kesän ollessa' (ei vaadi possessiivia)."""
+    for a in _analyze(voikko, word, cache):
+        if a.get('CLASS') == 'teonsana' and a.get('MOOD') == 'E-infinitive':
+            return True
+        if a.get('PARTICIPLE') == 'past_passive' \
+                and a.get('SIJAMUOTO') == 'osanto':
+            return True
+    return False
+
+
+def _lv_first_finite(words, voikko, cache):
+    # "vastata" saa myos passiivin indikatiivin analysin; ohita sanat,
+    # joilla on infinitiivi- tai partisiippianalyysi (monitulkintaiset).
+    for i, w in enumerate(words):
+        an = _analyze(voikko, w.text, cache)
+        if any(a.get('INFINITIVE') or a.get('MOOD', '').endswith('-infinitive')
+               or a.get('PARTICIPLE') for a in an):
+            continue
+        if _finite_verb_any(an):
+            return i
+    return len(words)
+
+
+def check_comma_lauseenvastike(sent_text, offset, words, voikko, cache):
+    out = []
+
+    def flag(i, why):
+        # pilkku sanojen i ja i+1 valissa
+        a, b = words[i], words[i + 1]
+        if b.lower in _LV_CONJ:
+            return  # konjunktiota seuraava lause erotetaan pilkulla
+        gap = sent_text[a.end:b.start]
+        if gap.strip() != ',':
+            return
+        if any(s.start == offset + a.end for s in out):
+            return  # jo liputettu (R1 ja R3 voivat osua samaan)
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_LAUSEENVASTIKE', category='style',
+            severity='warning',
+            start=offset + a.end, end=offset + b.start,
+            message=('Lauseenvastiketta ei eroteta pilkulla (%s).'
+                     % why),
+            replacements=[' ']))
+
+    # R1/R4: pilkku vastikkeen jalkeen. Vastike aloittaa virkkeen, kun
+    # 1. sana on vastikemerkki, genetiivisubjekti tai "ilman".
+    if len(words) >= 3:
+        w0 = words[0]
+        initial = _lv_marker(voikko, cache, w0.text)
+        gen_pattern = False
+        if not initial and w0.lower == 'ilman' and any(
+                a.get('CLASS') == 'suhdesana'
+                for a in _analyze(voikko, w0.text, cache)):
+            initial = True  # ilman-rakenne ("Ilman oppeja, ei olisi...")
+        if not initial and any(a.get('SIJAMUOTO') == 'omanto'
+                               for a in _analyze(voikko, w0.text, cache)):
+            # omanto-alku: etsi vastikkeen loppusana ennen pilkkua
+            fin = _lv_first_finite(words, voikko, cache)
+            for j in range(1, min(fin, len(words) - 1)):
+                if _lv_gen_pattern_marker(voikko, cache, words[j].text):
+                    gen_pattern = True
+                    break
+        if initial or gen_pattern:
+            if initial and _lv_marker(voikko, cache, w0.text) is False \
+                    and gen_pattern is False and w0.lower == 'ilman' and \
+                    len(words) > 1 and words[1].lower == 'muuta':
+                pass  # "Ilman muuta, ..." korostusilmaus
+            else:
+                fin = _lv_first_finite(words, voikko, cache)
+                for i in range(min(fin, len(words) - 1)):
+                    if sent_text[words[i].end:words[i + 1].start]\
+                            .strip() == ',':
+                        flag(i, '"%s ..."' % w0.text)
+                        break
+
+    # R2: pilkku suoraan ennen vastikemerkkia ("... saada, muuttaessaan")
+    for i, tok in enumerate(words):
+        if i == 0:
+            continue
+        prev = words[i - 1]
+        if sent_text[prev.end:tok.start].strip() != ',':
+            continue
+        if _lv_marker(voikko, cache, tok.text):
+            flag(i - 1, '"%s"-alkuinen vastike' % tok.text)
+        elif tok.lower == 'ilman' and any(
+                a.get('CLASS') == 'suhdesana'
+                for a in _analyze(voikko, tok.text, cache)):
+            if not (i + 1 < len(words) and words[i + 1].lower == 'muuta'):
+                flag(i - 1, 'ilman-rakenne')
+
+    # R3: pilkku suoraan vastikemerkin jalkeen ("Soitettuaan, hän...")
+    for i, tok in enumerate(words):
+        if i + 1 >= len(words):
+            continue
+        if not _lv_marker(voikko, cache, tok.text):
+            continue
+        if sent_text[tok.end:words[i + 1].start].strip() == ',':
+            flag(i, '"%s"-paatteinen vastike' % tok.text)
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1369,6 +1498,8 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_rinnastus(sent_text, offset, words, voikko, cache)
     out += check_comma_kuin(sent_text, offset, words, voikko, cache)
     out += check_comma_johtolause(sent_text, offset, words, voikko, cache)
+
+    out += check_comma_lauseenvastike(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
