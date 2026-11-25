@@ -49,7 +49,8 @@ any rule is written.
 | missing comma between two bare titles before a name | pilkku-titteleiden-valissa-johtaja-insinoori-virta | done v0.1.25 PUNCT_COMMA_TITLES |
 
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-(pilkku-maaritteiden-valissa read 2026-11-25 and SKIPPED: the comma there is meaning-changing
+(pilkku-ja-lauseenalkuinen-valitettavasti-toisaalta read 2026-11-25 and SKIPPED: both variants allowed;
+pilkku-maaritteiden-valissa read 2026-11-25 and SKIPPED: the comma there is meaning-changing
 and both variants are correct, so no deterministic rule is possible;
 lainausmerkit-ja-vuorosanaviiva read 2026-11-25: the checkable subset landed as TYPO_QUOTE_MARK;
 vuorosanaviiva line-start detection needs line context the sentence pipeline does not have.)
