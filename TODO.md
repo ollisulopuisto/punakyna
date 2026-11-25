@@ -96,6 +96,24 @@
   Savutesti 0 vaaraa halytysta / 41 puhdasta; 145 testia lapi; ruff F puhdas.
 - Versio 0.1.20. Stacked PR:n #51 (comma-subord-relative) paalle.
 
+## 2026-11-25: PUNCT_COMMA_LAUSEENVASTIKE (v0.1.21)
+
+- Uusi warning-saanto: lauseenvastiketta eika ilman-/tekemalla-rakennetta
+  eroteta muusta lauseesta pilkulla. Lahde: ohjepankki "Pilkku ja
+  lauseenvastike: auringon noustua lahdimme" (luettu 2026-11-25).
+- Tunnistus: E-/A-infinitiivi + possessiivi (soitettuaan, voidaksemme),
+  ma-infinitiivin adessiivi (tekemalla), omanto-alkuinen ajanvastike
+  (auringon noustua, Suomen kesän ollessa) ja ilman-rakenne; seka pilkku
+  vastikkeen jalkeen etta ennen loppuvastiketta.
+- FP-suojat: konjunktiota seuraava pilkku sallittu (etta-sivulause
+  vastikkeen jalkeen, ja-alkuinen paalause); "ilman muuta" -idiomi;
+  monitulkintaiset infinitiivi/passiivimuodot (vastata) ohitetaan
+  aarellisverbin tunnistuksessa; duplikaattisuojaus R1/R3-valilla.
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa puhtaassa aineistossa;
+  sensitivisyys 9 yksikkotestilla (ohjepankin omat esimerkit).
+  Savutesti 0 vaaraa / 41 puhdasta; 157 testia lapi; ruff F puhdas.
+- Versio 0.1.21.
+
 ## Kehitysjono (TDT-löydökset 2026-11-03, ei viritetty)
 
 - NEG_CONNEGATIVE: puhekielen "et" (=että) jäsentyy kieltoverbiksi ->

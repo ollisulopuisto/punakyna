@@ -38,8 +38,11 @@ any rule is written.
 | superfluous comma before kuin in comparisons | pilkku-kuin-ilmauksissa | done v0.1.20 PUNCT_COMMA_KUIN |
 | missing comma after quote before attribution clause | pilkku-lainauksen-ja-johtolauseen-jaljessa | done v0.1.20 PUNCT_COMMA_JOHTOLAUSE |
 
+| superfluous comma around a clause equivalent (lauseenvastike / ilman / tekemällä) | pilkku-ja-lauseenvastike-auringon-noustua-lahdimme | done v0.1.21 PUNCT_COMMA_LAUSEENVASTIKE |
+
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-pilkku-ja-infinitiivirakenteet, pilkku rinnasteisten lauseenjäsenten ja luettelon osien välissä,
+pilkku rinnasteisten lauseenjäsenten ja luettelon osien välissä (note: no separate
+pilkku-ja-infinitiivirakenteet page exists; the lauseenvastike page is the covering source),
 epäsuoran kysymyslauseen pilkku, lainausmerkit ja vuorosanaviiva. Voikko's own grammar checker does not flag a missing comma
 before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a
 generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
