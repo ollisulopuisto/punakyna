@@ -21,6 +21,23 @@
 - Do not add third-party model weights or datasets to the repo. License
   status of FinnGEC weights/data is unresolved; see README section Neurotaso.
 
+## 2026-11-25: PUNCT_COMMA_LIST_JA (v0.1.22, stacked on #53)
+
+- Uusi warning-saanto: luettelon viimeisen osan ja-/seka-/tai-sanan edessa
+  ei pilkkua ("Kivea, Saarikoskea, Kilpea, Hassista ja muita").
+  Lahde: ohjepankki "Pilkku rinnasteisten lauseenjasenten ja luettelon
+  osien valissa" (luettu 2026-11-25).
+- Rajaus tarkkuuden vuoksi: liputetaan vain >= 3 osan nimiluettelot;
+  ohitetaan kun edellisen pilkun ja konjunktion valissa on aarellisverbi
+  (lauseketju), kun valissa on kuten-tarkennus (pilkku sulkee tarkennuksen),
+  tai kun konjunktion jalkeen tulee aarellisverbi (kokonainen lause, esim.
+  eksistentiaali "ja silla oli oma hallinto").
+- Tarkkuus: fi.wikipedia ~21k sanaa: 5 osumaa ennen suojia (4 vaaraa) ->
+  1 osuma suojien jalkeen, tosi ("...Atlantilta, seka arktinen, kuiva
+  pakkassaa pohjoisesta"). Savutesti 0 vaaraa / 41; 163 testia lapi;
+  ruff F puhdas.
+- Versio 0.1.22. Stacked PR:n #53 (comma-lauseenvastike) paalle.
+
 ## 2026-11-25: PUNCT_COMMA_LAUSEENVASTIKE (v0.1.21)
 
 - Uusi warning-saanto: lauseenvastiketta eika ilman-/tekemalla-rakennetta

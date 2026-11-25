@@ -40,10 +40,12 @@ any rule is written.
 
 | superfluous comma around a clause equivalent (lauseenvastike / ilman / tekemällä) | pilkku-ja-lauseenvastike-auringon-noustua-lahdimme | done v0.1.21 PUNCT_COMMA_LAUSEENVASTIKE |
 
+| superfluous comma before the final ja/sekä/tai of a list | pilkku-rinnasteisten-lauseenjasenten-ja-luettelon-osien-valissa | done v0.1.22 PUNCT_COMMA_LIST_JA |
+
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-pilkku rinnasteisten lauseenjäsenten ja luettelon osien välissä (note: no separate
-pilkku-ja-infinitiivirakenteet page exists; the lauseenvastike page is the covering source),
-epäsuoran kysymyslauseen pilkku, lainausmerkit ja vuorosanaviiva. Voikko's own grammar checker does not flag a missing comma
+epäsuoran kysymyslauseen pilkku (pilkku-ja-epasuora-kysymyslause), lainausmerkit ja vuorosanaviiva.
+(Note: no separate pilkku-ja-infinitiivirakenteet page exists; the lauseenvastike page is the
+covering source, done in v0.1.21.) Voikko's own grammar checker does not flag a missing comma
 before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a
 generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
 

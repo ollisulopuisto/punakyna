@@ -1486,6 +1486,56 @@ def check_comma_lauseenvastike(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Luettelon osien valiin tulee pilkku, mutta viimeisen osan ja-/seka-/tai-
+# sanan eteen pilkkua EI tule: "Kivea, Saarikoskea, Kilpea, Hassista ja
+# muita" (ohjepankki, "Pilkku rinnasteisten lauseenjasenten ja luettelon
+# osien valissa", luettu 2026-11-25). Liputetaan vain selvat nimiluettelot:
+# ohitetaan, jos ja-sanan jalkeen on nominatiivi + aarellisverbi
+# (kokonainen paa/sivulause, jolloin pilkku on pakollinen) tai jos
+# edellisen pilkun ja ja-sanan valissa on aarellisverbi (lauseketju).
+
+_LJA_CONJ = {'ja', 'sekä', 'tai'}
+
+
+def check_comma_list_ja(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        if tok.lower not in _LJA_CONJ or i < 2:
+            continue
+        prev = words[i - 1]
+        gap = sent_text[prev.end:tok.start]
+        if gap.strip() != ',':
+            continue
+        # vaadi aiempi pilkku samassa lauseessa (>= 3 osan luettelo)
+        j = i - 2
+        while j >= 0 and sent_text[words[j].end:words[j + 1].start]\
+                .strip() != ',':
+            j -= 1
+        if j < 0:
+            continue  # vain kaksi osaa: konjunktiopari, ei liputeta
+        # aarellisverbi edellisen pilkun ja konjunktion valissa -> lauseketju
+        if any(_finite_verb_any(_analyze(voikko, w.text, cache))
+               for w in words[j + 1:i]):
+            continue
+        # kuten-tarkennus edellisen pilkun ja konjunktion valissa ->
+        # pilkku sulkee tarkennuksen, ei luettelon osaa
+        if any(w.lower == 'kuten' for w in words[j + 1:i]):
+            continue
+        # konjunktion jalkeen aarellisverbi -> kokonainen lause
+        # (esim. eksistentiaali "ja sillä oli oma hallinto")
+        if any(_finite_verb_any(_analyze(voikko, w.text, cache))
+               for w in words[i + 1:]):
+            continue
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_LIST_JA', category='style',
+            severity='warning',
+            start=offset + prev.end, end=offset + tok.start,
+            message=('Luettelon viimeisen osan %s-sanan edella ei '
+                     'kayteta pilkkua.' % tok.text),
+            replacements=[' %s' % tok.text]))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1506,6 +1556,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_johtolause(sent_text, offset, words, voikko, cache)
 
     out += check_comma_lauseenvastike(sent_text, offset, words, voikko, cache)
+    out += check_comma_list_ja(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
