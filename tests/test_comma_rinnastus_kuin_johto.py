@@ -95,3 +95,19 @@ def test_johtolause_guards():
               # ei johtolausetta
               'Hän käytti sanaa \u201dpunakynä\u201d puhuessaan oikoluvusta.'):
         assert not hits(t, 'PUNCT_COMMA_JOHTOLAUSE'), t
+
+
+def test_quoted_title_as_subject_is_not_a_quote_plus_attribution():
+    # Otsikko lainausmerkeissä on lauseen subjekti, ei lainaus + johtolause
+    for t in ('Elokuva "Tuntematon sotilas" kertoo sodasta.',
+              'Kirja ”Sota ja rauha” kertoo Venäjästä.'):
+        assert not hits(t, 'PUNCT_COMMA_JOHTOLAUSE'), t
+    assert len(hits('”En aio erota” ministeri vastasi.', 'PUNCT_COMMA_JOHTOLAUSE')) == 1
+
+
+def test_comma_before_detached_kuin_clause_is_optional_so_not_flagged():
+    # ohjepankki: irrallinen kuin-lause jälkilisäyksenä, pilkku sallittu
+    for t in ('Hän vaati itselleen huomiota, kuin olisi suurikin kuuluisuus.',
+              'Se näytti, kuin sataisi.'):
+        assert not hits(t, 'PUNCT_COMMA_KUIN'), t
+    assert len(hits('Tämä on isompi, kuin entinen.', 'PUNCT_COMMA_KUIN')) == 1

@@ -1278,6 +1278,12 @@ def check_comma_rinnastus(sent_text, offset, words, voikko, cache):
 _KUIN_PREV_ALLOW_COMMA = {'ikään', 'ennen', 'toisin', 'samoin', 'aivan', 'niin'}
 
 
+def _finite_verb_any(analyses):
+    return any(a.get('CLASS') == 'teonsana' and a.get('MOOD') in (
+        'indicative', 'conditional', 'potential') and not a.get('PARTICIPLE')
+        and not a.get('INFINITIVE') for a in analyses)
+
+
 def check_comma_kuin(sent_text, offset, words, voikko, cache):
     out = []
     for i, tok in enumerate(words):
@@ -1289,6 +1295,11 @@ def check_comma_kuin(sent_text, offset, words, voikko, cache):
             continue  # vain suoraan edeltava pilkku
         if prev.lower in _KUIN_PREV_ALLOW_COMMA:
             continue
+        if not any(a.get('COMPARISON') == 'comparative'
+                   for a in _analyze(voikko, prev.text, cache)) and any(
+                _finite_verb_any(_analyze(voikko, w.text, cache))
+                for w in words[i + 1:i + 5]):
+            continue  # irrallinen kuin-lause: pilkku sallittu (ohjepankki)
         out.append(Suggestion(
             rule='PUNCT_COMMA_KUIN', category='style', severity='warning',
             start=offset + prev.end, end=offset + tok.end,
@@ -1323,6 +1334,9 @@ def check_comma_johtolause(sent_text, offset, words, voikko, cache):
         if m.group(1) in '!?….':
             continue  # kysymys-/huutomerkin (tai ...) jalkeen ei pilkkua
         verb = m.group(4)
+        opener = max(sent_text.rfind(q, 0, m.start() + 1) for q in '”"“')
+        if opener > 0 and sent_text[:opener].strip():
+            continue  # otsikko tms. lauseen keskellä ("Elokuva "X" kertoo")
         # span: lainausmerkki + vali + mahdollinen johtolauseen subjekti
         start = m.start() + 1
         end = m.start(4)
