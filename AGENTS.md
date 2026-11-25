@@ -21,6 +21,22 @@
 - Do not add third-party model weights or datasets to the repo. License
   status of FinnGEC weights/data is unresolved; see README section Neurotaso.
 
+## 2026-11-26: WORD_KUN_KUIN (v0.1.29, stacked on #60)
+
+- Uusi warning-saanto: vaihtumattoman sanaliiton kun/kuin-valinta.
+  Vertailu vaatii kuin-sanan ("ennen kuin", ei "ennen kun"), aikasuhde
+  kun-sanan ("aina kun", ei "aina kuin"). Lahde: ohjepankki "Konjunktiot:
+  kun vai kuin?" (luettu 2026-11-25).
+- Listat sivun taulukosta: kuin-suunta {aivan, ikaan, niin, samoin, sama,
+  samaa, samanlainen, samanarvoinen, erilainen, ennen} + kun, kun-suunta
+  {aina, heti, silloin, sitten, asti, jalkeen, kerran} + kuin. Vain suorat
+  sanaparit ilman valimerkkia liputetaan.
+- Molempia sallivat liitot (samaan aikaan, samalla, sen aikaa, sita mukaa,
+  sikali kun/kuin) ohitetaan tietoisesti; samoin "niin kauan kun/kun".
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa. Savutesti 0 vaaraa / 41;
+  208 testia lapi; ruff F puhdas.
+- Versio 0.1.29. Stacked PR:n #60 (typo-sanapari) paalle.
+
 ## 2026-11-26: TYPO_SANAPARI (v0.1.28, stacked on #59)
 
 - Uusi warning-saanto: kiteytyneen sanaparin yhteen/erilleen kirjoitus.

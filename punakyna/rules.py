@@ -1829,6 +1829,47 @@ def check_sanapari(sent_text, offset, words):
     return out
 
 
+# Kun- ja kuin-konjunktioilla on yleiskielessa oma ydinkayttoalueensa:
+# kun ilmaisee aikasuhdetta ("aina kun", "ennen kuin" on vertailu) ja kuin
+# vertailua ("niin kuin", "sama kuin"). Tietyt sanaliitot ovat
+# vaihtelemattomia; toiset (samaan aikaan kun/kuin, sita mukaa kun/kuin)
+# sallivat molemmat ja ohitetaan. Lahde: ohjepankki, "Konjunktiot: kun vai
+# kuin?" (luettu 2026-11-25). Vain suorat sanaparit ilman valimerkkia
+# liputetaan.
+
+_KUN_KUIN_TO_KUIN = {  # virhe: kun, oikein: kuin (vertailu)
+    'aivan', 'ikään', 'niin', 'samoin',
+    'sama', 'samaa', 'samanlainen', 'samanarvoinen',
+    'erilainen', 'ennen',
+}
+
+_KUN_KUIN_TO_KUN = {  # virhe: kuin, oikein: kun (aikasuhde)
+    'aina', 'heti', 'silloin', 'sitten', 'asti', 'jälkeen', 'kerran',
+}
+
+def check_kun_kuin(sent_text, offset, words):
+    out = []
+    for i in range(len(words) - 1):
+        tok, nxt = words[i], words[i + 1]
+        if sent_text[tok.end:nxt.start].strip() != '':
+            continue  # vain suoraan perakkaiset sanat
+        if nxt.lower == 'kun' and tok.lower in _KUN_KUIN_TO_KUIN:
+            out.append(Suggestion(
+                rule='WORD_KUN_KUIN', category='style', severity='warning',
+                start=offset + nxt.start, end=offset + nxt.end,
+                message=('Vertailun sanaliitossa käytetään yleiskielessä '
+                         'kuin-sanaa: "%s kuin".' % tok.lower),
+                replacements=['kuin']))
+        elif nxt.lower == 'kuin' and tok.lower in _KUN_KUIN_TO_KUN:
+            out.append(Suggestion(
+                rule='WORD_KUN_KUIN', category='style', severity='warning',
+                start=offset + nxt.start, end=offset + nxt.end,
+                message=('Aikaa ilmaisevassa sanaliitossa käytetään '
+                         'yleiskielessä kun-sanaa: "%s kun".' % tok.lower),
+                replacements=['kun']))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1855,6 +1896,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_kuten(sent_text, offset, words, voikko, cache)
     out += check_comma_mita_sita(sent_text, offset, words, voikko, cache)
     out += check_sanapari(sent_text, offset, words)
+    out += check_kun_kuin(sent_text, offset, words)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(

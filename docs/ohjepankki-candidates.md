@@ -76,6 +76,8 @@ generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
 
 | pikku-compounds | yhdyssana-vai-ei-pikkutytto-vai-pikku-tytto | read 2026-11-26 and SKIPPED: both spellings allowed in many cases |
 
+| kun vs kuin in fixed collocations (ennen kuin, aina kun) | konjunktiot-kun-vai-kuin-sita-mukaa-kuin-sita-mukaa-kun | done v0.1.29 WORD_KUN_KUIN (fixed pairs only; samaan aikaan / sita mukaa etc. allow both and are skipped) |
+
 ## Tier C: word-level (needs lexical knowledge, medium precision)
 
 yhdyssana-vai-ei pages (about 20), yhdysmerkki pages, alkukirjain pages (months and seasons are
