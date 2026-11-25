@@ -44,8 +44,11 @@ any rule is written.
 
 | missing comma before an indirect question | pilkku-ja-epasuora-kysymyslause-han-kysyi-tulenko-ajoissa | done v0.1.23 PUNCT_COMMA_INDIRECT_QUESTION |
 
+| straight ASCII quote marks instead of Finnish ” | lainausmerkit | done v0.1.24 TYPO_QUOTE_MARK |
+
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-lainausmerkit ja vuorosanaviiva.
+(lainausmerkit-ja-vuorosanaviiva read 2026-11-25: the checkable subset landed as TYPO_QUOTE_MARK;
+vuorosanaviiva line-start detection needs line context the sentence pipeline does not have.)
 (Note: no separate pilkku-ja-infinitiivirakenteet page exists; the lauseenvastike page is the
 covering source, done in v0.1.21.) Voikko's own grammar checker does not flag a missing comma
 before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a

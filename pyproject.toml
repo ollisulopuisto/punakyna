@@ -1,6 +1,6 @@
 [project]
 name = "punakyna"
-version = "0.1.23"
+version = "0.1.24"
 description = "Paikallinen suomen oikolukumoottori (Voikko + omat säännöt)"
 requires-python = ">=3.10"
 dependencies = ["libvoikko"]
