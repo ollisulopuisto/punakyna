@@ -1684,8 +1684,15 @@ def check_comma_kuten(sent_text, offset, words, voikko, cache):
         gap = sent_text[prev.end:tok.start]
         if gap.strip() != '':
             continue  # pilkku tai muu merkki jo valissa
+        span = []
+        for k in range(i + 1, min(i + 6, len(words))):
+            if sent_text[words[k - 1].end:words[k].start].strip() or \
+                    words[k].lower in ('ja', 'sillä', 'mutta', 'kun', 'joka',
+                                       'eikä', 'tai', 'että', 'koska'):
+                break  # seuraava lause ei kuulu kuten-jaksoon
+            span.append(words[k])
         if not any(_finite_verb_any(_analyze(voikko, w.text, cache))
-                   for w in words[i + 1:i + 6]):
+                   for w in span):
             continue  # verbiton jakso: "kuten aina", "kuten kuninkaalliset"
         out.append(Suggestion(
             rule='PUNCT_COMMA_KUTEN', category='style', severity='warning',

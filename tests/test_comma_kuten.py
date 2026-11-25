@@ -39,3 +39,14 @@ def test_comma_already_present_not_flagged():
               'Kuten EU:n ilmastopaketti osoittaa, energiankäytöllä on '
               'suuri vaikutus.'):
         assert not _hits(t), t
+
+
+def test_verb_in_a_following_clause_does_not_make_kuten_a_clause():
+    # ohjepankki: "Lomaile kuten kuninkaalliset." ei saa pilkkua; verbi
+    # seuraavassa lauseessa (pilkun tai konjunktion jälkeen) ei kuulu kuten-jaksoon
+    for t in ('Lomaile kuten kuninkaalliset, sillä olet ansainnut sen.',
+              'Hän lähti kuten aina ennenkin, ja sitten tuli Matti.',
+              'Täällä on mukavaa kuten aina ja nyt tulee kesä.',
+              'Voimme tehdä kuten aina, kun tulee kiire.'):
+        assert not _hits(t), t
+    assert len(_hits('Täällä on mukavaa kuten voitte nähdäkin.')) == 1
