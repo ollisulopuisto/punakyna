@@ -131,6 +131,20 @@
   ruff F puhdas.
 - Versio 0.1.22. Stacked PR:n #53 (comma-lauseenvastike) paalle.
 
+## 2026-11-25: PUNCT_COMMA_INDIRECT_QUESTION (v0.1.23, stacked on #54)
+
+- Uusi warning-saanto: epasuora kysymyslause erotetaan paalauseesta
+  pilkulla ("En tieda, missa han asuu"). Lahde: ohjepankki "Pilkku ja
+  epasuora kysymyslause" (luettu 2026-11-25).
+- Rajaus tarkkuuden vuoksi: vain selkein tapaus - matriisiverbi
+  (kysya/tietaa/arvata/... n. 30 lemmaa) + suoraan perassa kysymyssana
+  tai -ko/-ko-verbi, ilman valissa olevaa pilkkua. "siita kuka" -tyyppiset
+  valisanatapaukset jaavat tunnistamatta (recall, ei FP-riskia).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa puhtaassa aineistossa;
+  sensitivisyys ohjepankin esimerkeilla (5 testia). Savutesti 0 vaaraa
+  / 41; 169 testia lapi; ruff F puhdas.
+- Versio 0.1.23. Stacked PR:n #54 (comma-list-ja) paalle.
+
 ## Kehitysjono (TDT-löydökset 2026-11-03, ei viritetty)
 
 - NEG_CONNEGATIVE: puhekielen "et" (=että) jäsentyy kieltoverbiksi ->
