@@ -1451,6 +1451,11 @@ def check_comma_lauseenvastike(sent_text, offset, words, voikko, cache):
                 for i in range(min(fin, len(words) - 1)):
                     if sent_text[words[i].end:words[i + 1].start]\
                             .strip() == ',':
+                        if w0.lower == 'ilman' and (
+                                words[1].lower == 'että' or any(
+                                    w.lower in ('ja', 'tai', 'sekä', 'eli', 'vai')
+                                    for w in words[i + 1:fin])):
+                            break  # "ilman että" tai luettelon pilkku
                         flag(i, '"%s ..."' % w0.text)
                         break
 
@@ -1466,7 +1471,8 @@ def check_comma_lauseenvastike(sent_text, offset, words, voikko, cache):
         elif tok.lower == 'ilman' and any(
                 a.get('CLASS') == 'suhdesana'
                 for a in _analyze(voikko, tok.text, cache)):
-            if not (i + 1 < len(words) and words[i + 1].lower == 'muuta'):
+            if not (i + 1 < len(words) and words[i + 1].lower in ('muuta', 'että')) \
+                    and ',' not in sent_text[:prev.end]:
                 flag(i - 1, 'ilman-rakenne')
 
     # R3: pilkku suoraan vastikemerkin jalkeen ("Soitettuaan, hän...")

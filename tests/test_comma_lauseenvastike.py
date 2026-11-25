@@ -72,3 +72,14 @@ def test_ordinary_sentences_not_flagged():
               'Ministeri totesi, että asia on loppuun käsitelty.',
               'Kesällä perhe kunnosti saunaa, ja talvella keittiön.'):
         assert not _hits(t), t
+
+
+def test_ilman_etta_clause_and_list_commas_are_not_flagged():
+    # "ilman että" aloittaa sivulauseen (pilkku kuuluu), ja luettelon pilkku
+    # ilman-ilmauksen sisällä on luettelon pilkku.
+    for t in ('Hän lähti, ilman että kukaan huomasi.',
+              'Ilman ruokaa, vettä ja unta hän selvisi.',
+              'Hän osti leipää, maitoa, ilman sokeria.'):
+        assert not _hits(t), t
+    assert len(_hits('Ilman koulun tarjoamia oppeja, minulla ei olisi '
+                     'mitään käsitystä Excelistä.')) == 1
