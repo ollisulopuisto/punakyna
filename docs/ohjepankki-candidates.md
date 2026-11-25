@@ -46,10 +46,23 @@ any rule is written.
 
 | straight ASCII quote marks instead of Finnish ” | lainausmerkit | done v0.1.24 TYPO_QUOTE_MARK |
 
+| missing comma between the members of a symmetric pair (mitä–sitä, toisaalta–toisaalta) | pilkku-ja-mita-sita-toisaalta-toisaalta | done v0.1.27 PUNCT_COMMA_MITA_SITA |
+
 | missing comma between two bare titles before a name | pilkku-titteleiden-valissa-johtaja-insinoori-virta | done v0.1.25 PUNCT_COMMA_TITLES |
 
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-(pilkku-ja-lauseenalkuinen-valitettavasti-toisaalta read 2026-11-25 and SKIPPED: both variants allowed;
+(pilkku-ja-moniosaisissa-konjunktioilmauksissa read 2026-11-25 and SKIPPED: the comma is
+optional and its placement changes the emphasis, so no deterministic rule;
+pilkku-ja-paitsi-myos read 2026-11-25 and SKIPPED: no comma is normally needed and an
+optional clarifying comma is allowed, both variants correct;
+pilkku-ja-saati read 2026-11-25 and SKIPPED: plain pair has no comma, emphatic addition may
+take one, both variants correct;
+pilkku-ja-puhutteluilmaus-tarkennus-tai-muu-lisays read 2026-11-25 and SKIPPED: vocative and
+apposition commas depend on intended emphasis (both name variants are explicitly allowed),
+not deterministically decidable;
+pilkku-ja-silla read 2026-11-25: a sillä-clause is always comma-separated, already covered by
+PUNCT_COMMA_RINNASTUS (v0.1.20);
+pilkku-ja-lauseenalkuinen-valitettavasti-toisaalta read 2026-11-25 and SKIPPED: both variants allowed;
 pilkku-maaritteiden-valissa read 2026-11-25 and SKIPPED: the comma there is meaning-changing
 and both variants are correct, so no deterministic rule is possible;
 lainausmerkit-ja-vuorosanaviiva read 2026-11-25: the checkable subset landed as TYPO_QUOTE_MARK;
