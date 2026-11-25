@@ -29,13 +29,17 @@ any rule is written.
 
 ## Tier B: punctuation (commas are the most common real-world error class)
 
-All **title** only; each needs the page read and a false-positive sweep before any rule.
-Highest value first: pilkku-ja-alistuskonjunktiolla-esim-etta-jos-alkava-lause (read: the
-subordinate clause is separated by a comma; a "missing comma before että/jos/kun" rule needs
-exceptions for short clauses, "Hyvin lyhyet lauseet: pilkku valinnainen", and combinations
-such as "etenkin jos"), pilkku-ja-joka-mika-relatiivilause, pilkku-ja-mutta-vaan,
-pilkku-paalauseiden-valissa, pilkku-kuin-ilmauksissa, pilkku-lainauksen-ja-johtolauseen-jaljessa.
-Voikko's own grammar checker already covers some comma errors; overlap must be checked first.
+| Candidate | Page (path under /ohje/) | Status |
+| --- | --- | --- |
+| comma between main clause and mutta/vaan + full main clause | pilkku-ja-mutta-vaan | done v0.1.18 PUNCT_COMMA_MUTTA_VAAN |
+| missing comma before a subordinate conjunction (että, jos, kun, ...) | pilkku-ja-alistuskonjunktiolla-esim-etta-jos-alkava-lause | done v0.1.19 PUNCT_COMMA_SUBORD |
+| missing comma before a joka/mikä relative clause | pilkku-ja-joka-mika-relatiivilause | done v0.1.19 PUNCT_COMMA_RELATIVE |
+
+Still **title** only; each needs the page read and a false-positive sweep before any rule:
+pilkku-paalauseiden-valissa, pilkku-kuin-ilmauksissa, pilkku-lainauksen-ja-johtolauseen-jaljessa,
+pilkku-ja-infinitiivirakenteet. Voikko's own grammar checker does not flag a missing comma
+before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a
+generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
 
 ## Tier C: word-level (needs lexical knowledge, medium precision)
 

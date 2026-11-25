@@ -31,6 +31,44 @@
 - Open: FinnGEC-testijakoa ei ole julkisesti; DaLA-fi on synteettinen
   valitys. Aidon puhujan validoima aineisto puuttuu edelleen.
 
+## 2026-11-25: PUNCT_COMMA_SUBORD + PUNCT_COMMA_RELATIVE (v0.1.19)
+
+- Kaksi uutta pilkkusaantoa ohjepankista (molemmat warning):
+  - PUNCT_COMMA_SUBORD: puuttuva pilkku ennen alistuskonjunktiota (etta,
+    jotta, koska, kun, kunnes, jos, vaikka, jollei, ellei, kunhan, mikali,
+    joskin). Lahde: ohjepankki "Pilkku ja alistuskonjunktiolla (esim. etta,
+    jos) alkava lause" (luettu 2026-11-25).
+  - PUNCT_COMMA_RELATIVE: puuttuva pilkku ennen joka/mika-relativiivia
+    taivutusmuotoineen. Lahde: ohjepankki "Pilkku ja joka-, mika-
+    relatiivilause" (luettu 2026-11-25). jolloin/joten/milloin/miten-
+    muodot rajattu pois (kysymys- ja konnektorimerkitykset).
+- Overlappi tarkistettu: libvoikko GC ei liputa puuttuvaa pilkkua ennen
+  ettaa lainkaan; joka-tapauksiin koodi 18 antaa vain yleisviestin
+  (style-taso), oma saanto antaa tarkan viestin ja korjausehdotuksen.
+- FP-suojat (SUBORD): virkkeen alku; yhden sanan paalause (pilkku
+  valinnainen, "Toivon etta tulet"); konjunktioparit ("tai jos",
+  "mutta vaikka", "etta kun"); korostussanat (etenkin, varsinkin,
+  erityisesti, nimenomaan, juuri, vasta, heti, myos, paitsi - pilkku voi
+  olla sanan edella); korrelaatti "seka ... etta"; idioomit "mita/enta
+  jos"; raja-merkki tai pilkku jo valissa; isolla alkava muoto kesken
+  virkkeen (erisnimi tai otsikon jalkeinen virkkeen alku).
+- FP-suojat (RELATIVE): virkkeen alku; pilkku/raja-merkki valissa;
+  konjunktioparit ("ja/tai/etta joka"); yleispronominit "mika/mita/mihin
+  tahansa (hyvansa)"; "joka/mika" vain kun seuraava sana ei analysoidu
+  nominiksi ("joka paiva" jaa pois - tarkkuusrajoitus: "auto joka mies
+  osti" jaa liputtamatta); isolla alkava (esim. yritysnimi Jolla).
+- Tarkkuus: fi.wikipedia-aineisto 5 artikkelia (~21k sanaa, haettu
+  web-fetchilla koska wikimedia rajoitti sweep-IP:ta): 6 osumaa, 5 tosia
+  + 1 raja-tapaus (sääntökirjan telegrafista tekstia "Tarkoitetaan jos").
+  Ennen suojia 13 osumaa, joista 7 FP:tä (mika tahansa, paitsi jos, heti
+  kun, myos mikali, Jolla-nimi, otsikko+Kun). Savutesti 0 vaaraa halytysta
+  / 41 puhdasta lausetta; 139 yksikkotestia lapi, ruff F puhdas.
+- Versio 0.1.19 (pyproject, __init__, description.xml, browser manifest,
+  uv.lock).
+- Seuraavaksi (ohjepankki Tier B): pilkku-paalauseiden-valissa,
+  pilkku-kuin-ilmauksissa, pilkku-lainauksen-ja-johtolauseen-jaljessa
+  (kaikki viela title-tasolla, sivut luettava ennen saantoa).
+
 ## Kehitysjono (TDT-löydökset 2026-11-03, ei viritetty)
 
 - NEG_CONNEGATIVE: puhekielen "et" (=että) jäsentyy kieltoverbiksi ->
