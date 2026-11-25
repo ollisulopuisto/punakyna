@@ -1536,6 +1536,65 @@ def check_comma_list_ja(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Epasuora (alisteinen) kysymyslause erotetaan paalauseesta pilkulla:
+# "En tieda, missa han asuu." (ohjepankki, "Pilkku ja epasuora
+# kysymyslause: Han kysyi, tulenko ajoissa.", luettu 2026-11-25).
+# Tunnistetaan vain selkein tapaus: matriisiverbi (kysya, tietaa, ...)
+# + suoraan perassa kysymyssana tai -ko/-ko-verbi ilman pilkkua.
+
+_IQ_MATRIX = {
+    'kysyä', 'tietää', 'arvata', 'veikata', 'ennustaa', 'kuulla',
+    'miettiä', 'pohtia', 'ihmetellä', 'päätellä', 'selvittää', 'muistaa',
+    'unohtaa', 'ymmärtää', 'kertoa', 'nähdä', 'huomata', 'arvella',
+    'tuumia', 'määritellä', 'tutkia', 'selvitellä', 'arvioida', 'katsoa',
+    'päättää', 'testata', 'arpoa', 'tarkistaa', 'tarkastella', 'harkita',
+}
+
+_IQ_QWORDS = {
+    'kuka', 'ken', 'kenet', 'kenestä', 'kenellä', 'kenelle', 'kenen',
+    'keneltä', 'keneen', 'keneksi', 'mikä', 'mitä', 'minkä', 'missä',
+    'mistä', 'mihin', 'millä', 'mille', 'miltä', 'miksi', 'miten',
+    'milloin', 'kuinka', 'kumpi', 'kumman', 'kummassa', 'kummasta',
+    'kumpaan', 'kummalla', 'kummalle', 'kummalta', 'millainen',
+    'millaista', 'minkälainen', 'monenko',
+}
+
+
+def _iq_is_matrix_verb(voikko, cache, word):
+    return any(a.get('CLASS') == 'teonsana'
+               and a.get('BASEFORM') in _IQ_MATRIX
+               for a in _analyze(voikko, word, cache))
+
+
+def _iq_is_ko_verb(voikko, cache, word):
+    low = word.lower()
+    return len(low) >= 4 and low.endswith(('ko', 'kö')) and any(
+        a.get('CLASS') == 'teonsana' for a in _analyze(voikko, word, cache))
+
+
+def check_comma_indirect_question(sent_text, offset, words, voikko, cache):
+    out = []
+    for i in range(1, len(words) - 1):
+        q = words[i]
+        if q.lower not in _IQ_QWORDS and not _iq_is_ko_verb(
+                voikko, cache, q.text):
+            continue
+        prev = words[i - 1]
+        gap = sent_text[prev.end:q.start]
+        if gap.strip() != '':
+            continue  # pilkku tai muu merkki jo valissa
+        if not _iq_is_matrix_verb(voikko, cache, prev.text):
+            continue
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_INDIRECT_QUESTION', category='style',
+            severity='warning',
+            start=offset + prev.end, end=offset + q.start,
+            message=('Epäsuora kysymyslause erotetaan päälauseesta '
+                     'pilkulla ("%s, %s").' % (prev.text, q.text)),
+            replacements=[', ']))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1557,6 +1616,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
 
     out += check_comma_lauseenvastike(sent_text, offset, words, voikko, cache)
     out += check_comma_list_ja(sent_text, offset, words, voikko, cache)
+    out += check_comma_indirect_question(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(

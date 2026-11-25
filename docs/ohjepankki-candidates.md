@@ -42,8 +42,10 @@ any rule is written.
 
 | superfluous comma before the final ja/sekä/tai of a list | pilkku-rinnasteisten-lauseenjasenten-ja-luettelon-osien-valissa | done v0.1.22 PUNCT_COMMA_LIST_JA |
 
+| missing comma before an indirect question | pilkku-ja-epasuora-kysymyslause-han-kysyi-tulenko-ajoissa | done v0.1.23 PUNCT_COMMA_INDIRECT_QUESTION |
+
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-epäsuoran kysymyslauseen pilkku (pilkku-ja-epasuora-kysymyslause), lainausmerkit ja vuorosanaviiva.
+lainausmerkit ja vuorosanaviiva.
 (Note: no separate pilkku-ja-infinitiivirakenteet page exists; the lauseenvastike page is the
 covering source, done in v0.1.21.) Voikko's own grammar checker does not flag a missing comma
 before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a
