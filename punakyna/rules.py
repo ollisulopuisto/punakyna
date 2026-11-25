@@ -1703,6 +1703,132 @@ def check_comma_kuten(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Tasapainoisen sanaparin (mita-sita, toisaalta-toisaalta, milloin-milloin,
+# osaksi-osaksi, yhtaalla-toisaalta) jasenet erotetaan toisistaan pilkulla:
+# "Mita korkeammalla aurinko on, sita enemman altistumme." (ohjepankki,
+# "Pilkku ja mita-sita, toisaalta-toisaalta", luettu 2026-11-25).
+# Mita-sita-rakenne tunnistetaan vain, kun ensimmaisen jasenen joukossa on
+# komparatiivi; muuten "mita ... sita" voi olla kysymys tai pronominiketju.
+
+_PAIR_SECONDS = (('toisaalta', ('toisaalta', 'yhtäältä')),
+                 ('milloin', ('milloin',)),
+                 ('osaksi', ('osaksi',)))
+
+def check_comma_mita_sita(sent_text, offset, words, voikko, cache):
+    out = []
+
+    def _missing_comma(j):
+        prev = words[j - 1]
+        gap = sent_text[prev.end:tok.start]
+        return prev, gap.strip() == ''
+
+    # mita-sita: virkkeen alkusanana "mita", myohemmin "sita" ilman pilkkua
+    if words and words[0].lower == 'mitä':
+        for j in range(2, len(words)):
+            tok = words[j]
+            if tok.lower != 'sitä':
+                continue
+            prev, missing = _missing_comma(j)
+            if not missing:
+                continue  # pilkku jo valissa
+            seg = words[1:j]
+            if not any(a.get('COMPARISON') == 'comparative'
+                       for w in seg for a in _analyze(voikko, w.text, cache)):
+                continue  # ei tasapainorakennetta: "Mita sita nyt tehtaisiin"
+            out.append(Suggestion(
+                rule='PUNCT_COMMA_MITA_SITA', category='style', severity='warning',
+                start=offset + prev.end, end=offset + tok.start,
+                message=('Tasapainoisen mitä–sitä-rakenteen jäsenet erotetaan '
+                         'toisistaan pilkulla (", sitä").'),
+                replacements=[', ']))
+            break
+
+    # muut parit: sanaparin toinen esiintyma ilman edeltavaa pilkkua
+    for second, firsts in _PAIR_SECONDS:
+        first_seen = False
+        for i, tok in enumerate(words):
+            if not first_seen and tok.lower in firsts:
+                first_seen = True
+                continue
+            if first_seen and tok.lower == second:
+                prev, missing = _missing_comma(i)
+                if missing and prev.lower not in ('ja', 'sekä', 'tai', 'eli', 'mutta', 'vaan'):
+                    out.append(Suggestion(
+                        rule='PUNCT_COMMA_MITA_SITA', category='style',
+                        severity='warning',
+                        start=offset + prev.end, end=offset + tok.start,
+                        message=('Tasapainoisen sanaparin jäsenet erotetaan '
+                                 'toisistaan pilkulla (", %s").' % second),
+                        replacements=[', ']))
+                break
+    return out
+
+
+# Kiteytyneet sanaparit: eraat parit kirjoitetaan aina erilleen ("itse
+# asiassa", ei "itseasiassa"), eraat aina yhteen ("edestakaisin", ei "edes
+# takaisin"). Lahde: ohjepankki, "Yhdyssana vai ei: nurin pain vai nurinpain?
+# - Kiteytyneet sanaparit" (luettu 2026-11-25). Listoihin on poimittu vain
+# parit, joille sivu ei salli vaihtoehtoista kirjoitustapaa (ei ~-merkintaa).
+# Erilleen-listassa ovat vain muodot, jotka Voikko hyvaksyy yhteen
+# kirjoitettunakin, joten tavallinen oikeinkirjoitustarkistus ei niita tavoita.
+
+_SANAPARI_APART = {
+    'itseasiassa': 'itse asiassa',
+    'kokoajan': 'koko ajan',
+    'aikalailla': 'aika lailla',
+    'kokolailla': 'koko lailla',
+    'paikanpäällä': 'paikan päällä',
+    'kaupanpäälle': 'kaupan päälle',
+    'samantien': 'saman tien',
+    'todenteolla': 'toden teolla',
+    'ensikertaa': 'ensi kertaa',
+    'vähänväliä': 'vähän väliä',
+}
+
+_SANAPARI_JOIN = {
+    ('jälki', 'käteen'): 'jälkikäteen',
+    ('poikki', 'päin'): 'poikkipäin',
+    ('poikki', 'puolin'): 'poikkipuolin',
+    ('poikki', 'teloin'): 'poikkiteloin',
+}
+
+def check_sanapari(sent_text, offset, words):
+    out = []
+    for i, tok in enumerate(words):
+        fixed = _SANAPARI_APART.get(tok.lower)
+        if fixed:
+            if tok.text.isupper():
+                repl = fixed.upper()
+            elif tok.text[:1].isupper():
+                repl = fixed.capitalize()
+            else:
+                repl = fixed
+            out.append(Suggestion(
+                rule='TYPO_SANAPARI', category='style', severity='warning',
+                start=offset + tok.start, end=offset + tok.end,
+                message=('Kiteytynyt sanapari kirjoitetaan erilleen: '
+                         '"%s".' % fixed),
+                replacements=[repl]))
+            continue
+        if i + 1 < len(words):
+            nxt = words[i + 1]
+            fixed = _SANAPARI_JOIN.get((tok.lower, nxt.lower))
+            if fixed and sent_text[tok.end:nxt.start].strip() == '':
+                if tok.text.isupper() and nxt.text.isupper():
+                    repl = fixed.upper()
+                elif tok.text[:1].isupper():
+                    repl = fixed.capitalize()
+                else:
+                    repl = fixed
+                out.append(Suggestion(
+                    rule='TYPO_SANAPARI', category='style', severity='warning',
+                    start=offset + tok.start, end=offset + nxt.end,
+                    message=('Kiteytynyt sana kirjoitetaan yhteen: '
+                             '"%s".' % fixed),
+                    replacements=[repl]))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1727,6 +1853,8 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_indirect_question(sent_text, offset, words, voikko, cache)
     out += check_comma_titles(sent_text, offset, words, voikko, cache)
     out += check_comma_kuten(sent_text, offset, words, voikko, cache)
+    out += check_comma_mita_sita(sent_text, offset, words, voikko, cache)
+    out += check_sanapari(sent_text, offset, words)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(

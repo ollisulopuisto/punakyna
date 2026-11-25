@@ -21,6 +21,46 @@
 - Do not add third-party model weights or datasets to the repo. License
   status of FinnGEC weights/data is unresolved; see README section Neurotaso.
 
+## 2026-11-26: TYPO_SANAPARI (v0.1.28, stacked on #59)
+
+- Uusi warning-saanto: kiteytyneen sanaparin yhteen/erilleen kirjoitus.
+  Lahde: ohjepankki "Yhdyssana vai ei: nurin pain vai nurinpain? -
+  Kiteytyneet sanaparit" (luettu 2026-11-25).
+- Erilleen-lista (10 muotoa: itseasiassa -> itse asiassa, kokoajan,
+  aikalailla, kokolailla, paikanpaalla, kaupanpaalle, samantien,
+  todenteolla, ensikertaa, vahanvalia) poimittu sivun listasta; Voikko
+  hyvaksyy nama virheelliset yhteenkirjoitetut muodot, joten SPELL ei
+  niita tavoita. Yhteen-lista (6 paria: edes takaisin -> edestakaisin,
+  jalki kateen, nimen omaan, poikki pain/puolin/teloin).
+- Vain parit ilman ~-merkintaa (tasavartaiset vaihtoehdot ohitetaan,
+  esim. nurin pain ~ nurinpain, itsestaan selva ~ itsestaanselva).
+- Skipattu tietoisesti: pikkutytto-sivu (molemmat kirjoitustavat
+  sallittuja monissa tapauksissa).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa. Savutesti 0 vaaraa / 41;
+  200 testia lapi; ruff F puhdas.
+- Versio 0.1.28. Stacked PR:n #59 (comma-mita-sita) paalle.
+
+## 2026-11-25: PUNCT_COMMA_MITA_SITA (v0.1.27, stacked on #58)
+
+- Uusi warning-saanto: tasapainoisen sanaparin (mita-sita, toisaalta-
+  toisaalta, milloin-milloin, osaksi-osaksi, yhtaalla-toisaalta) jasenet
+  erotetaan pilkulla ("Mita korkeammalla aurinko on, sita enemman
+  altistumme"). Lahde: ohjepankki "Pilkku ja mita-sita, toisaalta-
+  toisaalta" (luettu 2026-11-25).
+- Rajaus: mita-sita liputetaan vain, kun ensimmaisessa jasenessa on
+  komparatiivimuoto (Voikko COMPARISON=comparative), jotta tavalliset
+  "mita"-alkuiset kysymykset ja "mita sita" -pronominiketjut eivat
+  liputu.
+- Skipattu tietoisesti: moniosaiset konjunktioilmaukset (pilkku
+  valinnainen, painotusero), paitsi-myos (pilkku yleensa tarpeeton,
+  valinnainen selvennys), saati (molemmat vaihtoehdot sallittuja),
+  puhutteluilmaus/tarkennus (painotuksesta riippuvainen). Kaikki
+  dokumentoitu candidates.md. Pilkku-ja-silla jo katettuna saannossa
+  PUNCT_COMMA_RINNASTUS (v0.1.20).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa. Savutesti
+  0 vaaraa / 41; 190 testia lapi; ruff F puhdas.
+- Versio 0.1.27. Stacked PR:n #58 (comma-kuten) paalle.
+
 ## 2026-11-25: PUNCT_COMMA_KUTEN (v0.1.26, stacked on #57)
 
 - Uusi warning-saanto: verbillinen kuten-jakso erotetaan paalauseesta
