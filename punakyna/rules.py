@@ -1049,6 +1049,141 @@ def check_typography(sent_text, offset, clock=False):
     return out
 
 
+# Pilkku alistuskonjunktion edella: alistuskonjunktiolla alkava sivulause
+# erotetaan paalauseesta pilkulla (ohjepankki, "Pilkku ja
+# alistuskonjunktiolla (esim. etta, jos) alkava lause", luettu 2026-11-25).
+# Ohjepankin poikkeukset: yhden sanan paalause + hyvin lyhyt sivulause ->
+# pilkku valinnainen ("Toivon etta tulet."); perakkaiset konjunktiot
+# ("tai jos", "mutta vaikka", "etta kun") ilman pilkkua; korostussanan
+# kanssa ("etenkin jos") pilkku voi olla korostussanan kummallakin puolella.
+
+_SUBORD_CONJ = {
+    'että', 'jotta', 'koska', 'kun', 'kunnes', 'jos', 'vaikka',
+    'jollei', 'ellei', 'kunhan', 'mikäli', 'joskin',
+}
+
+# Sanat, joiden jalkeen konjunktiota edeltava pilkku joko ei kuulu
+# (konjunktioparit) tai voi sijaita aiemmin lauseessa (korostussanat),
+# tai yhdistelma on idiomaattinen ("mita jos").
+_SUBORD_PREV_SKIP = {
+    'mutta', 'vaan', 'ja', 'tai', 'vai', 'sekä', 'eli', 'kuin',
+    'että', 'jos', 'kun', 'vaikka', 'koska', 'jotta', 'kunnes',
+    'jollei', 'ellei', 'kunhan', 'mikäli', 'joskin',
+    'etenkin', 'varsinkin', 'erityisesti', 'erityisen', 'nimenomaan',
+    'juuri', 'vasta', 'heti', 'myös', 'paitsi', 'mitä', 'entä',
+}
+
+# "vaikka" + naa: samantekevyytta tai puhekielta ("vaikka mita")
+_VAIKKA_NEXT_SKIP = {'mitä', 'mikä', 'kuinka', 'miten', 'vaan', 'vielä'}
+
+
+def check_comma_subordinate(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        if tok.lower not in _SUBORD_CONJ or i < 2:
+            # i == 0: virkkeen alku; i == 1: yhden sanan paalause,
+            # jolloin pilkku on ohjepankin mukaan valinnainen
+            continue
+        if tok.text[:1].isupper():
+            # kesken virkkeen isolla alkava: erisnimi tai otsikon jalkeinen
+            # virkkeen alku (piste puuttuu) - ei konjunktiotarkistusta
+            continue
+        prev = words[i - 1]
+        if sent_text[prev.end:tok.start].strip() != '':
+            # pilkku on jo paikallaan tai valissa on raja-merkki
+            # (":", "-", sulku tai lainausmerkki)
+            continue
+        if prev.lower in _SUBORD_PREV_SKIP:
+            continue
+        if tok.lower == 'että' and any(
+                w.lower == 'sekä' for w in words[max(0, i - 6):i]):
+            continue  # korrelaatti "sekä asiakkaiden että työntekijöiden"
+        if (tok.lower == 'vaikka' and i + 1 < len(words)
+                and words[i + 1].lower in _VAIKKA_NEXT_SKIP):
+            continue
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_SUBORD', category='style', severity='warning',
+            start=offset + tok.start, end=offset + tok.end,
+            message=('Alistuskonjunktiolla "%s" alkava sivulause erotetaan '
+                     'päälauseesta pilkulla (", %s").' % (tok.text, tok.text)),
+            replacements=[', ' + tok.text]))
+    return out
+
+
+# Relatiivilause erotetaan paalauseesta pilkulla (ohjepankki, "Pilkku ja
+# joka-, mika-relatiivilause", luettu 2026-11-25). Ohje ei tunne
+# lyhyyspoikkeusta, joten pilkku vaaditaan aina kesken virkkeen.
+# Relatiivipronominit joka ja mika taivutusmuotoineen; jolloin/joten/
+# milloin/miten-tyyppiset jatetaan tarkoituksella pois (kysymys- ja
+# konnektorimerkitykset).
+
+_REL_PLAIN = {
+    'jonka', 'jota', 'jolle', 'jolta', 'jolla', 'josta', 'johon', 'jossa',
+    'jonne', 'jotka', 'joiden', 'joita', 'joille', 'joilta', 'joilla',
+    'joista', 'joihin', 'joissa', 'joina', 'joiksi',
+    'minkä', 'mitä', 'mille', 'miltä', 'millä', 'mistä', 'mihin', 'missä',
+    'minne', 'mitkä',
+}
+
+# joka/mika ovat myos maaraissanoja ("joka paiva", "mika paiva"):
+# liputetaan vain, kun seuraava sana ei ole nomini.
+_REL_QUANT = {'joka', 'mikä'}
+
+# konjunktiopari tai idioomi ("kerro, mita teit ja mita nait"; "mita jos")
+_REL_PREV_SKIP = {
+    'ja', 'tai', 'vai', 'että', 'mutta', 'vaan', 'sekä', 'eli',
+    'mitä', 'entä', 'mikä', 'joka',
+}
+
+_REL_NOMINAL_CLASSES = {'nimisana', 'laatusana', 'lukusana'}
+
+
+def _rel_next_is_nominal(voikko, cache, word):
+    for a in _analyze(voikko, word, cache):
+        if a.get('CLASS') in _REL_NOMINAL_CLASSES and not a.get('PARTICIPLE'):
+            return True
+    return False
+
+
+def _rel_next_is_superlative(voikko, cache, word):
+    return any(a.get('COMPARISON') == 'superlative'
+               for a in _analyze(voikko, word, cache))
+
+
+def check_comma_relative(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        low = tok.lower
+        if low not in _REL_PLAIN and low not in _REL_QUANT:
+            continue
+        if i == 0:
+            continue  # virkkeen alku
+        if tok.text[:1].isupper():
+            continue  # erisnimi (esim. Jolla) tai otsikon jalkeen
+        prev = words[i - 1]
+        if sent_text[prev.end:tok.start].strip() != '':
+            continue  # pilkku tai raja-merkki jo valissa
+        if prev.lower in _REL_PREV_SKIP:
+            continue
+        if i + 1 < len(words) and words[i + 1].lower in (
+                'tahansa', 'hyvänsä', 'vain'):
+            continue  # "mikä tahansa", "mitä vain": yleispronomini
+        if low == 'mitä' and i + 1 < len(words) and \
+                _rel_next_is_superlative(voikko, cache, words[i + 1].text):
+            continue  # "mitä hienoin lahja": superlatiivin vahvike
+        if low in _REL_QUANT and i + 1 < len(words) and \
+                _rel_next_is_nominal(voikko, cache, words[i + 1].text):
+            continue  # "joka paiva", "mika vuosi": maaraissana
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_RELATIVE', category='style', severity='warning',
+            start=offset + tok.start, end=offset + tok.end,
+            message=('Relatiivipronominilla "%s" alkava relatiivilause '
+                     'erotetaan päälauseesta pilkulla (", %s").'
+                     % (tok.text, tok.text)),
+            replacements=[', ' + tok.text]))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1062,6 +1197,8 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_numeral_noun_case(sent_text, offset, words, voikko, cache)
     out += check_attribute_agreement(sent_text, offset, words, voikko, cache)
     out += check_comma_mutta_vaan(sent_text, offset, words, voikko, cache)
+    out += check_comma_subordinate(sent_text, offset, words, voikko, cache)
+    out += check_comma_relative(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
