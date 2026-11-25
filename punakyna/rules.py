@@ -1786,9 +1786,7 @@ _SANAPARI_APART = {
 }
 
 _SANAPARI_JOIN = {
-    ('edes', 'takaisin'): 'edestakaisin',
     ('jälki', 'käteen'): 'jälkikäteen',
-    ('nimen', 'omaan'): 'nimenomaan',
     ('poikki', 'päin'): 'poikkipäin',
     ('poikki', 'puolin'): 'poikkipuolin',
     ('poikki', 'teloin'): 'poikkiteloin',
@@ -1799,7 +1797,12 @@ def check_sanapari(sent_text, offset, words):
     for i, tok in enumerate(words):
         fixed = _SANAPARI_APART.get(tok.lower)
         if fixed:
-            repl = fixed.capitalize() if tok.text[:1].isupper() else fixed
+            if tok.text.isupper():
+                repl = fixed.upper()
+            elif tok.text[:1].isupper():
+                repl = fixed.capitalize()
+            else:
+                repl = fixed
             out.append(Suggestion(
                 rule='TYPO_SANAPARI', category='style', severity='warning',
                 start=offset + tok.start, end=offset + tok.end,
@@ -1811,7 +1814,12 @@ def check_sanapari(sent_text, offset, words):
             nxt = words[i + 1]
             fixed = _SANAPARI_JOIN.get((tok.lower, nxt.lower))
             if fixed and sent_text[tok.end:nxt.start].strip() == '':
-                repl = fixed.capitalize() if tok.text[:1].isupper() else fixed
+                if tok.text.isupper() and nxt.text.isupper():
+                    repl = fixed.upper()
+                elif tok.text[:1].isupper():
+                    repl = fixed.capitalize()
+                else:
+                    repl = fixed
                 out.append(Suggestion(
                     rule='TYPO_SANAPARI', category='style', severity='warning',
                     start=offset + tok.start, end=offset + nxt.end,
