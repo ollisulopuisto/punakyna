@@ -174,6 +174,22 @@
   177 testia lapi; ruff F puhdas.
 - Versio 0.1.25. Stacked PR:n #56 (typo-quote-mark) paalle.
 
+## 2026-11-25: PUNCT_COMMA_KUTEN (v0.1.26, stacked on #57)
+
+- Uusi warning-saanto: verbillinen kuten-jakso erotetaan paalauseesta
+  pilkulla ("Sailiot ovat huonossa kunnossa, kuten kuvasta nakykin").
+  Lahde: ohjepankki "Konjunktiot: kuten" (luettu 2026-11-25).
+- Rajaus: 'niin kuin' -merkityksinen verbiton jakso ("Lomaile kuten
+  kuninkaalliset") ei saa pilkkua, joten liputetaan vain kun kuten-sanaa
+  seuraavien 5 sanan joukossa on aarellisverbi. Sama saanto kattaa myos
+  'esimerkiksi'-merkityksen ("Medialaitteet, kuten TiVo, kayttavat").
+- Skipattu tietoisesti: lauseenalkuinen valitettavasti/toisaalta -sivu
+  (molemmat vaihtoehdot sallittuja; dokumentoitu candidates.md).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 6 osumaa, kaikki tosia
+  (esimerkki-kuten ilman pilkkua wikipedian proosassa). Savutesti
+  0 vaaraa / 41; 180 testia lapi; ruff F puhdas.
+- Versio 0.1.26. Stacked PR:n #57 (comma-titles) paalle.
+
 ## Kehitysjono (TDT-löydökset 2026-11-03, ei viritetty)
 
 - NEG_CONNEGATIVE: puhekielen "et" (=että) jäsentyy kieltoverbiksi ->

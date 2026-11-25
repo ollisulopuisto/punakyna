@@ -1667,6 +1667,42 @@ def check_comma_titles(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Kuten-jakso, joka on kokonainen lause (sisaltaa persoonamuotoisen
+# verbin), erotetaan paalauseesta pilkulla: "Sailiot ovat huonossa
+# kunnossa, kuten kuvasta nakykin." Samoin 'esimerkiksi'-merkityksinen
+# kuten-jakso erotetaan aina pilkulla (ohjepankki, "Konjunktiot: kuten",
+# luettu 2026-11-25). 'Niin kuin' -merkityksinen sananjakso ilman verbia
+# ("Lomaile kuten kuninkaalliset") ei saa pilkkua, joten liputetaan vain
+# kun kuten-sanaa seuraavien sanojen joukossa on aarellisverbi.
+
+def check_comma_kuten(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        if tok.lower != 'kuten' or i == 0:
+            continue
+        prev = words[i - 1]
+        gap = sent_text[prev.end:tok.start]
+        if gap.strip() != '':
+            continue  # pilkku tai muu merkki jo valissa
+        span = []
+        for k in range(i + 1, min(i + 6, len(words))):
+            if sent_text[words[k - 1].end:words[k].start].strip() or \
+                    words[k].lower in ('ja', 'sillä', 'mutta', 'kun', 'joka',
+                                       'eikä', 'tai', 'että', 'koska'):
+                break  # seuraava lause ei kuulu kuten-jaksoon
+            span.append(words[k])
+        if not any(_finite_verb_any(_analyze(voikko, w.text, cache))
+                   for w in span):
+            continue  # verbiton jakso: "kuten aina", "kuten kuninkaalliset"
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_KUTEN', category='style', severity='warning',
+            start=offset + prev.end, end=offset + tok.start,
+            message=('Kuten-jakso, joka sisältää verbin, erotetaan '
+                     'päälauseesta pilkulla (", kuten").'),
+            replacements=[', ']))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1690,6 +1726,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_list_ja(sent_text, offset, words, voikko, cache)
     out += check_comma_indirect_question(sent_text, offset, words, voikko, cache)
     out += check_comma_titles(sent_text, offset, words, voikko, cache)
+    out += check_comma_kuten(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
