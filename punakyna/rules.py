@@ -1583,6 +1583,9 @@ def check_comma_indirect_question(sent_text, offset, words, voikko, cache):
         gap = sent_text[prev.end:q.start]
         if gap.strip() != '':
             continue  # pilkku tai muu merkki jo valissa
+        if i + 1 < len(words) and words[i + 1].lower in (
+                'tahansa', 'hyvänsä', 'vain'):
+            continue  # yleispronomini ("mitä vain"), ei kysymyslause
         if not _iq_is_matrix_verb(voikko, cache, prev.text):
             continue
         out.append(Suggestion(

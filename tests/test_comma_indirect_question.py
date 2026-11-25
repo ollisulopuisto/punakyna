@@ -43,3 +43,13 @@ def test_relative_and_other_constructions_not_flagged():
 
 def test_question_word_as_sentence_final_adverbial_not_flagged():
     assert not _hits('En muista milloin.')
+
+
+def test_generic_pronouns_after_matrix_verb_are_not_indirect_questions():
+    # "mitä vain / miten tahansa" = yleispronomini, ei kysymyslause
+    for t in ('Hän tietää mitä vain.',
+              'Hän voi kertoa mitä tahansa.',
+              'Hän kertoi miten tahansa.',
+              'Hän tutki missä tahansa kaupungissa.'):
+        assert not _hits(t), t
+    assert len(_hits('En tiedä missä hän asuu.')) == 1
