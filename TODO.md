@@ -174,6 +174,25 @@
   177 testia lapi; ruff F puhdas.
 - Versio 0.1.25. Stacked PR:n #56 (typo-quote-mark) paalle.
 
+## 2026-11-26: TYPO_SANAPARI (v0.1.28, stacked on #59)
+
+- Uusi warning-saanto: kiteytyneen sanaparin yhteen/erilleen kirjoitus.
+  Lahde: ohjepankki "Yhdyssana vai ei: nurin pain vai nurinpain? -
+  Kiteytyneet sanaparit" (luettu 2026-11-25).
+- Erilleen-lista (10 muotoa: itseasiassa -> itse asiassa, kokoajan,
+  aikalailla, kokolailla, paikanpaalla, kaupanpaalle, samantien,
+  todenteolla, ensikertaa, vahanvalia) poimittu sivun listasta; Voikko
+  hyvaksyy nama virheelliset yhteenkirjoitetut muodot, joten SPELL ei
+  niita tavoita. Yhteen-lista (6 paria: edes takaisin -> edestakaisin,
+  jalki kateen, nimen omaan, poikki pain/puolin/teloin).
+- Vain parit ilman ~-merkintaa (tasavartaiset vaihtoehdot ohitetaan,
+  esim. nurin pain ~ nurinpain, itsestaan selva ~ itsestaanselva).
+- Skipattu tietoisesti: pikkutytto-sivu (molemmat kirjoitustavat
+  sallittuja monissa tapauksissa).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 0 osumaa. Savutesti 0 vaaraa / 41;
+  200 testia lapi; ruff F puhdas.
+- Versio 0.1.28. Stacked PR:n #59 (comma-mita-sita) paalle.
+
 ## 2026-11-25: PUNCT_COMMA_MITA_SITA (v0.1.27, stacked on #58)
 
 - Uusi warning-saanto: tasapainoisen sanaparin (mita-sita, toisaalta-

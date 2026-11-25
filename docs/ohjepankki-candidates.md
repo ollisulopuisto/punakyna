@@ -72,6 +72,10 @@ covering source, done in v0.1.21.) Voikko's own grammar checker does not flag a 
 before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a
 generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
 
+| fossilized word pair joined/apart spelling (itse asiassa, edestakaisin) | yhdyssana-vai-ei-nurin-pain-vai-nurinpain | done v0.1.28 TYPO_SANAPARI (curated subset: only pairs the page does not mark as equal variants) |
+
+| pikku-compounds | yhdyssana-vai-ei-pikkutytto-vai-pikku-tytto | read 2026-11-26 and SKIPPED: both spellings allowed in many cases |
+
 ## Tier C: word-level (needs lexical knowledge, medium precision)
 
 yhdyssana-vai-ei pages (about 20), yhdysmerkki pages, alkukirjain pages (months and seasons are

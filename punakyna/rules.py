@@ -1764,6 +1764,63 @@ def check_comma_mita_sita(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Kiteytyneet sanaparit: eraat parit kirjoitetaan aina erilleen ("itse
+# asiassa", ei "itseasiassa"), eraat aina yhteen ("edestakaisin", ei "edes
+# takaisin"). Lahde: ohjepankki, "Yhdyssana vai ei: nurin pain vai nurinpain?
+# - Kiteytyneet sanaparit" (luettu 2026-11-25). Listoihin on poimittu vain
+# parit, joille sivu ei salli vaihtoehtoista kirjoitustapaa (ei ~-merkintaa).
+# Erilleen-listassa ovat vain muodot, jotka Voikko hyvaksyy yhteen
+# kirjoitettunakin, joten tavallinen oikeinkirjoitustarkistus ei niita tavoita.
+
+_SANAPARI_APART = {
+    'itseasiassa': 'itse asiassa',
+    'kokoajan': 'koko ajan',
+    'aikalailla': 'aika lailla',
+    'kokolailla': 'koko lailla',
+    'paikanpäällä': 'paikan päällä',
+    'kaupanpäälle': 'kaupan päälle',
+    'samantien': 'saman tien',
+    'todenteolla': 'toden teolla',
+    'ensikertaa': 'ensi kertaa',
+    'vähänväliä': 'vähän väliä',
+}
+
+_SANAPARI_JOIN = {
+    ('edes', 'takaisin'): 'edestakaisin',
+    ('jälki', 'käteen'): 'jälkikäteen',
+    ('nimen', 'omaan'): 'nimenomaan',
+    ('poikki', 'päin'): 'poikkipäin',
+    ('poikki', 'puolin'): 'poikkipuolin',
+    ('poikki', 'teloin'): 'poikkiteloin',
+}
+
+def check_sanapari(sent_text, offset, words):
+    out = []
+    for i, tok in enumerate(words):
+        fixed = _SANAPARI_APART.get(tok.lower)
+        if fixed:
+            repl = fixed.capitalize() if tok.text[:1].isupper() else fixed
+            out.append(Suggestion(
+                rule='TYPO_SANAPARI', category='style', severity='warning',
+                start=offset + tok.start, end=offset + tok.end,
+                message=('Kiteytynyt sanapari kirjoitetaan erilleen: '
+                         '"%s".' % fixed),
+                replacements=[repl]))
+            continue
+        if i + 1 < len(words):
+            nxt = words[i + 1]
+            fixed = _SANAPARI_JOIN.get((tok.lower, nxt.lower))
+            if fixed and sent_text[tok.end:nxt.start].strip() == '':
+                repl = fixed.capitalize() if tok.text[:1].isupper() else fixed
+                out.append(Suggestion(
+                    rule='TYPO_SANAPARI', category='style', severity='warning',
+                    start=offset + tok.start, end=offset + nxt.end,
+                    message=('Kiteytynyt sana kirjoitetaan yhteen: '
+                             '"%s".' % fixed),
+                    replacements=[repl]))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1789,6 +1846,7 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_titles(sent_text, offset, words, voikko, cache)
     out += check_comma_kuten(sent_text, offset, words, voikko, cache)
     out += check_comma_mita_sita(sent_text, offset, words, voikko, cache)
+    out += check_sanapari(sent_text, offset, words)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(
