@@ -1184,6 +1184,173 @@ def check_comma_relative(sent_text, offset, words, voikko, cache):
     return out
 
 
+# Pilkku kokonaisten paalauseiden valissa, kun niita yhdistaa
+# rinnastuskonjunktio (ohjepankki, "Pilkku paalauseiden valissa", luettu
+# 2026-11-25). Pilkku vaaditaan, kun molemmat lauseet ovat rakenteeltaan
+# kokonaisia (omalla subjektilla). Valinnainen eli EI liputeta: 1./2.
+# persoonan verbit, passiiviverbit, hyvin lyhyet lauseet, yhteinen jasen.
+# mutta/vaan on oma saantonsa (PUNCT_COMMA_MUTTA_VAAN); tassa ja, tai,
+# silla.
+
+_RINN_CONJ = {'ja', 'tai', 'sillä'}
+
+_RINN_PREV_SKIP = {
+    'ja', 'tai', 'vai', 'sekä', 'eli', 'mutta', 'vaan', 'sillä', 'kuin',
+    'että', 'jos', 'kun', 'vaikka', 'koska', 'jotta', 'kunnes',
+    'jollei', 'ellei', 'kunhan', 'mikäli', 'joskin',
+}
+
+_RINN_KIELTO_3RD = {'ei', 'eivät', 'eikö', 'eivätkö'}
+
+
+def _finite_active_3rd_verb(analyses):
+    return any(a.get('CLASS') == 'teonsana' and a.get('PERSON') == '3'
+               and a.get('MOOD') in ('indicative', 'conditional', 'potential')
+               and not a.get('PARTICIPLE') and not a.get('INFINITIVE')
+               and a.get('NEGATIVE') not in ('true', True)
+               and a.get('VOICE') != 'passive'
+               for a in analyses)
+
+
+def check_comma_rinnastus(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        if tok.lower not in _RINN_CONJ or i == 0:
+            continue
+        if tok.text[:1].isupper():
+            continue  # erisnimi tai otsikon jalkeinen virkkeen alku
+        prev = words[i - 1]
+        if sent_text[prev.end:tok.start].strip() != '':
+            continue  # pilkku tai raja-merkki jo valissa
+        if prev.lower in _RINN_PREV_SKIP:
+            continue
+        if tok.lower in ('ja', 'tai'):
+            if i < 3:
+                # hyvin lyhyet paalauseet (2-3 sanaa): pilkku valinnainen
+                continue
+            if prev.text.endswith('-'):
+                continue  # ripustettu yhdyssanan osa ("Etela- ja lounais-")
+            if not _analyze(voikko, prev.text, cache):
+                continue  # tuntematonta sanaa ei voi paatella (vieras/lyhenne)
+            if i + 2 >= len(words):
+                continue
+            nxt = words[i + 1]
+            if not _nom_subject(_analyze(voikko, nxt.text, cache)):
+                continue
+            verb = words[i + 2]
+            verb_an = _analyze(voikko, verb.text, cache)
+            plural = verb.lower in ('eivät', 'eivätkö') or any(
+                a.get('NUMBER') == 'plural' for a in verb_an)
+            if plural and _nom_subject(_analyze(voikko, prev.text, cache)):
+                # "maanviljely ja karjanhoito yleistyivat": kahden
+                # nominatiivin muodostama luettelosubjekti, ei pilkkua
+                continue
+            if _neg_base(verb.lower) in _KIELTO:
+                # 1./2. persoonan kieltoverbi -> pilkku valinnainen
+                if verb.lower not in _RINN_KIELTO_3RD:
+                    continue
+            elif not _finite_active_3rd_verb(verb_an):
+                # passiivi ja 1./2. persoona: pilkku valinnainen -> ohitus
+                continue
+        else:  # silla
+            if i + 1 >= len(words):
+                continue
+            nxt = words[i + 1]
+            if _neg_base(nxt.lower) in _KIELTO:
+                if nxt.lower not in _RINN_KIELTO_3RD:
+                    continue
+            elif not _finite_active_3rd_verb(_analyze(voikko, nxt.text, cache)):
+                continue  # "silla kynalla": adessiivipronomini, ei konjunktio
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_RINNASTUS', category='style', severity='warning',
+            start=offset + tok.start, end=offset + tok.end,
+            message=('Kokonaisia päälauseita yhdistävän konjunktion "%s" '
+                     'edellä on pilkku (", %s").' % (tok.text, tok.text)),
+            replacements=[', ' + tok.text]))
+    return out
+
+
+# Vertailevan kuin-sanan edella ei kayteta pilkkua (ohjepankki, "Pilkku
+# kuin-ilmauksissa", luettu 2026-11-25). Liputetaan liallinen pilkku suoraan
+# kuin-sanan edella. Ohitetaan edeltavat ikään/ennen/toisin/samoin/aivan/
+# niin, joiden kanssa pilkku on ohjeen mukaan valinnainen tauottava keino.
+
+_KUIN_PREV_ALLOW_COMMA = {'ikään', 'ennen', 'toisin', 'samoin', 'aivan', 'niin'}
+
+
+def _finite_verb_any(analyses):
+    return any(a.get('CLASS') == 'teonsana' and a.get('MOOD') in (
+        'indicative', 'conditional', 'potential') and not a.get('PARTICIPLE')
+        and not a.get('INFINITIVE') for a in analyses)
+
+
+def check_comma_kuin(sent_text, offset, words, voikko, cache):
+    out = []
+    for i, tok in enumerate(words):
+        if tok.lower != 'kuin' or i == 0:
+            continue
+        prev = words[i - 1]
+        gap = sent_text[prev.end:tok.start]
+        if gap.strip() != ',':
+            continue  # vain suoraan edeltava pilkku
+        if prev.lower in _KUIN_PREV_ALLOW_COMMA:
+            continue
+        if not any(a.get('COMPARISON') == 'comparative'
+                   for a in _analyze(voikko, prev.text, cache)) and any(
+                _finite_verb_any(_analyze(voikko, w.text, cache))
+                for w in words[i + 1:i + 5]):
+            continue  # irrallinen kuin-lause: pilkku sallittu (ohjepankki)
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_KUIN', category='style', severity='warning',
+            start=offset + prev.end, end=offset + tok.end,
+            message=('Vertailevan kuin-sanan edellä ei käytetä pilkkua '
+                     '("%s kuin").' % prev.text),
+            replacements=[' kuin']))
+    return out
+
+
+# Lainauksen ja johtolauseen valiin tulee pilkku, kun valittainmuotoinen
+# lainaus on johtolauseen edella: '"En aio erota", ministeri vastasi.'
+# (ohjepankki, "Pilkku lainauksen ja johtolauseen jaljessa", luettu
+# 2026-11-25). Kysymys-/huutomerkin jalkeen pilkkua ei tule; kolmen
+# pisteen jalkeen pilkku on valinnainen.
+
+_JOHTO_VERBS = {
+    'sanoi', 'sanoo', 'kysyi', 'kysyy', 'vastasi', 'vastaa', 'totesi',
+    'toteaa', 'kertoi', 'kertoo', 'huomautti', 'huomauttaa', 'lisäsi',
+    'lisää', 'jatkoi', 'jatkaa', 'kommentoi', 'selitti', 'selittää',
+    'väitti', 'väittää', 'ilmoitti', 'ilmoittaa', 'tiedotti', 'kirjoitti',
+    'kirjoittaa', 'huudahti', 'lausahti', 'toisti', 'myönsi', 'myöntää',
+    'väiteli', 'arveli', 'arvioi', 'paalutti', 'pahoitteli', 'kiitti',
+}
+
+_RE_JOHTO = re.compile(
+    r'(.)[”"](\s+)(?:(\w+)\s+)?(%s)\b' % '|'.join(sorted(_JOHTO_VERBS)))
+
+
+def check_comma_johtolause(sent_text, offset, words, voikko, cache):
+    out = []
+    for m in _RE_JOHTO.finditer(sent_text):
+        if m.group(1) in '!?….':
+            continue  # kysymys-/huutomerkin (tai ...) jalkeen ei pilkkua
+        verb = m.group(4)
+        opener = max(sent_text.rfind(q, 0, m.start() + 1) for q in '”"“')
+        if opener > 0 and sent_text[:opener].strip():
+            continue  # otsikko tms. lauseen keskellä ("Elokuva "X" kertoo")
+        # span: lainausmerkki + vali + mahdollinen johtolauseen subjekti
+        start = m.start() + 1
+        end = m.start(4)
+        quote = sent_text[m.start() + 1]
+        tail = sent_text[start + 1:end]
+        out.append(Suggestion(
+            rule='PUNCT_COMMA_JOHTOLAUSE', category='style', severity='warning',
+            start=offset + start, end=offset + end,
+            message=('Väittämän muotoisen lainauksen ja johtolauseen väliin '
+                     'tulee pilkku ("…", %s …).' % verb),
+            replacements=[quote + ',' + tail]))
+    return out
+
+
 def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     words = [t for t in tokens if t.is_word]
     out = []
@@ -1199,6 +1366,9 @@ def run_rules(sent_text, offset, tokens, voikko, cache, before=''):
     out += check_comma_mutta_vaan(sent_text, offset, words, voikko, cache)
     out += check_comma_subordinate(sent_text, offset, words, voikko, cache)
     out += check_comma_relative(sent_text, offset, words, voikko, cache)
+    out += check_comma_rinnastus(sent_text, offset, words, voikko, cache)
+    out += check_comma_kuin(sent_text, offset, words, voikko, cache)
+    out += check_comma_johtolause(sent_text, offset, words, voikko, cache)
     out += check_typography(sent_text, offset)
     out += check_lowercase_names(sent_text, offset, words, voikko, cache)
     out += check_active_perfect_passive_participle(

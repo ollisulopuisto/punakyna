@@ -34,10 +34,13 @@ any rule is written.
 | comma between main clause and mutta/vaan + full main clause | pilkku-ja-mutta-vaan | done v0.1.18 PUNCT_COMMA_MUTTA_VAAN |
 | missing comma before a subordinate conjunction (että, jos, kun, ...) | pilkku-ja-alistuskonjunktiolla-esim-etta-jos-alkava-lause | done v0.1.19 PUNCT_COMMA_SUBORD |
 | missing comma before a joka/mikä relative clause | pilkku-ja-joka-mika-relatiivilause | done v0.1.19 PUNCT_COMMA_RELATIVE |
+| missing comma between two full main clauses (ja/tai/sillä) | pilkku-paalauseiden-valissa | done v0.1.20 PUNCT_COMMA_RINNASTUS |
+| superfluous comma before kuin in comparisons | pilkku-kuin-ilmauksissa | done v0.1.20 PUNCT_COMMA_KUIN |
+| missing comma after quote before attribution clause | pilkku-lainauksen-ja-johtolauseen-jaljessa | done v0.1.20 PUNCT_COMMA_JOHTOLAUSE |
 
 Still **title** only; each needs the page read and a false-positive sweep before any rule:
-pilkku-paalauseiden-valissa, pilkku-kuin-ilmauksissa, pilkku-lainauksen-ja-johtolauseen-jaljessa,
-pilkku-ja-infinitiivirakenteet. Voikko's own grammar checker does not flag a missing comma
+pilkku-ja-infinitiivirakenteet, pilkku rinnasteisten lauseenjäsenten ja luettelon osien välissä,
+epäsuoran kysymyslauseen pilkku, lainausmerkit ja vuorosanaviiva. Voikko's own grammar checker does not flag a missing comma
 before että (verified 2026-11-25); its code 18 heuristic covers some joka cases with a
 generic message, which PUNCT_COMMA_RELATIVE now supersedes with a precise one.
 
