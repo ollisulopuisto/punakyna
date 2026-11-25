@@ -145,6 +145,19 @@
   / 41; 169 testia lapi; ruff F puhdas.
 - Versio 0.1.23. Stacked PR:n #54 (comma-list-ja) paalle.
 
+## 2026-11-25: TYPO_QUOTE_MARK (v0.1.24, stacked on #55)
+
+- Uusi warning-saanto: suorat ASCII-lainausmerkit (") suomenkielisessa
+  tekstissa -> kaarevat ”. Lahteet: ohjepankki "Lainausmerkit" ja
+  "Lainausmerkit ja vuorosanaviiva" (luetut 2026-11-25).
+- FP-suoja: numeron vieressa oleva merkki ohitetaan (tuumamerkki).
+- Tarkkuus: fi.wikipedia ~21k sanaa: 22 osumaa, kaikki tosia
+  (suoria lainausmerkkeja proosassa). Savutesti 0 vaaraa / 41;
+  173 testia lapi; ruff F puhdas.
+- Vuorosanaviiva-osuus jai toteuttamatta: rivinalun tunnistus vaatii
+  rivikontekstia, jota virkepiiri ei valita (dokumentoitu candidates.md).
+- Versio 0.1.24. Stacked PR:n #55 (comma-indirect-question) paalle.
+
 ## Kehitysjono (TDT-löydökset 2026-11-03, ei viritetty)
 
 - NEG_CONNEGATIVE: puhekielen "et" (=että) jäsentyy kieltoverbiksi ->

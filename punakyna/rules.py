@@ -830,6 +830,7 @@ def _group_digits(num):
 # UTF-8), viivaketjut (ISBN 978-951-..., ISO-paivays 2026-11-08) ja molemmin-
 # puolin vahintaan 3-numeroiset mallinumerot (Boeing 737-800), ellei jompikumpi
 # ole 1-2-numeroinen tai vuosisadaluku 1800-2199.
+_RE_QUOTE_ASCII = re.compile(r'(?<!\d)"(?!\d)')
 _RE_RANGE_HYPHEN = re.compile(r'(?<![\w\u2013.%-])(\d{1,4})-(\d{1,4})(?!-\d|[\w\u2013])')
 
 
@@ -988,6 +989,17 @@ def check_typography(sent_text, offset, clock=False):
                 message=('Suomenkielisessä tekstissä desimaaliluvun erottimena on '
                          'pilkku ("%s"), ei piste.' % fixed),
                 replacements=[fixed]))
+    if '"' in sent_text:
+        # Suomenkielisessa tekstissa kaytetaan kaarevia lainausmerkkeja
+        # (ohjepankki, "Lainausmerkit", luettu 2026-11-25). Ohitetaan
+        # tuumamerkki (numeron vieressa).
+        for m in _RE_QUOTE_ASCII.finditer(sent_text):
+            out.append(Suggestion(
+                rule='TYPO_QUOTE_MARK', category='style', severity='warning',
+                start=offset + m.start(), end=offset + m.end(),
+                message=('Suomenkielisessä tekstissä käytetään kaarevia '
+                         'lainausmerkkejä (””), ei suoria lainausmerkkejä (").'),
+                replacements=['\u201d']))
     if '-' in sent_text:
         for m in _RE_RANGE_HYPHEN.finditer(sent_text):
             if not _range_hyphen_ok(m.group(1), m.group(2)):
