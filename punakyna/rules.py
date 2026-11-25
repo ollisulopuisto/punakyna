@@ -1145,6 +1145,11 @@ def _rel_next_is_nominal(voikko, cache, word):
     return False
 
 
+def _rel_next_is_superlative(voikko, cache, word):
+    return any(a.get('COMPARISON') == 'superlative'
+               for a in _analyze(voikko, word, cache))
+
+
 def check_comma_relative(sent_text, offset, words, voikko, cache):
     out = []
     for i, tok in enumerate(words):
@@ -1160,8 +1165,12 @@ def check_comma_relative(sent_text, offset, words, voikko, cache):
             continue  # pilkku tai raja-merkki jo valissa
         if prev.lower in _REL_PREV_SKIP:
             continue
-        if i + 1 < len(words) and words[i + 1].lower in ('tahansa', 'hyvänsä'):
-            continue  # "mikä tahansa", "mitä hyvänsä": yleispronomini
+        if i + 1 < len(words) and words[i + 1].lower in (
+                'tahansa', 'hyvänsä', 'vain'):
+            continue  # "mikä tahansa", "mitä vain": yleispronomini
+        if low == 'mitä' and i + 1 < len(words) and \
+                _rel_next_is_superlative(voikko, cache, words[i + 1].text):
+            continue  # "mitä hienoin lahja": superlatiivin vahvike
         if low in _REL_QUANT and i + 1 < len(words) and \
                 _rel_next_is_nominal(voikko, cache, words[i + 1].text):
             continue  # "joka paiva", "mika vuosi": maaraissana

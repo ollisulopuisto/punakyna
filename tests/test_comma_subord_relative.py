@@ -98,3 +98,14 @@ def test_relative_with_subject_right_after_is_recall_limit():
     assert not hits('Auto joka mies osti oli vanha.', 'PUNCT_COMMA_RELATIVE')
     # mutta taivutetut muodot liputetaan aina
     assert len(hits('Auto jonka mies osti oli vanha.', 'PUNCT_COMMA_RELATIVE')) == 1
+
+
+def test_relative_generic_pronoun_and_superlative_idioms_are_not_flagged():
+    # "mitä/missä/minne vain" = yleispronomini kuten "tahansa"; "mitä hienoin" = superlatiivin vahvike
+    for t in ('Voit tehdä mitä vain.',
+              'Hän syö mitä vain.',
+              'Menemme minne vain.',
+              'Voit istua missä vain.',
+              'Se oli mitä hienoin lahja.',
+              'Hän on mitä ihanin ihminen.'):
+        assert not hits(t, 'PUNCT_COMMA_RELATIVE'), t
