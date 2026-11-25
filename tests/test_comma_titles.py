@@ -45,3 +45,13 @@ def test_ordinary_noun_pairs_not_flagged():
               'Ministeri puhui lehdistölle.',
               'Koulu tarvitsee opettaja Virran kaltaisia ihmisiä.'):
         assert not _hits(t), t
+
+
+def test_modified_first_title_and_capitalised_name_are_not_flagged():
+    # entinen/nykyinen = ensimmäisen tittelin määrite: pilkku valinnainen;
+    # isolla alkava toinen sana on sukunimi ("kapteeni Piispa Virtanen")
+    for t in ('Esitelmöi entinen ministeri professori Matti Virtanen.',
+              'Puhui nykyinen rehtori maisteri Jussi Korhonen.',
+              'Tapasin kapteeni Piispa Virtasen.'):
+        assert not _hits(t), t
+    assert len(_hits('Palkinnon luovuttaa rehtori maisteri Jussi Korhonen.')) == 1

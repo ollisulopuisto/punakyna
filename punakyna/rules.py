@@ -1653,6 +1653,11 @@ def check_comma_titles(sent_text, offset, words, voikko, cache):
         # titteliparin jalkeen tulee nimi (iso alkukirjain)
         if not c.text[:1].isupper():
             continue
+        if b.text[:1].isupper() and not b.text.isupper():
+            continue  # isolla alkava toinen sana on sukunimi ("kapteeni Piispa")
+        if i > 0 and any(an.get('CLASS') == 'nimisana_laatusana'
+                         for an in _analyze(voikko, words[i - 1].text, cache)):
+            continue  # "entinen ministeri professori": määrite, pilkku valinnainen
         out.append(Suggestion(
             rule='PUNCT_COMMA_TITLES', category='style', severity='warning',
             start=offset + a.end, end=offset + b.start,
